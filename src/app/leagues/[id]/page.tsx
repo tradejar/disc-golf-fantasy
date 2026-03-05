@@ -1,5 +1,6 @@
-import { auth } from '@clerk/nextjs/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { SEASON_2026, getLockTime } from '@/data/tournaments';
+import { auth } from '@clerk/nextjs/server';
 import Link from 'next/link';
 
 export default async function LeagueDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -75,6 +76,26 @@ export default async function LeagueDetailsPage({ params }: { params: Promise<{ 
         if (entries) memberEntries = entries;
     }
 
+    // 4. Upcoming Tournament (Pending Drafts)
+    const now = new Date();
+    const upcomingTournament = SEASON_2026.find(t => getLockTime(t) > now);
+    let upcomingEntries: any[] = [];
+
+    if (upcomingTournament) {
+        const memberIds = league.league_members.map((m: any) => m.user_id);
+        const { data: entries } = await supabaseAdmin
+            .from('entries')
+            .select(`
+                id,
+                user_id,
+                profiles!inner(display_name)
+            `)
+            .eq('tournament_id', upcomingTournament.id)
+            .in('user_id', memberIds);
+
+        if (entries) upcomingEntries = entries;
+    }
+
     return (
         <main style={{ background: '#0f172a', minHeight: '100vh', padding: '2rem' }}>
             <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -144,6 +165,45 @@ export default async function LeagueDetailsPage({ params }: { params: Promise<{ 
                 ) : (
                     <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8', border: '1px solid #334155', borderRadius: '12px', background: '#1e293b' }}>
                         No active tournament running.
+                    </div>
+                )}
+
+                {/* Upcoming Tournament Drafts */}
+                {upcomingTournament && upcomingTournament.id !== activeTournament?.id && (
+                    <div style={{ marginTop: '2rem', background: '#0f172a', borderRadius: '12px', padding: '1.5rem', border: '1px dashed #334155' }}>
+                        <h2 style={{ color: 'white', marginTop: 0, marginBottom: '0.5rem', fontSize: '1.25rem' }}>
+                            Pending Drafts <span style={{ color: '#94a3b8', fontSize: '1rem', fontWeight: 400 }}>({upcomingTournament.name})</span>
+                        </h2>
+                        <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                            Members who have secured their roster for the next event.
+                        </p>
+
+                        {upcomingEntries.length === 0 ? (
+                            <div style={{ color: '#94a3b8', fontStyle: 'italic' }}>
+                                No one has drafted yet.
+                            </div>
+                        ) : (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                                {upcomingEntries.map((entry) => (
+                                    <div key={entry.id} style={{
+                                        background: entry.user_id === userId ? '#263145' : '#1e293b',
+                                        border: entry.user_id === userId ? '1px solid #3b82f6' : '1px solid #334155',
+                                        color: 'white',
+                                        padding: '0.5rem 1rem',
+                                        borderRadius: '20px',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 600,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem'
+                                    }}>
+                                        <div style={{ width: '8px', height: '8px', background: '#10b981', borderRadius: '50%' }}></div>
+                                        {entry.profiles?.display_name || 'Anonymous Player'}
+                                        {entry.user_id === userId && <span style={{ color: '#3b82f6', fontSize: '0.8rem' }}>(You)</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
