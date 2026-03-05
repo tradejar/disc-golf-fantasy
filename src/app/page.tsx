@@ -13,15 +13,37 @@ export default async function SeasonHubPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let entries: any[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let userLeagues: any[] = [];
 
   if (userId) {
-    const { data } = await supabaseAdmin
+    const { data: entriesData } = await supabaseAdmin
       .from('entries')
       .select('*')
       .eq('user_id', userId);
 
-    if (data) {
-      entries = data;
+    if (entriesData) {
+      entries = entriesData;
+    }
+
+    // Fetch user's leagues
+    const { data: leaguesData } = await supabaseAdmin
+      .from('league_members')
+      .select(`
+        league_id,
+        joined_at,
+        leagues (
+          id,
+          name,
+          entry_fee,
+          payout_structure,
+          owner_id
+        )
+      `)
+      .eq('user_id', userId);
+
+    if (leaguesData) {
+      userLeagues = leaguesData.map(lm => lm.leagues).filter(Boolean);
     }
   }
 
@@ -120,6 +142,57 @@ export default async function SeasonHubPage() {
           </div>
           {isAdmin && <ResetButton />}
         </div>
+
+        {/* ─── My Leagues (Authenticated Only) ─── */}
+        {userId && (
+          <div style={{ marginBottom: '3rem', background: '#1e293b', borderRadius: '12px', padding: '1.5rem', border: '1px solid #334155' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <h2 style={{ color: 'white', margin: 0, fontSize: '1.5rem' }}>My Mini-Leagues</h2>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <Link href="/leagues/join" style={{
+                  background: '#334155', color: 'white', padding: '0.6rem 1.2rem',
+                  borderRadius: '6px', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem'
+                }}>
+                  Join with Code
+                </Link>
+                <Link href="/leagues/create" style={{
+                  background: '#3b82f6', color: 'white', padding: '0.6rem 1.2rem',
+                  borderRadius: '6px', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem'
+                }}>
+                  + Create League
+                </Link>
+              </div>
+            </div>
+
+            {userLeagues.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#94a3b8', background: '#0f172a', borderRadius: '8px' }}>
+                You haven't joined any private mini-leagues yet.
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+                {userLeagues.map((league) => (
+                  <Link href={`/leagues/${league.id}`} key={league.id} style={{
+                    display: 'block',
+                    background: '#0f172a',
+                    border: '1px solid #334155',
+                    borderRadius: '8px',
+                    padding: '1.25rem',
+                    textDecoration: 'none',
+                    transition: 'border-color 0.2s'
+                  }}>
+                    <h3 style={{ margin: '0 0 0.5rem', color: 'white', fontSize: '1.1rem' }}>{league.name}</h3>
+                    <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                      Prizepool: {league.payout_structure.replace(/_/g, ' ')}
+                    </div>
+                    <div style={{ color: league.entry_fee > 0 ? '#10b981' : '#38bdf8', fontSize: '0.85rem', fontWeight: 600 }}>
+                      Entry: {league.entry_fee > 0 ? `$${league.entry_fee}` : 'Free'}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ─── Tournament cards ─── */}
         <div className={styles.timelineContainer}>
