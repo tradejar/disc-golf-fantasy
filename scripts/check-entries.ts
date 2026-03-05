@@ -1,20 +1,25 @@
-import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
-import path from 'path';
+import { supabaseAdmin } from '../src/lib/supabase-admin';
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+async function main() {
+    console.log('Checking all entries...');
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-    auth: { autoRefreshToken: false, persistSession: false }
-});
+    const { data: entries, error } = await supabaseAdmin
+        .from('entries')
+        .select(`
+            id,
+            user_id,
+            tournament_id,
+            created_at,
+            profiles ( display_name )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-async function check() {
-    const { data, error } = await supabase.from('entries').select('*').order('created_at', { ascending: false }).limit(5);
-    if (error) console.error(error);
-    else {
-        data?.forEach(d => {
-            console.log(`ID: ${d.id}, Points: ${d.total_points}, Rank: ${d.tournament_rank}`);
-        });
+    if (error) {
+        console.error('Error fetching entries:', error);
+    } else {
+        console.log('Recent Entries:', JSON.stringify(entries, null, 2));
     }
 }
-check();
+
+main().catch(console.error);

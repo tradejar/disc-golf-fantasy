@@ -61,18 +61,18 @@ export default async function LeagueDetailsPage({ params }: { params: Promise<{ 
     if (activeTournament) {
         // Get all entries for this tournament that belong to league members
         const memberIds = league.league_members.map((m: any) => m.user_id);
-        const { data: entries } = await supabaseAdmin
+        const { data: entries, error: entriesError } = await supabaseAdmin
             .from('entries')
             .select(`
                 id,
                 user_id,
-                total_points,
-                profiles!inner(display_name)
+                total_points
             `)
             .eq('tournament_id', activeTournament.id)
             .in('user_id', memberIds)
             .order('total_points', { ascending: false });
 
+        if (entriesError) console.error("Error fetching active entries:", entriesError);
         if (entries) memberEntries = entries;
     }
 
@@ -83,16 +83,16 @@ export default async function LeagueDetailsPage({ params }: { params: Promise<{ 
 
     if (upcomingTournament) {
         const memberIds = league.league_members.map((m: any) => m.user_id);
-        const { data: entries } = await supabaseAdmin
+        const { data: entries, error: upcomingError } = await supabaseAdmin
             .from('entries')
             .select(`
                 id,
-                user_id,
-                profiles!inner(display_name)
+                user_id
             `)
             .eq('tournament_id', upcomingTournament.id)
             .in('user_id', memberIds);
 
+        if (upcomingError) console.error("Error fetching upcoming entries:", upcomingError);
         if (entries) upcomingEntries = entries;
     }
 
@@ -138,27 +138,33 @@ export default async function LeagueDetailsPage({ params }: { params: Promise<{ 
                             </div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                {memberEntries.map((entry, index) => (
-                                    <div key={entry.id} style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        background: entry.user_id === userId ? '#263145' : '#0f172a',
-                                        border: entry.user_id === userId ? '1px solid #3b82f6' : '1px solid #334155',
-                                        borderRadius: '8px',
-                                        padding: '1rem'
-                                    }}>
-                                        <div style={{ width: '40px', color: '#94a3b8', fontWeight: 'bold', fontSize: '1.1rem' }}>
-                                            #{index + 1}
+                                {memberEntries.map((entry, index) => {
+                                    const member = league.league_members.find((m: any) => m.user_id === entry.user_id);
+                                    const prof = member?.profiles as any;
+                                    const displayName = (Array.isArray(prof) ? prof[0]?.display_name : prof?.display_name) || 'Anonymous Player';
+
+                                    return (
+                                        <div key={entry.id} style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            background: entry.user_id === userId ? '#263145' : '#0f172a',
+                                            border: entry.user_id === userId ? '1px solid #3b82f6' : '1px solid #334155',
+                                            borderRadius: '8px',
+                                            padding: '1rem'
+                                        }}>
+                                            <div style={{ width: '40px', color: '#94a3b8', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                                                #{index + 1}
+                                            </div>
+                                            <div style={{ flex: 1, color: 'white', fontWeight: 600 }}>
+                                                {displayName}
+                                                {entry.user_id === userId && <span style={{ color: '#3b82f6', marginLeft: '8px', fontSize: '0.8rem' }}>(You)</span>}
+                                            </div>
+                                            <div style={{ color: '#10b981', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                                                {entry.total_points ?? 0} pts
+                                            </div>
                                         </div>
-                                        <div style={{ flex: 1, color: 'white', fontWeight: 600 }}>
-                                            {entry.profiles?.display_name || 'Anonymous Player'}
-                                            {entry.user_id === userId && <span style={{ color: '#3b82f6', marginLeft: '8px', fontSize: '0.8rem' }}>(You)</span>}
-                                        </div>
-                                        <div style={{ color: '#10b981', fontWeight: 'bold', fontSize: '1.2rem' }}>
-                                            {entry.total_points ?? 0} pts
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -184,24 +190,30 @@ export default async function LeagueDetailsPage({ params }: { params: Promise<{ 
                             </div>
                         ) : (
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                                {upcomingEntries.map((entry) => (
-                                    <div key={entry.id} style={{
-                                        background: entry.user_id === userId ? '#263145' : '#1e293b',
-                                        border: entry.user_id === userId ? '1px solid #3b82f6' : '1px solid #334155',
-                                        color: 'white',
-                                        padding: '0.5rem 1rem',
-                                        borderRadius: '20px',
-                                        fontSize: '0.9rem',
-                                        fontWeight: 600,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem'
-                                    }}>
-                                        <div style={{ width: '8px', height: '8px', background: '#10b981', borderRadius: '50%' }}></div>
-                                        {entry.profiles?.display_name || 'Anonymous Player'}
-                                        {entry.user_id === userId && <span style={{ color: '#3b82f6', fontSize: '0.8rem' }}>(You)</span>}
-                                    </div>
-                                ))}
+                                {upcomingEntries.map((entry) => {
+                                    const member = league.league_members.find((m: any) => m.user_id === entry.user_id);
+                                    const prof = member?.profiles as any;
+                                    const displayName = (Array.isArray(prof) ? prof[0]?.display_name : prof?.display_name) || 'Anonymous Player';
+
+                                    return (
+                                        <div key={entry.id} style={{
+                                            background: entry.user_id === userId ? '#263145' : '#1e293b',
+                                            border: entry.user_id === userId ? '1px solid #3b82f6' : '1px solid #334155',
+                                            color: 'white',
+                                            padding: '0.5rem 1rem',
+                                            borderRadius: '20px',
+                                            fontSize: '0.9rem',
+                                            fontWeight: 600,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem'
+                                        }}>
+                                            <div style={{ width: '8px', height: '8px', background: '#10b981', borderRadius: '50%' }}></div>
+                                            {displayName}
+                                            {entry.user_id === userId && <span style={{ color: '#3b82f6', fontSize: '0.8rem' }}>(You)</span>}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
