@@ -46,15 +46,15 @@ export default async function LeagueDetailsPage({ params }: { params: Promise<{ 
         );
     }
 
-    // 3. Leaderboard Construction (Current Active Tournament)
-    const { data: activeTournaments } = await supabaseAdmin
+    // 3. Leaderboard Construction (Current Active or Most Recent Tournament)
+    const { data: latestTournaments } = await supabaseAdmin
         .from('tournaments')
-        .select('id, name')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
+        .select('id, name, is_active')
+        .order('is_active', { ascending: false }) // Prioritize active tournaments first
+        .order('created_at', { ascending: false }) // Then fallback to the most recent one
         .limit(1);
 
-    const activeTournament = activeTournaments?.[0];
+    const activeTournament = latestTournaments?.[0];
     let memberEntries: any[] = [];
 
     if (activeTournament) {
