@@ -1,0 +1,17 @@
+{
+    "name": "DGPT Fantasy 2026",
+    "short_name": "DGF",
+    "description": "Draft a $950 roster from real DGPT pros. Earn fantasy points from live scoring.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#0f172a",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/favicon.ico",
+            "sizes": "256x256",
+            "type": "image/x-icon"
+        }
+    ]
+}

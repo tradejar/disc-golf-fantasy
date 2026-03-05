@@ -1,0 +1,16 @@
+{
+    "crons": [
+        {
+            "path": "/api/cron/ingest",
+            "schedule": "*/10 * * * 3,4,5,6,0"
+        },
+        {
+            "path": "/api/cron/registrations",
+            "schedule": "0 6 * * *"
+        },
+        {
+            "path": "/api/cron/auto-draft",
+            "schedule": "*/10 * * * 3,4,5,6,0"
+        }
+    ]
+}

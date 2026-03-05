@@ -1,0 +1,180 @@
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.header {
+    margin-bottom: 2rem;
+}
+
+.title {
+    color: white;
+    font-size: 1.75rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+    color: #94a3b8;
+    margin: 0;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.entryCard {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.entryCard:hover {
+    border-color: #475569;
+    background: #263347;
+}
+
+.myEntry {
+    border-color: #3b82f6 !important;
+    background: #1a2a3f !important;
+}
+
+.first {
+    border-color: #f59e0b !important;
+}
+
+.entryRow {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.rank {
+    min-width: 2.5rem;
+    text-align: center;
+}
+
+.trophy {
+    font-size: 1.5rem;
+}
+
+.rankNum {
+    color: #94a3b8;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.nameCol {
+    flex: 1;
+    min-width: 0;
+}
+
+.playerName {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.youBadge {
+    background: #3b82f6;
+    color: white;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.rosterPreview {
+    display: block;
+    color: #64748b;
+    font-size: 0.78rem;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.points {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 4rem;
+}
+
+.positive {
+    color: #4ade80;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.neutral {
+    color: #94a3b8;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.pointsLabel {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+/* Expanded detail */
+.rosterDetail {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #334155;
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.rosterSection {
+    flex: 1;
+    min-width: 180px;
+}
+
+.divisionLabel {
+    color: #3b82f6;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 0 0 0.5rem 0;
+}
+
+.rosterPlayer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+    color: #cbd5e1;
+    font-size: 0.875rem;
+}
+
+.ratingBadge {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.priceBadge {
+    background: #1e3a5f;
+    color: #38bdf8;
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.budgetInfo {
+    width: 100%;
+    margin-top: 0.75rem;
+    color: #64748b;
+    font-size: 0.85rem;
+}

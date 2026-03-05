@@ -1,0 +1,132 @@
+.row {
+    display: grid;
+    grid-template-columns: 80px 2fr 200px 100px;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #334155;
+    background: #1e293b;
+    transition: background 0.2s;
+}
+
+.row:hover {
+    background: #283648;
+}
+
+.selected {
+    background: #064e3b;
+    border-left: 4px solid #10b981;
+}
+
+.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.ratingBadge {
+    font-weight: 700;
+    color: #fbbf24;
+    background: #0f172a;
+    padding: 4px 8px;
+    border-radius: 4px;
+    width: fit-content;
+}
+
+.rating {
+    display: inline;
+}
+
+.mobileInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.name {
+    color: #f8fafc;
+    font-weight: 600;
+}
+
+.division {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.mobileStats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 2rem;
+}
+
+.price {
+    font-family: monospace;
+    font-size: 1.1rem;
+    color: #60a5fa;
+}
+
+.value {
+    font-size: 0.9rem;
+    color: #94a3b8;
+}
+
+.mobileAction {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.button {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    background: #3b82f6;
+    color: white;
+    width: 100%;
+}
+
+.button:hover {
+    background: #2563eb;
+}
+
+.selected .button {
+    background: #ef4444;
+}
+
+.selected .button:hover {
+    background: #dc2626;
+}
+
+@media (max-width: 768px) {
+    .row {
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas:
+            "badge info action"
+            "stats stats stats";
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+
+    .ratingBadge {
+        grid-area: badge;
+        min-width: 48px;
+        text-align: center;
+    }
+
+    .mobileInfo {
+        grid-area: info;
+        justify-content: center;
+    }
+
+    .mobileStats {
+        grid-area: stats;
+        background: #0f172a;
+        padding: 0.4rem 0.75rem;
+        border-radius: 4px;
+        margin-top: 0.25rem;
+        border: 1px solid #1e293b;
+    }
+
+    .mobileAction {
+        grid-area: action;
+    }
+}

@@ -1,0 +1,104 @@
+import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { SEASON_2026, getLockTime } from '@/data/tournaments';
+
+export async function GET(request: Request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const tournamentId = searchParams.get('tournamentId');
+        const requestingUserId = searchParams.get('userId') || null;
+
+        if (!tournamentId) {
+            return NextResponse.json({ error: 'Missing tournamentId' }, { status: 400 });
+        }
+
+        const tournament = SEASON_2026.find(t => t.id === tournamentId);
+        if (!tournament) {
+            return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });
+        }
+
+        // Picks are hidden until the draft locks (= first card tees off / PDGA streams).
+        // Using getLockTime instead of midnight to match the actual lock trigger.
+        const now = new Date();
+        const lockTime = getLockTime(tournament);
+        const isStarted = now >= lockTime;
+
+        const { data: entries, error } = await supabaseAdmin
+            .from('entries')
+            .select('id, user_id, roster_data, total_points, tournament_rank, created_at, budget_remaining')
+            .filter('tournament_id', 'eq', tournamentId)
+            .order('total_points', { ascending: false, nullsFirst: false });
+
+        if (error) {
+            console.error('Leaderboard query error:', error);
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        // Try to fetch auto_drafted separately — gracefully handles case where
+        // column hasn't been added to the DB yet (migration may be pending).
+        let autoDraftedMap = new Map<string, boolean>();
+        try {
+            const { data: adRows } = await supabaseAdmin
+                .from('entries')
+                .select('id, auto_drafted')
+                .filter('tournament_id', 'eq', tournamentId);
+            if (adRows) {
+                autoDraftedMap = new Map(adRows.map(r => [r.id, r.auto_drafted ?? false]));
+            }
+        } catch { /* column doesn't exist yet — all entries default to false */ }
+
+        if (!entries || entries.length === 0) {
+            return NextResponse.json({
+                tournamentId,
+                tournamentName: tournament.name,
+                isStarted,
+                entries: []
+            });
+        }
+
+        // Fetch display names from profiles
+        const userIds = [...new Set(entries.map(e => e.user_id))];
+        const { data: profiles } = await supabaseAdmin
+            .from('profiles')
+            .select('id, display_name, email')
+            .in('id', userIds);
+
+        const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+        const leaderboard = entries.map((entry, index) => {
+            const profile = profileMap.get(entry.user_id);
+            const displayName = profile?.display_name
+                || profile?.email?.split('@')[0]
+                || `Player ${index + 1}`;
+
+            const isOwn = entry.user_id === requestingUserId;
+            // Hide other users' picks until draft locks
+            const roster = (isStarted || isOwn)
+                ? (entry.roster_data || [])
+                : null; // null = hidden
+
+            return {
+                rank: index + 1,
+                entryId: entry.id,
+                userId: entry.user_id,
+                displayName,
+                totalPoints: entry.total_points ?? null,
+                budgetRemaining: entry.budget_remaining,
+                roster,
+                picksHidden: !isStarted && !isOwn,
+                autoDrafted: autoDraftedMap.get(entry.id) ?? false,
+                createdAt: entry.created_at,
+            };
+        });
+
+        return NextResponse.json({
+            tournamentId,
+            tournamentName: tournament.name,
+            isStarted,
+            entries: leaderboard
+        });
+    } catch (e: unknown) {
+        console.error('Leaderboard error:', e);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+}

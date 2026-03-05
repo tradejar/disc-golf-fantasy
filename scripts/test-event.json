@@ -1,0 +1,1061 @@
+{
+  "data": {
+    "DateRange": "Mar 15-17, 2024",
+    "EndDate": "2024-03-17",
+    "Country": "United States",
+    "Location": "Austin, Texas",
+    "LocationShort": "Austin, TX",
+    "Divisions": [
+      {
+        "DivisionID": 100,
+        "Division": "MPO",
+        "DivisionName": "Mixed Pro Open",
+        "Players": 112,
+        "IsPro": true,
+        "ShortName": "Mixed Pro Open",
+        "AbbreviatedName": "Mixed Pro Open",
+        "LatestRound": 3
+      },
+      {
+        "DivisionID": 105,
+        "Division": "FPO",
+        "DivisionName": "Women's Pro Open",
+        "Players": 53,
+        "IsPro": true,
+        "ShortName": "Women's Pro Open",
+        "AbbreviatedName": "Women's Pro Open",
+        "LatestRound": 3
+      }
+    ],
+    "Finals": "no",
+    "HighestCompletedRound": 3,
+    "LatestRound": 3,
+    "FinalRound": 3,
+    "Layouts": [
+      {
+        "LayoutID": 661529,
+        "CourseID": 306058,
+        "CourseName": "Harvey Penick",
+        "Name": "The Open course at Harvey Penick - MPO",
+        "Holes": 18,
+        "Par": 63,
+        "Length": 9075,
+        "Units": "Feet",
+        "Accuracy": "M",
+        "Details": [
+          {
+            "Hole": "H1",
+            "Label": "1",
+            "Par": 3,
+            "Length": 400
+          },
+          {
+            "Hole": "H2",
+            "Label": "2",
+            "Par": 4,
+            "Length": 715
+          },
+          {
+            "Hole": "H3",
+            "Label": "3",
+            "Par": 3,
+            "Length": 360
+          },
+          {
+            "Hole": "H4",
+            "Label": "4",
+            "Par": 3,
+            "Length": 460
+          },
+          {
+            "Hole": "H5",
+            "Label": "5",
+            "Par": 4,
+            "Length": 520
+          },
+          {
+            "Hole": "H6",
+            "Label": "6",
+            "Par": 4,
+            "Length": 535
+          },
+          {
+            "Hole": "H7",
+            "Label": "7",
+            "Par": 3,
+            "Length": 305
+          },
+          {
+            "Hole": "H8",
+            "Label": "8",
+            "Par": 4,
+            "Length": 570
+          },
+          {
+            "Hole": "H9",
+            "Label": "9",
+            "Par": 4,
+            "Length": 745
+          },
+          {
+            "Hole": "H10",
+            "Label": "10",
+            "Par": 3,
+            "Length": 315
+          },
+          {
+            "Hole": "H11",
+            "Label": "11",
+            "Par": 5,
+            "Length": 1000
+          },
+          {
+            "Hole": "H12",
+            "Label": "12",
+            "Par": 3,
+            "Length": 375
+          },
+          {
+            "Hole": "H13",
+            "Label": "13",
+            "Par": 3,
+            "Length": 415
+          },
+          {
+            "Hole": "H14",
+            "Label": "14",
+            "Par": 4,
+            "Length": 545
+          },
+          {
+            "Hole": "H15",
+            "Label": "15",
+            "Par": 3,
+            "Length": 345
+          },
+          {
+            "Hole": "H16",
+            "Label": "16",
+            "Par": 3,
+            "Length": 375
+          },
+          {
+            "Hole": "H17",
+            "Label": "17",
+            "Par": 3,
+            "Length": 410
+          },
+          {
+            "Hole": "H18",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          }
+        ]
+      },
+      {
+        "LayoutID": 661531,
+        "CourseID": 306058,
+        "CourseName": "Harvey Penick",
+        "Name": "The Open course at Harvey Penick - FPO",
+        "Holes": 18,
+        "Par": 66,
+        "Length": 8225,
+        "Units": "Feet",
+        "Accuracy": "M",
+        "Details": [
+          {
+            "Hole": "H1",
+            "Label": "1",
+            "Par": 3,
+            "Length": 320
+          },
+          {
+            "Hole": "H2",
+            "Label": "2",
+            "Par": 5,
+            "Length": 680
+          },
+          {
+            "Hole": "H3",
+            "Label": "3",
+            "Par": 3,
+            "Length": 275
+          },
+          {
+            "Hole": "H4",
+            "Label": "4",
+            "Par": 3,
+            "Length": 350
+          },
+          {
+            "Hole": "H5",
+            "Label": "5",
+            "Par": 4,
+            "Length": 520
+          },
+          {
+            "Hole": "H6",
+            "Label": "6",
+            "Par": 4,
+            "Length": 535
+          },
+          {
+            "Hole": "H7",
+            "Label": "7",
+            "Par": 3,
+            "Length": 305
+          },
+          {
+            "Hole": "H8",
+            "Label": "8",
+            "Par": 4,
+            "Length": 570
+          },
+          {
+            "Hole": "H9",
+            "Label": "9",
+            "Par": 4,
+            "Length": 510
+          },
+          {
+            "Hole": "H10",
+            "Label": "10",
+            "Par": 3,
+            "Length": 315
+          },
+          {
+            "Hole": "H11",
+            "Label": "11",
+            "Par": 5,
+            "Length": 900
+          },
+          {
+            "Hole": "H12",
+            "Label": "12",
+            "Par": 3,
+            "Length": 310
+          },
+          {
+            "Hole": "H13",
+            "Label": "13",
+            "Par": 3,
+            "Length": 315
+          },
+          {
+            "Hole": "H14",
+            "Label": "14",
+            "Par": 4,
+            "Length": 465
+          },
+          {
+            "Hole": "H15",
+            "Label": "15",
+            "Par": 3,
+            "Length": 345
+          },
+          {
+            "Hole": "H16",
+            "Label": "16",
+            "Par": 3,
+            "Length": 320
+          },
+          {
+            "Hole": "H17",
+            "Label": "17",
+            "Par": 4,
+            "Length": 505
+          },
+          {
+            "Hole": "H18",
+            "Label": "18",
+            "Par": 5,
+            "Length": 685
+          }
+        ]
+      },
+      {
+        "LayoutID": 661841,
+        "CourseID": 306058,
+        "CourseName": "Harvey Penick",
+        "Name": "Playoff Layout FPO",
+        "Holes": 18,
+        "Par": 63,
+        "Length": 9045,
+        "Units": "Feet",
+        "Accuracy": "M",
+        "Details": [
+          {
+            "Hole": "H1",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H2",
+            "Label": "1",
+            "Par": 3,
+            "Length": 320
+          },
+          {
+            "Hole": "H3",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H4",
+            "Label": "1",
+            "Par": 3,
+            "Length": 320
+          },
+          {
+            "Hole": "H5",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H6",
+            "Label": "1",
+            "Par": 3,
+            "Length": 320
+          },
+          {
+            "Hole": "H7",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H8",
+            "Label": "1",
+            "Par": 3,
+            "Length": 320
+          },
+          {
+            "Hole": "H9",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H10",
+            "Label": "1",
+            "Par": 3,
+            "Length": 320
+          },
+          {
+            "Hole": "H11",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H12",
+            "Label": "1",
+            "Par": 3,
+            "Length": 320
+          },
+          {
+            "Hole": "H13",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H14",
+            "Label": "1",
+            "Par": 3,
+            "Length": 320
+          },
+          {
+            "Hole": "H15",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H16",
+            "Label": "1",
+            "Par": 3,
+            "Length": 320
+          },
+          {
+            "Hole": "H17",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H18",
+            "Label": "1",
+            "Par": 3,
+            "Length": 320
+          }
+        ]
+      },
+      {
+        "LayoutID": 662104,
+        "CourseID": 306058,
+        "CourseName": "Harvey Penick",
+        "Name": "Playoff Layout MPO",
+        "Holes": 18,
+        "Par": 63,
+        "Length": 9765,
+        "Units": "Feet",
+        "Accuracy": "M",
+        "Details": [
+          {
+            "Hole": "H1",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H2",
+            "Label": "1",
+            "Par": 3,
+            "Length": 400
+          },
+          {
+            "Hole": "H3",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H4",
+            "Label": "1",
+            "Par": 3,
+            "Length": 400
+          },
+          {
+            "Hole": "H5",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H6",
+            "Label": "1",
+            "Par": 3,
+            "Length": 400
+          },
+          {
+            "Hole": "H7",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H8",
+            "Label": "1",
+            "Par": 3,
+            "Length": 400
+          },
+          {
+            "Hole": "H9",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H10",
+            "Label": "1",
+            "Par": 3,
+            "Length": 400
+          },
+          {
+            "Hole": "H11",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H12",
+            "Label": "1",
+            "Par": 3,
+            "Length": 400
+          },
+          {
+            "Hole": "H13",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H14",
+            "Label": "1",
+            "Par": 3,
+            "Length": 400
+          },
+          {
+            "Hole": "H15",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H16",
+            "Label": "1",
+            "Par": 3,
+            "Length": 400
+          },
+          {
+            "Hole": "H17",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          },
+          {
+            "Hole": "H18",
+            "Label": "1",
+            "Par": 3,
+            "Length": 400
+          }
+        ]
+      },
+      {
+        "LayoutID": 662606,
+        "CourseID": 306058,
+        "CourseName": "Harvey Penick",
+        "Name": "The Open course at Harvey Penick - FPO Rd2",
+        "Holes": 18,
+        "Par": 66,
+        "Length": 8225,
+        "Units": "Feet",
+        "Accuracy": "M",
+        "Details": [
+          {
+            "Hole": "H1",
+            "Label": "1",
+            "Par": 3,
+            "Length": 320
+          },
+          {
+            "Hole": "H2",
+            "Label": "2",
+            "Par": 5,
+            "Length": 680
+          },
+          {
+            "Hole": "H3",
+            "Label": "3",
+            "Par": 3,
+            "Length": 275
+          },
+          {
+            "Hole": "H4",
+            "Label": "4",
+            "Par": 3,
+            "Length": 350
+          },
+          {
+            "Hole": "H5",
+            "Label": "5",
+            "Par": 4,
+            "Length": 520
+          },
+          {
+            "Hole": "H6",
+            "Label": "6",
+            "Par": 4,
+            "Length": 535
+          },
+          {
+            "Hole": "H7",
+            "Label": "7",
+            "Par": 3,
+            "Length": 305
+          },
+          {
+            "Hole": "H8",
+            "Label": "8",
+            "Par": 4,
+            "Length": 570
+          },
+          {
+            "Hole": "H9",
+            "Label": "9",
+            "Par": 4,
+            "Length": 510
+          },
+          {
+            "Hole": "H10",
+            "Label": "10",
+            "Par": 3,
+            "Length": 315
+          },
+          {
+            "Hole": "H11",
+            "Label": "11",
+            "Par": 5,
+            "Length": 900
+          },
+          {
+            "Hole": "H12",
+            "Label": "12",
+            "Par": 3,
+            "Length": 310
+          },
+          {
+            "Hole": "H13",
+            "Label": "13",
+            "Par": 3,
+            "Length": 315
+          },
+          {
+            "Hole": "H14",
+            "Label": "14",
+            "Par": 4,
+            "Length": 465
+          },
+          {
+            "Hole": "H15",
+            "Label": "15",
+            "Par": 3,
+            "Length": 345
+          },
+          {
+            "Hole": "H16",
+            "Label": "16",
+            "Par": 3,
+            "Length": 320
+          },
+          {
+            "Hole": "H17",
+            "Label": "17",
+            "Par": 4,
+            "Length": 505
+          },
+          {
+            "Hole": "H18",
+            "Label": "18",
+            "Par": 5,
+            "Length": 685
+          }
+        ]
+      },
+      {
+        "LayoutID": 662608,
+        "CourseID": 306058,
+        "CourseName": "Harvey Penick",
+        "Name": "The Open course at Harvey Penick - MPO Rd2",
+        "Holes": 18,
+        "Par": 63,
+        "Length": 9075,
+        "Units": "Feet",
+        "Accuracy": "M",
+        "Details": [
+          {
+            "Hole": "H1",
+            "Label": "1",
+            "Par": 3,
+            "Length": 400
+          },
+          {
+            "Hole": "H2",
+            "Label": "2",
+            "Par": 4,
+            "Length": 715
+          },
+          {
+            "Hole": "H3",
+            "Label": "3",
+            "Par": 3,
+            "Length": 360
+          },
+          {
+            "Hole": "H4",
+            "Label": "4",
+            "Par": 3,
+            "Length": 460
+          },
+          {
+            "Hole": "H5",
+            "Label": "5",
+            "Par": 4,
+            "Length": 520
+          },
+          {
+            "Hole": "H6",
+            "Label": "6",
+            "Par": 4,
+            "Length": 535
+          },
+          {
+            "Hole": "H7",
+            "Label": "7",
+            "Par": 3,
+            "Length": 305
+          },
+          {
+            "Hole": "H8",
+            "Label": "8",
+            "Par": 4,
+            "Length": 570
+          },
+          {
+            "Hole": "H9",
+            "Label": "9",
+            "Par": 4,
+            "Length": 745
+          },
+          {
+            "Hole": "H10",
+            "Label": "10",
+            "Par": 3,
+            "Length": 315
+          },
+          {
+            "Hole": "H11",
+            "Label": "11",
+            "Par": 5,
+            "Length": 1000
+          },
+          {
+            "Hole": "H12",
+            "Label": "12",
+            "Par": 3,
+            "Length": 375
+          },
+          {
+            "Hole": "H13",
+            "Label": "13",
+            "Par": 3,
+            "Length": 415
+          },
+          {
+            "Hole": "H14",
+            "Label": "14",
+            "Par": 4,
+            "Length": 545
+          },
+          {
+            "Hole": "H15",
+            "Label": "15",
+            "Par": 3,
+            "Length": 345
+          },
+          {
+            "Hole": "H16",
+            "Label": "16",
+            "Par": 3,
+            "Length": 375
+          },
+          {
+            "Hole": "H17",
+            "Label": "17",
+            "Par": 3,
+            "Length": 410
+          },
+          {
+            "Hole": "H18",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          }
+        ]
+      },
+      {
+        "LayoutID": 662609,
+        "CourseID": 306058,
+        "CourseName": "Harvey Penick",
+        "Name": "The Open course at Harvey Penick - MPO Rd3",
+        "Holes": 18,
+        "Par": 63,
+        "Length": 9075,
+        "Units": "Feet",
+        "Accuracy": "M",
+        "Details": [
+          {
+            "Hole": "H1",
+            "Label": "1",
+            "Par": 3,
+            "Length": 400
+          },
+          {
+            "Hole": "H2",
+            "Label": "2",
+            "Par": 4,
+            "Length": 715
+          },
+          {
+            "Hole": "H3",
+            "Label": "3",
+            "Par": 3,
+            "Length": 360
+          },
+          {
+            "Hole": "H4",
+            "Label": "4",
+            "Par": 3,
+            "Length": 460
+          },
+          {
+            "Hole": "H5",
+            "Label": "5",
+            "Par": 4,
+            "Length": 520
+          },
+          {
+            "Hole": "H6",
+            "Label": "6",
+            "Par": 4,
+            "Length": 535
+          },
+          {
+            "Hole": "H7",
+            "Label": "7",
+            "Par": 3,
+            "Length": 305
+          },
+          {
+            "Hole": "H8",
+            "Label": "8",
+            "Par": 4,
+            "Length": 570
+          },
+          {
+            "Hole": "H9",
+            "Label": "9",
+            "Par": 4,
+            "Length": 745
+          },
+          {
+            "Hole": "H10",
+            "Label": "10",
+            "Par": 3,
+            "Length": 315
+          },
+          {
+            "Hole": "H11",
+            "Label": "11",
+            "Par": 5,
+            "Length": 1000
+          },
+          {
+            "Hole": "H12",
+            "Label": "12",
+            "Par": 3,
+            "Length": 375
+          },
+          {
+            "Hole": "H13",
+            "Label": "13",
+            "Par": 3,
+            "Length": 415
+          },
+          {
+            "Hole": "H14",
+            "Label": "14",
+            "Par": 4,
+            "Length": 545
+          },
+          {
+            "Hole": "H15",
+            "Label": "15",
+            "Par": 3,
+            "Length": 345
+          },
+          {
+            "Hole": "H16",
+            "Label": "16",
+            "Par": 3,
+            "Length": 375
+          },
+          {
+            "Hole": "H17",
+            "Label": "17",
+            "Par": 3,
+            "Length": 410
+          },
+          {
+            "Hole": "H18",
+            "Label": "18",
+            "Par": 4,
+            "Length": 685
+          }
+        ]
+      },
+      {
+        "LayoutID": 662613,
+        "CourseID": 306058,
+        "CourseName": "Harvey Penick",
+        "Name": "The Open course at Harvey Penick - FPO Rd3",
+        "Holes": 18,
+        "Par": 66,
+        "Length": 8225,
+        "Units": "Feet",
+        "Accuracy": "M",
+        "Details": [
+          {
+            "Hole": "H1",
+            "Label": "1",
+            "Par": 3,
+            "Length": 320
+          },
+          {
+            "Hole": "H2",
+            "Label": "2",
+            "Par": 5,
+            "Length": 680
+          },
+          {
+            "Hole": "H3",
+            "Label": "3",
+            "Par": 3,
+            "Length": 275
+          },
+          {
+            "Hole": "H4",
+            "Label": "4",
+            "Par": 3,
+            "Length": 350
+          },
+          {
+            "Hole": "H5",
+            "Label": "5",
+            "Par": 4,
+            "Length": 520
+          },
+          {
+            "Hole": "H6",
+            "Label": "6",
+            "Par": 4,
+            "Length": 535
+          },
+          {
+            "Hole": "H7",
+            "Label": "7",
+            "Par": 3,
+            "Length": 305
+          },
+          {
+            "Hole": "H8",
+            "Label": "8",
+            "Par": 4,
+            "Length": 570
+          },
+          {
+            "Hole": "H9",
+            "Label": "9",
+            "Par": 4,
+            "Length": 510
+          },
+          {
+            "Hole": "H10",
+            "Label": "10",
+            "Par": 3,
+            "Length": 315
+          },
+          {
+            "Hole": "H11",
+            "Label": "11",
+            "Par": 5,
+            "Length": 900
+          },
+          {
+            "Hole": "H12",
+            "Label": "12",
+            "Par": 3,
+            "Length": 310
+          },
+          {
+            "Hole": "H13",
+            "Label": "13",
+            "Par": 3,
+            "Length": 315
+          },
+          {
+            "Hole": "H14",
+            "Label": "14",
+            "Par": 4,
+            "Length": 465
+          },
+          {
+            "Hole": "H15",
+            "Label": "15",
+            "Par": 3,
+            "Length": 345
+          },
+          {
+            "Hole": "H16",
+            "Label": "16",
+            "Par": 3,
+            "Length": 320
+          },
+          {
+            "Hole": "H17",
+            "Label": "17",
+            "Par": 4,
+            "Length": 505
+          },
+          {
+            "Hole": "H18",
+            "Label": "18",
+            "Par": 5,
+            "Length": 685
+          }
+        ]
+      }
+    ],
+    "Name": "The Open at Austin presented by Flight Factory Discs",
+    "NameHtml": "The Open at Austin presented by Flight Factory Discs",
+    "MultiLineName": {
+      "pre": "",
+      "main": "The Open at Austin",
+      "post": "presented by Flight Factory Discs"
+    },
+    "MultiLineNameHtml": " <span class=\"event-name-main\">The Open at Austin</span> <span class=\"event-name-post\">presented by Flight Factory Discs</span>",
+    "RawTier": "ES",
+    "Rounds": 3,
+    "RoundsList": {
+      "1": {
+        "Number": 1,
+        "Label": "Round 1",
+        "LabelAbbreviated": "Rd 1",
+        "Date": "2024-03-17",
+        "DateAbbreviated": "Mar 17",
+        "ShowDate": false
+      },
+      "2": {
+        "Number": 2,
+        "Label": "Round 2",
+        "LabelAbbreviated": "Rd 2",
+        "Date": "2024-03-17",
+        "DateAbbreviated": "Mar 17",
+        "ShowDate": false
+      },
+      "3": {
+        "Number": 3,
+        "Label": "Round 3",
+        "LabelAbbreviated": "Rd 3",
+        "Date": "2024-03-17",
+        "DateAbbreviated": "Mar 17",
+        "ShowDate": false
+      }
+    },
+    "Semis": "no",
+    "SimpleName": "DGPT - The Open at Austin",
+    "StartDate": "2024-03-15",
+    "TDName": "Neal Dambra",
+    "TDPDGANum": 200,
+    "Tier": "Disc Golf Pro Tour",
+    "FormattedTier": "Disc Golf Pro Tour",
+    "FormattedLongTier": "Disc Golf Pro Tour",
+    "TierPro": "ES",
+    "TierAm": "ES",
+    "TierX": false,
+    "TotalPlayers": 165,
+    "TournamentId": "77759",
+    "International": true,
+    "FullStats": true,
+    "TimeZone": "America/Chicago",
+    "AdditionalEventInfo": null,
+    "EventVideo": "https://www.discgolfnetwork.com/show/the-open-at-austin",
+    "ScoringFormat": "S"
+  },
+  "hash": "0f8f5b53a14330de23818956843b7e4f"
+}

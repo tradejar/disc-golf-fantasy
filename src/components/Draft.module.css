@@ -1,0 +1,555 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: #0f172a;
+    min-height: 100vh;
+    color: white;
+    font-family: inherit;
+}
+
+/* Page Header */
+.pageHeader {
+    padding: 0 2rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.pageTitle {
+    margin: 0;
+    font-size: 1.5rem;
+    flex: 1;
+    word-wrap: break-word;
+}
+
+.pageHeaderStatus {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+/* Dashboard Metrics */
+.dashboard {
+    background: #1e293b;
+    padding: 0;
+    border-radius: 0;
+    margin-bottom: 0;
+    border-bottom: 1px solid #334155;
+    position: sticky;
+    top: 56px;
+    z-index: 40;
+    box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.2);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.dashboardInner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+    align-items: center;
+    width: 100%;
+    padding: 0.4rem 0.75rem;
+}
+
+/* Wrapper that holds both slot groups side by side */
+.slotsRow {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 52px;
+}
+
+.metricLabel {
+    font-size: 0.6rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1;
+}
+
+.metricValue {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #f8fafc;
+    line-height: 1.2;
+}
+
+.danger {
+    color: #ef4444;
+}
+
+/* ── Slot groups (MPO / FPO with player names) ──────────────────────────── */
+.slotGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex: 0 0 auto;
+}
+
+/* Dedicated metric inside a slot group — never affected by the mobile .metric card rule */
+.slotMetric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 auto;
+    min-width: 40px;
+}
+
+.slotNames {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem 0.4rem;
+    padding-left: 0.5rem;
+    border-left: 1px solid #334155;
+    min-width: 0;
+}
+
+.slotChip {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    white-space: nowrap;
+}
+
+.slotDivider {
+    color: #334155;
+    font-size: 0.7rem;
+    user-select: none;
+}
+
+.slotFullName {
+    display: inline;
+}
+
+.slotShortName {
+    display: none;
+}
+
+.actionArea {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.confirmButton {
+    background: #10b981;
+    color: #064e3b;
+    border: none;
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.confirmButton:hover {
+    background: #34d399;
+    transform: translateY(-2px);
+}
+
+.confirmedBadge {
+    background: #064e3b;
+    color: #34d399;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 700;
+    border: 1px solid #10b981;
+}
+
+/* List View Styles (individual player cards handle their own styling) */
+
+.listHeader {
+    display: grid;
+    grid-template-columns: 80px 2fr 200px 100px;
+    background: #0f172a;
+    padding: 1rem;
+    font-weight: 700;
+    color: #94a3b8;
+    border-bottom: 2px solid #334155;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+}
+
+.confirmedContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.simButton {
+    background: #8b5cf6;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Simulation Results */
+.resultsPanel {
+    background: #1e293b;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.resultsTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+}
+
+.resultsTable th {
+    text-align: left;
+    padding: 1rem;
+    background: #0f172a;
+    color: #94a3b8;
+}
+
+.resultsTable td {
+    padding: 1rem;
+    border-bottom: 1px solid #334155;
+}
+
+.winner {
+    background: #3f6212;
+    /* Dark Green */
+}
+
+.totalScore {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fbbf24;
+    margin-bottom: 2rem;
+}
+
+.resetButton {
+    background: transparent;
+    border: 1px solid #475569;
+    color: #94a3b8;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* Search & Tab Controls */
+.listControlsContainer {
+    position: sticky;
+    /* top is overridden dynamically via JS (ResizeObserver on dashboard) */
+    top: 159px;
+    z-index: 35;
+    background: #1e293b;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.listControls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.divisionToggles {
+    display: flex;
+    gap: 0.5rem;
+    background: #0f172a;
+    padding: 0.25rem;
+    border-radius: 8px;
+}
+
+.tabBtn {
+    padding: 0.5rem 1.5rem;
+    border-radius: 6px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    background: transparent;
+    color: #94a3b8;
+    transition: all 0.2s;
+}
+
+.tabMPO {
+    background: #3b82f6;
+    color: white;
+}
+
+.tabFPO {
+    background: #ec4899;
+    color: white;
+}
+
+.searchInput {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: white;
+    outline: none;
+    min-width: 200px;
+}
+
+/* Rating Badge Base */
+.ratingBadge {
+    background: #0f172a;
+    color: #38bdf8;
+    font-weight: 800;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    text-align: center;
+    border: 1px solid #38bdf8;
+    min-width: 48px;
+}
+
+.playerName {
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.playerDiv {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.playerPrice {
+    color: #38bdf8;
+    font-weight: 700;
+}
+
+.playerValue {
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.draftedText {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 0.5rem 0;
+}
+
+/* Mobile Responsiveness Premium Compact */
+@media (max-width: 768px) {
+    .container {
+        padding: 0.5rem;
+    }
+
+    .dashboard {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .resultsPanel {
+        padding: 1rem;
+        overflow-x: hidden;
+    }
+
+    .resultsTable {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .metric {
+        flex: 1 1 30%;
+        background: #0f172a;
+        padding: 0.5rem;
+        border-radius: 6px;
+        border: 1px solid #334155;
+    }
+
+    .metricLabel {
+        font-size: 0.65rem;
+        letter-spacing: 0.02em;
+        margin-bottom: 0.2rem;
+    }
+
+    .metricValue {
+        font-size: 1.1rem;
+        font-weight: 800;
+    }
+
+    .pageHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0 0.5rem 1rem;
+    }
+
+    .pageTitle {
+        font-size: 1.25rem;
+    }
+
+    .listHeader {
+        display: none;
+    }
+
+    .listControlsContainer {
+        top: 128px;
+        border-radius: 0;
+        padding: 0.5rem;
+    }
+
+    .listControls {
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+
+    .tabBtn {
+        padding: 0.4rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .searchInput {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .listContainer {
+        border-radius: 8px;
+    }
+
+    .listItem {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas:
+            "badge info action"
+            "stats stats stats";
+        gap: 0.5rem;
+        padding: 0.75rem;
+        align-items: center;
+        border-bottom: 1px solid #334155;
+    }
+
+    .ratingBadge {
+        grid-area: badge;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.4rem;
+        min-width: 42px;
+    }
+
+    .mobileInfo {
+        grid-area: info;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.1rem;
+    }
+
+    .playerName {
+        font-size: 0.95rem;
+        letter-spacing: -0.02em;
+    }
+
+    .playerDiv {
+        font-size: 0.7rem;
+    }
+
+    .mobileAction {
+        grid-area: action;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .draftButton {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.8rem;
+        border-radius: 4px;
+    }
+
+    .mobileStats {
+        grid-area: stats;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #0f172a;
+        padding: 0.4rem 0.75rem;
+        border-radius: 4px;
+        margin-top: 0.25rem;
+        border: 1px solid #1e293b;
+    }
+
+    .playerPrice {
+        font-size: 0.9rem;
+    }
+}
+
+/* Slot group + dashboard mobile overrides */
+@media (max-width: 768px) {
+    .dashboardInner {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        row-gap: 0;
+    }
+
+    /* Budget card stays in row 1, don't grow */
+    .dashboardInner>.metric {
+        flex: 0 0 auto;
+    }
+
+    /* slotsRow drops to row 2, stacks MPO and FPO vertically */
+    .slotsRow {
+        flex: 1 1 100%;
+        order: 3;
+        flex-direction: column;
+        gap: 0.2rem;
+        border-top: 1px solid #1e293b;
+        padding-top: 0.3rem;
+    }
+
+    /* actionArea stays in row 1 */
+    .actionArea {
+        order: 2;
+    }
+
+    .slotChip {
+        font-size: 0.72rem;
+    }
+
+    /* Show last names only on mobile */
+    .slotFullName {
+        display: none;
+    }
+
+    .slotShortName {
+        display: inline;
+    }
+}
