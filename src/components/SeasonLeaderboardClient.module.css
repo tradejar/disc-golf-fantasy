@@ -1,0 +1,48 @@
+.badgeContainer {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.individualLabel {
+    color: #64748b;
+    font-size: 0.85rem;
+    align-self: center;
+}
+
+.tournamentBadge {
+    font-size: 0.8rem;
+    color: #38bdf8;
+    text-decoration: none;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    padding: 0.3rem 0.6rem;
+    background: #1e293b;
+    transition: all 0.2s ease;
+}
+
+.tournamentBadge:hover {
+    background: #263145;
+    border-color: #38bdf8;
+    color: white;
+}
+
+@media (max-width: 600px) {
+    .badgeContainer {
+        gap: 0.4rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .individualLabel {
+        font-size: 0.75rem;
+        margin-bottom: 0.2rem;
+        width: 100%;
+        /* Break label to own line on mobile */
+    }
+
+    .tournamentBadge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+}

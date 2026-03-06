@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { SEASON_2026 } from '@/data/tournaments';
+import styles from './SeasonLeaderboardClient.module.css';
 
 interface TournamentEntry {
     tournamentId: string;
@@ -62,23 +63,15 @@ export default function SeasonLeaderboardClient({ title, subtitle, leagueId = nu
             </p>
 
             {/* Per-tournament quick links */}
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
-                <span style={{ color: '#64748b', fontSize: '0.85rem', alignSelf: 'center' }}>Individual:</span>
+            <div className={styles.badgeContainer}>
+                <span className={styles.individualLabel}>Individual:</span>
                 {SEASON_2026.map(t => {
                     const url = leagueId ? `/leagues/${leagueId}` : `/leaderboard/${t.id}`;
                     return (
                         <Link
                             key={t.id}
                             href={url}
-                            style={{
-                                fontSize: '0.8rem',
-                                color: '#38bdf8',
-                                textDecoration: 'none',
-                                border: '1px solid #334155',
-                                borderRadius: '4px',
-                                padding: '0.2rem 0.6rem',
-                                background: '#1e293b'
-                            }}
+                            className={styles.tournamentBadge}
                         >
                             {t.name.replace('2026 ', '')}
                         </Link>
