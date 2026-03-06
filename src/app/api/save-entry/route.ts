@@ -117,6 +117,9 @@ export async function POST(req: Request) {
                         tournament_id: tournamentId,
                         roster_data: roster,
                         budget_remaining: budgetRemaining,
+                        total_points: null,
+                        tournament_rank: null,
+                        breakdown_data: null
                     },
                     { onConflict: 'user_id, tournament_id' }
                 )
