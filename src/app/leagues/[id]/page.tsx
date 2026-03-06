@@ -3,6 +3,7 @@ import { SEASON_2026, getLockTime } from '@/data/tournaments';
 import { auth } from '@clerk/nextjs/server';
 import Link from 'next/link';
 import LeaderboardClient from '@/components/LeaderboardClient';
+import SeasonLeaderboardClient from '@/components/SeasonLeaderboardClient';
 
 export default async function LeagueDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { userId } = await auth();
@@ -62,39 +63,6 @@ export default async function LeagueDetailsPage({ params }: { params: Promise<{ 
     const now = new Date();
     const upcomingTournament = SEASON_2026.find(t => getLockTime(t) > now);
 
-    // 5. Season Leaderboard (Cumulative Points)
-    const allMemberIds = league.league_members.map((m: any) => m.user_id);
-    let seasonLeaderboard: { user_id: string; total_points: number; display_name: string }[] = [];
-
-    if (allMemberIds.length > 0) {
-        const { data: allEntries, error: allEntriesErr } = await supabaseAdmin
-            .from('entries')
-            .select('user_id, total_points')
-            .in('user_id', allMemberIds);
-
-        if (!allEntriesErr && allEntries) {
-            // Aggregate points per user
-            const pointsMap: Record<string, number> = {};
-            // Initialize with 0
-            allMemberIds.forEach((id: string) => pointsMap[id] = 0);
-
-            allEntries.forEach((entry: any) => {
-                pointsMap[entry.user_id] += Number(entry.total_points || 0);
-            });
-
-            seasonLeaderboard = allMemberIds.map((userId: string) => {
-                const member = league.league_members.find((m: any) => m.user_id === userId);
-                const prof = member?.profiles as any;
-                const displayName = (Array.isArray(prof) ? prof[0]?.display_name : prof?.display_name) || 'Anonymous Player';
-                return {
-                    user_id: userId,
-                    total_points: pointsMap[userId],
-                    display_name: displayName
-                };
-            }).sort((a, b) => b.total_points - a.total_points);
-        }
-    }
-
     return (
         <main style={{ background: '#0f172a', minHeight: '100vh', padding: '2rem' }}>
             <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -125,41 +93,12 @@ export default async function LeagueDetailsPage({ params }: { params: Promise<{ 
                 </div>
 
                 {/* Season Standings */}
-                <div style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', borderRadius: '12px', padding: '1.5rem', border: '1px solid #3b82f6', marginBottom: '2rem' }}>
-                    <h2 style={{ color: 'white', marginTop: 0, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        🏆 Season Standings <span style={{ color: '#94a3b8', fontSize: '1rem', fontWeight: 400 }}>(Cumulative)</span>
-                    </h2>
-
-                    {seasonLeaderboard.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                            No points recorded yet this season.
-                        </div>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            {seasonLeaderboard.map((entry, index) => (
-                                <div key={entry.user_id} style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    background: entry.user_id === userId ? '#263145' : '#0f172a',
-                                    border: entry.user_id === userId ? '1px solid #3b82f6' : '1px solid #334155',
-                                    borderRadius: '8px',
-                                    padding: '1rem',
-                                    boxShadow: index === 0 ? '0 0 10px rgba(56, 189, 248, 0.2)' : 'none'
-                                }}>
-                                    <div style={{ width: '40px', color: index === 0 ? '#f59e0b' : '#94a3b8', fontWeight: 'bold', fontSize: index === 0 ? '1.3rem' : '1.1rem' }}>
-                                        #{index + 1}
-                                    </div>
-                                    <div style={{ flex: 1, color: 'white', fontWeight: 600, fontSize: index === 0 ? '1.1rem' : '1rem' }}>
-                                        {entry.display_name}
-                                        {entry.user_id === userId && <span style={{ color: '#3b82f6', marginLeft: '8px', fontSize: '0.8rem' }}>(You)</span>}
-                                    </div>
-                                    <div style={{ color: '#10b981', fontWeight: 'bold', fontSize: index === 0 ? '1.3rem' : '1.2rem' }}>
-                                        {entry.total_points.toFixed(1)} pts
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                <div style={{ marginBottom: '2rem' }}>
+                    <SeasonLeaderboardClient
+                        title="🏆 Season Standings"
+                        subtitle="(Cumulative)"
+                        leagueId={resolvedParams.id}
+                    />
                 </div>
 
                 {/* Active Tournament Leaderboard */}

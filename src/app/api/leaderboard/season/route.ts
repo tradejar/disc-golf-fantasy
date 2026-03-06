@@ -2,15 +2,31 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SEASON_2026 } from '@/data/tournaments';
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        const { searchParams } = new URL(request.url);
+        const leagueId = searchParams.get('leagueId') || null;
+
         // Fetch all entries for all 2026 tournaments
         const tournamentIds = SEASON_2026.map(t => t.id);
 
-        const { data: entries, error } = await supabaseAdmin
+        let entriesQuery = supabaseAdmin
             .from('entries')
             .select('id, user_id, tournament_id, total_points, roster_data, created_at')
-            .in('tournament_id', tournamentIds)
+            .in('tournament_id', tournamentIds);
+
+        // If a leagueId is provided, restrict to members of that league
+        if (leagueId) {
+            const { data: leagueMembersData } = await supabaseAdmin
+                .from('league_members')
+                .select('user_id')
+                .eq('league_id', leagueId);
+
+            const authorizedLeagueMembers = leagueMembersData?.map(m => m.user_id) || [];
+            entriesQuery = entriesQuery.in('user_id', authorizedLeagueMembers);
+        }
+
+        const { data: entries, error } = await entriesQuery
             .order('total_points', { ascending: false, nullsFirst: false });
 
         if (error) {
@@ -36,13 +52,10 @@ export async function GET() {
             userId: string;
             displayName: string;
             totalPoints: number;
-            tournaments: { tournamentId: string; tournamentName: string; points: number; entryId: string }[];
+            tournaments: { tournamentId: string; tournamentName: string; points: number | null; entryId: string }[];
         }>();
 
         entries.forEach(entry => {
-            // Skip entries that haven't scored yet (tournament not played / still pending)
-            if (entry.total_points == null) return;
-
             const profile = profileMap.get(entry.user_id);
             const displayName = profile?.display_name || profile?.email?.split('@')[0] || 'Player';
             const tournament = SEASON_2026.find(t => t.id === entry.tournament_id);
@@ -58,7 +71,13 @@ export async function GET() {
             }
 
             const u = userMap.get(entry.user_id)!;
-            u.totalPoints += pts;
+
+            // Add points to total only if played
+            if (pts != null) {
+                u.totalPoints += pts;
+            }
+
+            // Always add the tournament entry so we can show they participated/drafted
             u.tournaments.push({
                 tournamentId: entry.tournament_id,
                 tournamentName: tournament?.name || entry.tournament_id,
