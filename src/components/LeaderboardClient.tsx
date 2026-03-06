@@ -20,15 +20,20 @@ interface LeaderboardClientProps {
     tournamentId: string;
     tournamentName: string;
     currentUserId: string | null;
+    leagueId?: string | null;
+    variant?: 'global' | 'league';
 }
 
-export default function LeaderboardClient({ tournamentId, tournamentName, currentUserId }: LeaderboardClientProps) {
+export default function LeaderboardClient({ tournamentId, tournamentName, currentUserId, leagueId = null, variant = 'global' }: LeaderboardClientProps) {
     const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
 
     useEffect(() => {
-        const url = `/api/leaderboard?tournamentId=${tournamentId}${currentUserId ? `&userId=${currentUserId}` : ''}`;
+        let url = `/api/leaderboard?tournamentId=${tournamentId}`;
+        if (currentUserId) url += `&userId=${currentUserId}`;
+        if (leagueId) url += `&leagueId=${leagueId}`;
+
         fetch(url)
             .then(r => r.json())
             .then(data => {
@@ -45,9 +50,11 @@ export default function LeaderboardClient({ tournamentId, tournamentName, curren
     if (loading) {
         return (
             <div className={styles.container}>
-                <Link href="/leaderboard" style={{ color: '#94a3b8', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem' }}>← Season Leaderboard</Link>
+                {variant === 'global' && (
+                    <Link href="/leaderboard" style={{ color: '#94a3b8', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem' }}>← Season Leaderboard</Link>
+                )}
                 <div className={styles.header}>
-                    <h1 className={styles.title}>{tournamentName}</h1>
+                    <h1 className={styles.title} style={{ fontSize: variant === 'league' ? '1.5rem' : undefined }}>{tournamentName}</h1>
                     <div className={styles.subtitle}>Loading leaderboard...</div>
                 </div>
             </div>
@@ -57,9 +64,11 @@ export default function LeaderboardClient({ tournamentId, tournamentName, curren
     if (entries.length === 0) {
         return (
             <div className={styles.container}>
-                <Link href="/leaderboard" style={{ color: '#94a3b8', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem' }}>← Season Leaderboard</Link>
+                {variant === 'global' && (
+                    <Link href="/leaderboard" style={{ color: '#94a3b8', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem' }}>← Season Leaderboard</Link>
+                )}
                 <div className={styles.header}>
-                    <h1 className={styles.title}>{tournamentName}</h1>
+                    <h1 className={styles.title} style={{ fontSize: variant === 'league' ? '1.5rem' : undefined }}>{tournamentName}</h1>
                     <p className={styles.subtitle}>No completed entries yet — be the first to draft!</p>
                 </div>
             </div>
@@ -68,9 +77,11 @@ export default function LeaderboardClient({ tournamentId, tournamentName, curren
 
     return (
         <div className={styles.container}>
-            <Link href="/leaderboard" style={{ color: '#94a3b8', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem' }}>← Season Leaderboard</Link>
+            {variant === 'global' && (
+                <Link href="/leaderboard" style={{ color: '#94a3b8', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem' }}>← Season Leaderboard</Link>
+            )}
             <div className={styles.header}>
-                <h1 className={styles.title}>{tournamentName}</h1>
+                <h1 className={styles.title} style={{ fontSize: variant === 'league' ? '1.5rem' : undefined }}>{tournamentName}</h1>
                 <p className={styles.subtitle}>{entries.length} {entries.length === 1 ? 'entry' : 'entries'} · Ranked by Fantasy Points</p>
             </div>
 

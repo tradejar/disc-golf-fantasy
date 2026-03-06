@@ -7,6 +7,7 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const tournamentId = searchParams.get('tournamentId');
         const requestingUserId = searchParams.get('userId') || null;
+        const leagueId = searchParams.get('leagueId') || null;
 
         if (!tournamentId) {
             return NextResponse.json({ error: 'Missing tournamentId' }, { status: 400 });
@@ -23,10 +24,31 @@ export async function GET(request: Request) {
         const lockTime = getLockTime(tournament);
         const isStarted = now >= lockTime;
 
-        const { data: entries, error } = await supabaseAdmin
+        // If leagueId is provided, fetch allowed userIds for that league
+        let authorizedLeagueMembers: string[] | null = null;
+        if (leagueId) {
+            const { data: leagueMembersData, error: lmError } = await supabaseAdmin
+                .from('league_members')
+                .select('user_id')
+                .eq('league_id', leagueId);
+
+            if (lmError) {
+                console.error("League members query error:", lmError);
+                return NextResponse.json({ error: "Failed to verify league membership." }, { status: 500 });
+            }
+            authorizedLeagueMembers = leagueMembersData?.map(m => m.user_id) || [];
+        }
+
+        let entriesQuery = supabaseAdmin
             .from('entries')
             .select('id, user_id, roster_data, total_points, tournament_rank, created_at, budget_remaining')
-            .filter('tournament_id', 'eq', tournamentId)
+            .filter('tournament_id', 'eq', tournamentId);
+
+        if (authorizedLeagueMembers) {
+            entriesQuery = entriesQuery.in('user_id', authorizedLeagueMembers);
+        }
+
+        const { data: entries, error } = await entriesQuery
             .order('total_points', { ascending: false, nullsFirst: false });
 
         if (error) {
