@@ -1,6 +1,7 @@
 
 import styles from './PlayerRow.module.css';
 import { Player } from '@/data/mock-schema';
+import PlayerRatings from './PlayerRatings';
 
 interface PlayerRowProps {
     player: Player;
@@ -32,6 +33,7 @@ export default function PlayerRow({ player, onDraft, disabled, isSelected, isReg
                     )}
                 </span>
                 <span className={styles.division}>{player.division}</span>
+                <PlayerRatings player={player} />
             </div>
 
             <div className={styles.mobileStats}>

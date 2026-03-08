@@ -1,0 +1,218 @@
+[
+  {
+    "name": "Supreme Olympus Flight Open",
+    "distance": 4,
+    "technical": 4,
+    "elevation": 4,
+    "climate": 4,
+    "bias": 4
+  },
+  {
+    "name": "Big Easy Parc des Open Familles",
+    "distance": 4,
+    "technical": 4,
+    "elevation": 1,
+    "climate": 4,
+    "bias": 4
+  },
+  {
+    "name": "Queen Hornets City Nest Classic",
+    "distance": 2,
+    "technical": 4,
+    "elevation": 3,
+    "climate": 3,
+    "bias": 3
+  },
+  {
+    "name": "Champion New s Cup London (Major) Tech",
+    "distance": 4,
+    "technical": 4,
+    "elevation": 3,
+    "climate": 3,
+    "bias": 4
+  },
+  {
+    "name": "Jonesboro Disc Side Open of Heaven",
+    "distance": 3,
+    "technical": 3,
+    "elevation": 3,
+    "climate": 4,
+    "bias": 3
+  },
+  {
+    "name": "KC Wide Bad Rock Open Gold",
+    "distance": 4,
+    "technical": 3,
+    "elevation": 3,
+    "climate": 3,
+    "bias": 2
+  },
+  {
+    "name": "Waco Brazos East Annual Charity",
+    "distance": 2,
+    "technical": 4,
+    "elevation": 2,
+    "climate": 3,
+    "bias": 3
+  },
+  {
+    "name": "The Open Sprinkle/Ha at Austin rvey",
+    "distance": 3,
+    "technical": 4,
+    "elevation": 3,
+    "climate": 4,
+    "bias": 3
+  },
+  {
+    "name": "OTB Open Swenson Park",
+    "distance": 4,
+    "technical": 1,
+    "elevation": 1,
+    "climate": 4,
+    "bias": 2
+  },
+  {
+    "name": "Cascade Shelton Challenge Springs",
+    "distance": 3,
+    "technical": 4,
+    "elevation": 2,
+    "climate": 2,
+    "bias": 4
+  },
+  {
+    "name": "Northwest Milo/Glend Champ oveer",
+    "distance": 4,
+    "technical": 3,
+    "elevation": 2,
+    "climate": 2,
+    "bias": 4
+  },
+  {
+    "name": "European Tallinn Open Grounds (Major)",
+    "distance": 3,
+    "technical": 2,
+    "elevation": 3,
+    "climate": 3,
+    "bias": 3
+  },
+  {
+    "name": "Swedish Ymerg\u00e5rde Open n",
+    "distance": 2,
+    "technical": 4,
+    "elevation": 4,
+    "climate": 2,
+    "bias": 3
+  },
+  {
+    "name": "Ale Open Ale White",
+    "distance": 3,
+    "technical": 4,
+    "elevation": 4,
+    "climate": 2,
+    "bias": 3
+  },
+  {
+    "name": "Heinola Kippasuo Open Pro",
+    "distance": 3,
+    "technical": 4,
+    "elevation": 4,
+    "climate": 2,
+    "bias": 3
+  },
+  {
+    "name": "USWDGC Brighton (Major) Resort",
+    "distance": 3,
+    "technical": 3,
+    "elevation": 4,
+    "climate": 4,
+    "bias": 3
+  },
+  {
+    "name": "Champion Emporia s Landing",
+    "distance": 4,
+    "technical": 2,
+    "elevation": 3,
+    "climate": 4,
+    "bias": 2
+  },
+  {
+    "name": "Ledgeston Northwood e Open Black",
+    "distance": 4,
+    "technical": 4,
+    "elevation": 2,
+    "climate": 4,
+    "bias": 3
+  },
+  {
+    "name": "Discmania Pickard Challenge Park",
+    "distance": 3,
+    "technical": 3,
+    "elevation": 2,
+    "climate": 3,
+    "bias": 3
+  },
+  {
+    "name": "Preserve Black Bear Champion ship",
+    "distance": 4,
+    "technical": 3,
+    "elevation": 1,
+    "climate": 2,
+    "bias": 3
+  },
+  {
+    "name": "Pro Toboggan/ Worlds Locust (Major)",
+    "distance": 4,
+    "technical": 4,
+    "elevation": 4,
+    "climate": 2,
+    "bias": 4
+  },
+  {
+    "name": "LWS Open Idlewild at Idlewild",
+    "distance": 3,
+    "technical": 4,
+    "elevation": 3,
+    "climate": 3,
+    "bias": 3
+  },
+  {
+    "name": "Green Brewster/F Mountain ox Run Champ",
+    "distance": 4,
+    "technical": 4,
+    "elevation": 4,
+    "climate": 4,
+    "bias": 4
+  },
+  {
+    "name": "MVP Open Maple Hill x OTB",
+    "distance": 3,
+    "technical": 4,
+    "elevation": 3,
+    "climate": 2,
+    "bias": 4
+  },
+  {
+    "name": "USDGC Winthrop (Major) Gold",
+    "distance": 4,
+    "technical": 4,
+    "elevation": 2,
+    "climate": 3,
+    "bias": 1
+  },
+  {
+    "name": "Powerball Ivy Hill Cup (Finale)",
+    "distance": 4,
+    "technical": 3,
+    "elevation": 4,
+    "climate": 3,
+    "bias": 2
+  },
+  {
+    "name": "JomezPro Cactus Finale Rock",
+    "distance": 4,
+    "technical": 4,
+    "elevation": 4,
+    "climate": 3,
+    "bias": 3
+  }
+]

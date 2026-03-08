@@ -1,0 +1,902 @@
+[
+  {
+    "rank": 1,
+    "name": "Gannon Buhr",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 4
+  },
+  {
+    "rank": 2,
+    "name": "Richard Wysocki",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 4
+  },
+  {
+    "rank": 3,
+    "name": "Calvin Heimburg",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 4
+  },
+  {
+    "rank": 4,
+    "name": "Paul McBeth",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 4
+  },
+  {
+    "rank": 5,
+    "name": "Isaac Robinson",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 1
+  },
+  {
+    "rank": 6,
+    "name": "Anthony Barela",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 4,
+    "versatility": 4
+  },
+  {
+    "rank": 7,
+    "name": "Niklas Anttila",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 4
+  },
+  {
+    "rank": 8,
+    "name": "Kyle Klein",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 4
+  },
+  {
+    "rank": 9,
+    "name": "Ezra Robinson",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 4
+  },
+  {
+    "rank": 10,
+    "name": "Adam Hammes",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 3
+  },
+  {
+    "rank": 11,
+    "name": "Aaron Gossage",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 4,
+    "versatility": 3
+  },
+  {
+    "rank": 12,
+    "name": "Sullivan Tipton",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 13,
+    "name": "Chris Dickerson",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 4
+  },
+  {
+    "rank": 14,
+    "name": "Cole Redalen",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 15,
+    "name": "Simon Lizotte",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 4
+  },
+  {
+    "rank": 16,
+    "name": "Evan Smith",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 17,
+    "name": "Andrew Marwede",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 3
+  },
+  {
+    "rank": 18,
+    "name": "Luke Taylor",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 19,
+    "name": "Ezra Aderhold",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 20,
+    "name": "Gavin Babcock",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 21,
+    "name": "Joseph Anderson",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 22,
+    "name": "Austin Turner",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 23,
+    "name": "Corey Ellis",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 4,
+    "versatility": 3
+  },
+  {
+    "rank": 24,
+    "name": "Eagle McMahon",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 4
+  },
+  {
+    "rank": 25,
+    "name": "Andrew Presnell",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 26,
+    "name": "Matthew Orum",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 27,
+    "name": "Casey White",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 28,
+    "name": "Mason Ford",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 29,
+    "name": "V \u00e4in\u00f6",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 30,
+    "name": "Bradley Williams",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 31,
+    "name": "Jake Hebenheim er",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 32,
+    "name": "Mauri Villmann",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 33,
+    "name": "Paul Krans",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 34,
+    "name": "Benjamin Callaway",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 35,
+    "name": "Jakub Semer\u00e1d",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 36,
+    "name": "Jake Monn",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 37,
+    "name": "Raven Newsom",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 38,
+    "name": "Silas Schultz",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 39,
+    "name": "Lauri Lehtinen",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 40,
+    "name": "James Proctor",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 41,
+    "name": "Zachary Nash",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 42,
+    "name": "Evan Scott",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 43,
+    "name": "Robert Burridge",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 44,
+    "name": "Gavin Rathbun",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 45,
+    "name": "Jesse Nieminen",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 46,
+    "name": "Paul Ulibarri",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 47,
+    "name": "Kevin Jones",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 48,
+    "name": "Parker Welck",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 49,
+    "name": "Alden Harris",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 50,
+    "name": "Joel Freeman",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 51,
+    "name": "Ty Love",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 52,
+    "name": "Chandler Kramer",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 4
+  },
+  {
+    "rank": 53,
+    "name": "Matt Bell",
+    "power": 2,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 54,
+    "name": "Joona Hein\u00e4nen",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 55,
+    "name": "Calvin Lonnquist",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 56,
+    "name": "Gregg Barsby",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 57,
+    "name": "Nikko Locastro",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 58,
+    "name": "Jaden Rye",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 59,
+    "name": "Andrew Miranda",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 60,
+    "name": "Luke Humphries",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 61,
+    "name": "James Conrad",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 1
+  },
+  {
+    "rank": 62,
+    "name": "Daniel Davidsson",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 63,
+    "name": "Nathan Queen",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 1
+  },
+  {
+    "rank": 64,
+    "name": "Chris Clemons",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 1
+  },
+  {
+    "rank": 65,
+    "name": "Braeden Sides",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 66,
+    "name": "Albert Tamm",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 67,
+    "name": "Zach Arlinghaus",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 68,
+    "name": "Linus Carlsson",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 69,
+    "name": "Garrett Gurthie",
+    "power": 4,
+    "accuracy": 2,
+    "recovery": 2,
+    "resilience": 3,
+    "versatility": 2
+  },
+  {
+    "rank": 70,
+    "name": "Rasmus Saukkoriipi",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 71,
+    "name": "Emerson Keith",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 72,
+    "name": "Nestori Tuhkanen",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 73,
+    "name": "Noah Meintsma",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 74,
+    "name": "Harry Chace",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 75,
+    "name": "Gavin Phillips",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 76,
+    "name": "Connor Rock",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 77,
+    "name": "Silver L\u00e4tt",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 78,
+    "name": "AJ Carey",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 79,
+    "name": "Hjalte Jensen",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 80,
+    "name": "Clay Edwards",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 81,
+    "name": "Eetu Tuominen",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 82,
+    "name": "Jeremy Koling",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 4
+  },
+  {
+    "rank": 83,
+    "name": "Roland K\u00f5ur",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 84,
+    "name": "Lenni Kemppaine n",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 85,
+    "name": "Connor O'Reilly",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 86,
+    "name": "Teemu Lampainen",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 87,
+    "name": "Colten Montgome ry",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 88,
+    "name": "Dennis Augustsso n",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 89,
+    "name": "Nathan Sexton",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 4
+  },
+  {
+    "rank": 90,
+    "name": "Luke Samson",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 91,
+    "name": "Onni Ruusunen",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 92,
+    "name": "Randon Latta",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 93,
+    "name": "Eric Oakley",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 4
+  },
+  {
+    "rank": 94,
+    "name": "Andrew Fish",
+    "power": 2,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 2
+  },
+  {
+    "rank": 95,
+    "name": "Tuomas Hyyti\u00e4inen",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 96,
+    "name": "Ryan Monn",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 97,
+    "name": "Miio H\u00e4m\u00e4l\u00e4ine n",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 98,
+    "name": "Drew Gibson",
+    "power": 4,
+    "accuracy": 2,
+    "recovery": 2,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 99,
+    "name": "Eli Swansen",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 100,
+    "name": "G.T. Hancock 2026 FPO Player Ability Index (Top 50) Rank Player Power Accuracy Recovery Resilience Versatility",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  }
+]

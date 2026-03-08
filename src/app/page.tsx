@@ -4,6 +4,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import Link from 'next/link';
 import { SignInButton } from '@clerk/nextjs';
 import ResetButton from '@/components/ResetButton';
+import CourseRatings from '@/components/CourseRatings';
 import styles from './page.module.css';
 
 const ADMIN_EMAILS = ['misupeinternet@gmail.com'];
@@ -210,6 +211,14 @@ export default async function SeasonHubPage() {
                 <div style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
                   {new Date(`${tourney.startDate}T12:00:00Z`).toLocaleDateString()} – {new Date(`${tourney.endDate}T12:00:00Z`).toLocaleDateString()} • {tourney.location}
                 </div>
+
+                <CourseRatings
+                  distance={tourney.distance}
+                  technical={tourney.technical}
+                  elevation={tourney.elevation}
+                  climate={tourney.climate}
+                  bias={tourney.bias}
+                />
 
                 {tourney.status === 'locked-with-entry' && tourney.entry && (
                   <div style={{ color: '#10b981', fontWeight: 'bold' }}>

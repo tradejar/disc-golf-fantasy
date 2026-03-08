@@ -9,6 +9,11 @@ export interface Player {
     price: number; // Calculated based on rating/tier
     tier: 'S' | 'A' | 'B' | 'C' | 'D'; // Optional tiering
     pdgaNumber?: number; // Optional until all players have it
+    power?: number;
+    accuracy?: number;
+    recovery?: number;
+    resilience?: number;
+    versatility?: number;
 }
 
 export interface Tournament {

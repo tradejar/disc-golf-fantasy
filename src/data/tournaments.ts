@@ -7,6 +7,11 @@ export interface SeasonTournament {
     location: string;
     /** UTC hour (0-23) on startDate when draft locks. Default 13 = 9am ET / 6am PT */
     lockHour?: number;
+    distance?: number;
+    technical?: number;
+    elevation?: number;
+    climate?: number;
+    bias?: number;
 }
 
 /**
@@ -102,7 +107,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-05-24',
         location: 'Stockton, CA',
         lockHour: 16, // 9am PT
-    },
+   , distance: 4, technical: 1, elevation: 1, climate: 4, bias: 2 },
     // ── June ──────────────────────────────────────────────────────────────────
     {
         id: '96410',
@@ -140,7 +145,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-07-05',
         location: 'Nol, Sweden',
         lockHour: 7,
-    },
+   , distance: 3, technical: 4, elevation: 4, climate: 2, bias: 3 },
     {
         id: '96413',
         pdga_id: '96413',

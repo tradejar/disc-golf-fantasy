@@ -1,0 +1,452 @@
+[
+  {
+    "rank": 1,
+    "name": "Kristin L\u00e4tt",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 4
+  },
+  {
+    "rank": 2,
+    "name": "Silva Saarinen",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 3
+  },
+  {
+    "rank": 3,
+    "name": "Holyn Handley",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 4
+  },
+  {
+    "rank": 4,
+    "name": "Eveliina Salonen",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 5,
+    "name": "Ohn Scoggins",
+    "power": 2,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 4
+  },
+  {
+    "rank": 6,
+    "name": "Missy Gannon",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 4
+  },
+  {
+    "rank": 7,
+    "name": "Ella Hansen",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 8,
+    "name": "Henna Blomroos",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 9,
+    "name": "Cadence Burge",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 10,
+    "name": "Valerie Mandujano",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 11,
+    "name": "Paige Pierce",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 3
+  },
+  {
+    "rank": 12,
+    "name": "Kat Mertsch",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 13,
+    "name": "Hailey King",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 14,
+    "name": "Anniken Steen",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 15,
+    "name": "Rebecca Cox",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 16,
+    "name": "Iida Lehtom\u00e4ki",
+    "power": 4,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 17,
+    "name": "Natalie Ryan",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 18,
+    "name": "Emily Weatherm an",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 19,
+    "name": "Heidi Laine",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 20,
+    "name": "Hanna Huynh",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 21,
+    "name": "Alexis Mandujano",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 22,
+    "name": "Keiti T\u00e4tte",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 23,
+    "name": "Rachel Turton",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 24,
+    "name": "Sofia Donnecke",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 25,
+    "name": "Jennifer Allen",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 26,
+    "name": "Lisa Fajkus",
+    "power": 2,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 27,
+    "name": "Kaidi Allsalu",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 28,
+    "name": "Jessica Weese",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 29,
+    "name": "Anneli T\u00f5ugjas",
+    "power": 3,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 30,
+    "name": "Lykke Lorentzen",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 31,
+    "name": "Eliezra Midtlyng",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 32,
+    "name": "Catrina Allen",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 33,
+    "name": "Ali Smith",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 34,
+    "name": "Rebecca Don",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 35,
+    "name": "Ida Emilie",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 36,
+    "name": "Deann Carey",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 37,
+    "name": "Madison Walker",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 38,
+    "name": "Raven Klein",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 39,
+    "name": "Macie Velediaz",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 40,
+    "name": "Dani Kleidon",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 41,
+    "name": "Sarah Hokom",
+    "power": 2,
+    "accuracy": 4,
+    "recovery": 4,
+    "resilience": 3,
+    "versatility": 1
+  },
+  {
+    "rank": 42,
+    "name": "Chantel Budinsky",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 43,
+    "name": "Kona Star",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 44,
+    "name": "Jenni Karppinen",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 45,
+    "name": "Holly Finley",
+    "power": 2,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 2
+  },
+  {
+    "rank": 46,
+    "name": "Jennifer Smiley",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 47,
+    "name": "Stacie Rawnsley",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 48,
+    "name": "Stacie Kiefer",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 49,
+    "name": "Taylor Chocek",
+    "power": 4,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  },
+  {
+    "rank": 50,
+    "name": "Sintija Klezberga High-Intensity Analysis: Matching Players to 2026 Venues",
+    "power": 3,
+    "accuracy": 3,
+    "recovery": 3,
+    "resilience": 3,
+    "versatility": 3
+  }
+]
