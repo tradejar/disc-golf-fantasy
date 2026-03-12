@@ -13,6 +13,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        console.log("DEBUG: Full Clerk user payload:", {
+            id: user.id,
+            imageUrl: user.imageUrl,
+            hasImage: user.hasImage,
+            firstName: user.firstName,
+            email: user.emailAddresses[0]?.emailAddress
+        });
+
         // 2. Parse Body
         const body = await req.json();
         const { roster, budgetRemaining, tournamentId } = body;
@@ -77,6 +85,7 @@ export async function POST(req: Request) {
                 id: userId,
                 email: user.emailAddresses[0]?.emailAddress,
                 display_name: user.firstName ? `${user.firstName} ${user.lastName}` : 'Anonymous',
+                avatar_url: user.imageUrl || null,
             });
 
         if (profileError) {

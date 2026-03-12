@@ -33,7 +33,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-03-01',
         location: 'Brooksville, FL',
         lockHour: 13, // 9am ET
-    },
+        distance: 4, technical: 4, elevation: 4, climate: 4, bias: 4 },
     {
         id: '96402',
         pdga_id: '96402',
@@ -42,7 +42,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-03-15',
         location: 'Jefferson Parish, LA',
         lockHour: 14, // 9am CT
-    },
+        distance: 4, technical: 4, elevation: 1, climate: 4, bias: 4 },
     {
         id: '96403',
         pdga_id: '96403',
@@ -51,7 +51,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-03-29',
         location: 'Charlotte, NC',
         lockHour: 13,
-    },
+        distance: 2, technical: 4, elevation: 3, climate: 3, bias: 3 },
     // ── April ─────────────────────────────────────────────────────────────────
     {
         id: '96404',
@@ -61,7 +61,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-04-12',
         location: 'Lynchburg, VA',
         lockHour: 13,
-    },
+        distance: 4, technical: 4, elevation: 3, climate: 3, bias: 4 },
     {
         id: '96405',
         pdga_id: '96405',
@@ -70,7 +70,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-04-19',
         location: 'Jonesboro, AR',
         lockHour: 14, // 9am CT
-    },
+        distance: 3, technical: 3, elevation: 3, climate: 4, bias: 3 },
     {
         id: '96406',
         pdga_id: '96406',
@@ -79,7 +79,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-04-26',
         location: 'Liberty, MO',
         lockHour: 14,
-    },
+        distance: 4, technical: 3, elevation: 3, climate: 3, bias: 2 },
     // ── May ───────────────────────────────────────────────────────────────────
     {
         id: '96407',
@@ -89,7 +89,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-05-03',
         location: 'Waco, TX',
         lockHour: 14,
-    },
+        distance: 2, technical: 4, elevation: 2, climate: 3, bias: 3 },
     {
         id: '96408',
         pdga_id: '96408',
@@ -98,7 +98,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-05-10',
         location: 'Austin, TX',
         lockHour: 14,
-    },
+        distance: 3, technical: 4, elevation: 3, climate: 4, bias: 3 },
     {
         id: '96409',
         pdga_id: '96409',
@@ -107,7 +107,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-05-24',
         location: 'Stockton, CA',
         lockHour: 16, // 9am PT
-   , distance: 4, technical: 1, elevation: 1, climate: 4, bias: 2 },
+        distance: 4, technical: 1, elevation: 1, climate: 4, bias: 2 },
     // ── June ──────────────────────────────────────────────────────────────────
     {
         id: '96410',
@@ -117,7 +117,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-06-07',
         location: 'Portland, OR',
         lockHour: 16, // 9am PT
-    },
+        distance: 4, technical: 3, elevation: 2, climate: 2, bias: 4 },
     {
         id: '97339',
         pdga_id: '97339',
@@ -126,7 +126,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-06-21',
         location: 'Tallinn, Estonia',
         lockHour: 6, // ~9am EEST (UTC+3)
-    },
+        distance: 3, technical: 2, elevation: 3, climate: 3, bias: 3 },
     {
         id: '96411',
         pdga_id: '96411',
@@ -135,7 +135,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-06-28',
         location: 'Borg\u00e5s, Sweden',
         lockHour: 7, // ~9am CEST (UTC+2)
-    },
+        distance: 2, technical: 4, elevation: 4, climate: 2, bias: 3 },
     // ── July ──────────────────────────────────────────────────────────────────
     {
         id: '96412',
@@ -144,8 +144,7 @@ export const SEASON_2026: SeasonTournament[] = [
         startDate: '2026-07-03',
         endDate: '2026-07-05',
         location: 'Nol, Sweden',
-        lockHour: 7,
-   , distance: 3, technical: 4, elevation: 4, climate: 2, bias: 3 },
+        lockHour: 7},
     {
         id: '96413',
         pdga_id: '96413',
@@ -154,7 +153,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-07-12',
         location: 'Heinola, Finland',
         lockHour: 6, // ~9am EEST (UTC+3)
-    },
+        distance: 3, technical: 4, elevation: 4, climate: 2, bias: 3 },
     {
         id: '97341',
         pdga_id: '97341',
@@ -163,7 +162,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-07-19',
         location: 'Salt Lake City, UT',
         lockHour: 15, // 9am MDT (UTC-6)
-    },
+        distance: 3, technical: 3, elevation: 4, climate: 4, bias: 3 },
     // ── Late July / August ────────────────────────────────────────────────────
     {
         id: '96414',
@@ -173,7 +172,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-08-02',
         location: 'Peoria, IL',
         lockHour: 14, // 9am CT
-    },
+        distance: 4, technical: 4, elevation: 2, climate: 4, bias: 3 },
     {
         id: '96415',
         pdga_id: '96415',
@@ -182,7 +181,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-08-09',
         location: 'Indianola, IA',
         lockHour: 14,
-    },
+        distance: 3, technical: 3, elevation: 2, climate: 3, bias: 3 },
     {
         id: '96416',
         pdga_id: '96416',
@@ -191,7 +190,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-08-16',
         location: 'Clearwater, MN',
         lockHour: 14,
-    },
+        distance: 4, technical: 3, elevation: 1, climate: 2, bias: 3 },
     {
         id: '97344',
         pdga_id: '97344',
@@ -200,7 +199,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-08-30',
         location: 'Milford, MI',
         lockHour: 13, // 9am ET
-    },
+        distance: 4, technical: 4, elevation: 4, climate: 2, bias: 4 },
     // ── September ─────────────────────────────────────────────────────────────
     {
         id: '96417',
@@ -210,7 +209,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-09-06',
         location: 'Burlington, KY',
         lockHour: 13,
-    },
+        distance: 3, technical: 4, elevation: 3, climate: 3, bias: 3 },
     {
         id: '96418',
         pdga_id: '96418',
@@ -219,7 +218,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-09-20',
         location: 'Jeffersonville, VT',
         lockHour: 13,
-    },
+        distance: 4, technical: 4, elevation: 4, climate: 4, bias: 4 },
     {
         id: '96419',
         pdga_id: '96419',
@@ -228,7 +227,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-09-27',
         location: 'Leicester, MA',
         lockHour: 13,
-    },
+        distance: 3, technical: 4, elevation: 3, climate: 2, bias: 4 },
     // ── October ───────────────────────────────────────────────────────────────
     {
         id: '97346',
@@ -238,7 +237,7 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-10-11',
         location: 'Rock Hill, SC',
         lockHour: 13,
-    },
+        distance: 4, technical: 4, elevation: 2, climate: 3, bias: 1 },
     {
         id: '96421',
         pdga_id: '96421',
@@ -247,6 +246,6 @@ export const SEASON_2026: SeasonTournament[] = [
         endDate: '2026-10-18',
         location: 'Lynchburg, VA',
         lockHour: 13,
-    },
+        distance: 4, technical: 3, elevation: 4, climate: 3, bias: 2 },
 ];
 

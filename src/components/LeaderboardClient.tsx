@@ -109,13 +109,13 @@ export default function LeaderboardClient({ tournamentId, tournamentName, curren
 
                                 {/* Name */}
                                 <div className={styles.nameCol}>
-                                    <span className={styles.playerName}>
+                                    <div className={styles.playerName}>
                                         {entry.displayName}
                                         {isMe && <span className={styles.youBadge}>YOU</span>}
                                         {entry.autoDrafted && (
                                             <span style={{ fontSize: '0.7rem', color: '#94a3b8', background: '#1e293b', border: '1px solid #334155', borderRadius: '4px', padding: '0.1rem 0.4rem', marginLeft: '0.4rem' }}>🤖 Auto</span>
                                         )}
-                                    </span>
+                                    </div>
                                     {entry.picksHidden ? (
                                         <span style={{ color: '#64748b', fontSize: '0.75rem' }}>🔒 Picks hidden until tournament starts</span>
                                     ) : (

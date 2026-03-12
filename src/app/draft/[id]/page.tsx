@@ -1,10 +1,11 @@
 import { getPlayersWithPrices } from '@/lib/player-service';
+import { ALL_PLAYERS } from '@/data/mock-players';
 import DraftClient from '@/components/DraftClient';
 import { SEASON_2026, getLockTime } from '@/data/tournaments';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { auth } from '@clerk/nextjs/server';
 import { notFound, redirect } from 'next/navigation';
-import { calculatePrice } from '@/lib/pricing';
+import { calculatePrice, calculateDynamicPrice, FormHistory } from '@/lib/pricing';
 import { Player } from '@/data/mock-schema';
 
 export default async function DraftPage({ params }: { params: Promise<{ id: string }> }) {
@@ -35,23 +36,58 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
         .not('rating', 'is', null)   // only players with a fetched rating
         .not('first_name', 'is', null);
 
+    // ── Fetch Player Form History for Momentum Pricing ────────────────────────
+
+    let formMap = new Map<number, FormHistory[]>();
+    try {
+        const { data: formHistory } = await supabaseAdmin
+            .from('player_form_history')
+            .select('pdga_number, finish_position, cashed')
+            .eq('season', 2026)
+            .order('completed_at', { ascending: false });
+
+        if (formHistory) {
+            for (const record of formHistory) {
+                if (!formMap.has(record.pdga_number)) {
+                    formMap.set(record.pdga_number, []);
+                }
+                formMap.get(record.pdga_number)!.push(record);
+            }
+        }
+    } catch (e) {
+        console.warn("player_form_history table might not exist yet:", e);
+    }
+
     let players: Player[];
 
     if (registrations && registrations.length > 0) {
         // Dynamic pool from DB — the source of truth
-        players = registrations.map(r => ({
-            id: String(r.pdga_number),
-            firstName: r.first_name as string,
-            lastName: r.last_name as string,
-            rating: r.rating as number,
-            division: r.division as 'MPO' | 'FPO',
-            pdgaNumber: r.pdga_number as number,
-            price: calculatePrice(r.rating as number, r.division as 'MPO' | 'FPO'),
-            tier: 'A' as const,
-        })).sort((a, b) => b.rating - a.rating);
+        players = registrations.map(r => {
+            const staticPlayer = ALL_PLAYERS.find(p => p.pdgaNumber === r.pdga_number);
+            return {
+                id: String(r.pdga_number),
+                firstName: r.first_name as string,
+                lastName: r.last_name as string,
+                rating: r.rating as number,
+                division: r.division as 'MPO' | 'FPO',
+                pdgaNumber: r.pdga_number as number,
+                price: calculateDynamicPrice(
+                    calculatePrice(r.rating as number, r.division as 'MPO' | 'FPO'),
+                    staticPlayer || {},
+                    tournament,
+                    formMap.get(r.pdga_number as number) || []
+                ),
+                tier: 'A' as const,
+                power: staticPlayer?.power,
+                accuracy: staticPlayer?.accuracy,
+                recovery: staticPlayer?.recovery,
+                resilience: staticPlayer?.resilience,
+                versatility: staticPlayer?.versatility,
+            };
+        }).sort((a, b) => b.rating - a.rating);
     } else {
         // Fallback: cron hasn't run yet — use static list (unfiltered)
-        players = getPlayersWithPrices();
+        players = getPlayersWithPrices(tournament, formMap);
     }
 
     // Fetch the user's existing entry so DraftClient can pre-populate picks

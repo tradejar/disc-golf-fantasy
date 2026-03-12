@@ -58,6 +58,7 @@ export async function GET(request: Request) {
         entries.forEach(entry => {
             const profile = profileMap.get(entry.user_id);
             const displayName = profile?.display_name || profile?.email?.split('@')[0] || 'Player';
+
             const tournament = SEASON_2026.find(t => t.id === entry.tournament_id);
             const pts = entry.total_points;
 

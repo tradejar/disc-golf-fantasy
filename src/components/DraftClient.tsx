@@ -53,7 +53,12 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
                     (saved.pdgaNumber && p.pdgaNumber === saved.pdgaNumber) ||
                     (p.firstName === saved.firstName && p.lastName === saved.lastName)
                 );
-                return currentPoolPlayer || saved;
+                // CRITICAL FIX: Preserve the original purchase price so dynamic inflation 
+                // between sessions doesn't push the user's budget into the negative!
+                if (currentPoolPlayer) {
+                    return { ...currentPoolPlayer, price: saved.price ?? currentPoolPlayer.price };
+                }
+                return saved;
             });
 
             setRoster(mappedRoster);

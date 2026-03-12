@@ -86,16 +86,21 @@ export async function POST(req: Request) {
                 rounds.sort((a, b) => a.round_number - b.round_number);
 
                 for (const r of rounds) {
-                    let rPts = 0;
-                    rPts += (r.eagles || 0) * rule.eagle;
-                    rPts += (r.birdies || 0) * rule.birdie;
-                    rPts += (r.pars || 0) * rule.par;
-                    rPts += (r.bogeys || 0) * rule.bogey;
-                    rPts += (r.double_bogeys || 0) * rule.double;
+                    let rPts = r.fantasy_points;
 
-                    // Only award bogey-free bonus if the player actually played (strokes > 0)
-                    const bogeyFree = r.strokes > 0 && (r.bogeys + r.double_bogeys) === 0;
-                    if (bogeyFree) rPts += rule.bogeyFree;
+                    // Fallback to manual calculation if fantasy_points doesn't exist yet
+                    if (rPts === undefined || rPts === null) {
+                        rPts = 0;
+                        rPts += (r.eagles || 0) * rule.eagle;
+                        rPts += (r.birdies || 0) * rule.birdie;
+                        rPts += (r.pars || 0) * rule.par;
+                        rPts += (r.bogeys || 0) * rule.bogey;
+                        rPts += (r.double_bogeys || 0) * rule.double;
+                        rPts += (r.triple_bogeys || 0) * rule.triple;
+
+                        const bogeyFree = r.strokes > 0 && ((r.bogeys || 0) + (r.double_bogeys || 0) + (r.triple_bogeys || 0)) === 0;
+                        if (bogeyFree) rPts += rule.bogeyFree;
+                    }
 
                     pts += rPts;
                     strokes += r.strokes;

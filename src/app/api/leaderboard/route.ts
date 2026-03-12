@@ -78,7 +78,6 @@ export async function GET(request: Request) {
             });
         }
 
-        // Fetch display names from profiles
         const userIds = [...new Set(entries.map(e => e.user_id))];
         const { data: profiles } = await supabaseAdmin
             .from('profiles')

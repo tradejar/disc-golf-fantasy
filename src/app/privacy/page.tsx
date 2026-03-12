@@ -85,11 +85,14 @@ export default function PrivacyPage() {
                 <h2 style={{ color: 'white', fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem' }}>Terms of Service</h2>
 
                 <section style={sectionStyle}>
-                    <h2 style={h2Style}>5. Nature of the Game</h2>
+                    <h2 style={h2Style}>5. Nature of the Game & Game Mechanics</h2>
                     <p style={pStyle}>
                         DGPT Fantasy 2026 is a <strong style={{ color: '#e2e8f0' }}>free-to-play fantasy game</strong> with{' '}
                         <strong style={{ color: '#e2e8f0' }}>no monetary prizes or entry fees</strong>.
                         There is no gambling or wagering of any kind. Participation is purely for entertainment.
+                    </p>
+                    <p style={pStyle}>
+                        The game utilizes a proprietary <strong style={{ color: '#e2e8f0' }}>Dynamic Pricing Algorithm</strong> to calculate draft values. This algorithm programmatically evaluates subjective player performance ratings (e.g. Course Fit mechanics) and historical tournament forms (e.g. Momentum adjustments) based on publicly available PDGA tournament data. These mechanics are strictly algorithmic and applied uniformly to all users to ensure fair play.
                     </p>
                 </section>
 

@@ -79,7 +79,14 @@ export default function RulesPage() {
                         <ul style={UL_STYLE}>
                             <li>Salary cap of <strong style={{ color: '#f8fafc' }}>$950</strong> per event</li>
                             <li>Pick <strong style={{ color: '#f8fafc' }}>4 MPO</strong> + <strong style={{ color: '#f8fafc' }}>2 FPO</strong> players</li>
-                            <li>Player prices reflect their live PDGA rating — they change between events</li>
+                            <li>
+                                <strong style={{ color: '#f8fafc' }}>Dynamic Pricing Engine:</strong>
+                                <ul style={{ ...UL_STYLE, paddingTop: '0.4rem' }}>
+                                    <li><strong style={{ color: '#38bdf8' }}>Ratings Affinity:</strong> Player prices fluctuate organically based on two key factors:</li>
+                                    <li><strong style={{ color: '#38bdf8' }}>Course Fit:</strong> Player ratings are compared against the course's specific difficulty ratings (±1% per star variance). <br /> <strong style={{ color: '#f8fafc' }}>!!! Exception:</strong> A 5/5 distance player on a 5/5 distance course gains a strict +5% premium.</li>
+                                    <li><strong style={{ color: '#38bdf8' }}>Recent Form:</strong> We track the last 5 tournaments of the current season. Players earn a +3% to +1% bonus for recent podium finishes, but suffer a compounding -3% discount every time they miss the cash line.</li>
+                                </ul>
+                            </li>
                             <li>Draft locks at first tee time of the tournament</li>
                         </ul>
                     </div>

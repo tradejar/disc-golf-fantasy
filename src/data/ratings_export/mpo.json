@@ -1,0 +1,56 @@
+[
+  {
+    "rank": "1",
+    "name": "Gannon Buhr",
+    "power": 5,
+    "accuracy": 5,
+    "recovery": 5,
+    "resilience": 5,
+    "versatility": 5
+  },
+  {
+    "rank": "2",
+    "name": "Richard Wysocki",
+    "power": 5,
+    "accuracy": 4,
+    "recovery": 5,
+    "resilience": 5,
+    "versatility": 5
+  },
+  {
+    "rank": "3",
+    "name": "Calvin Heimburg",
+    "power": 5,
+    "accuracy": 5,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 4
+  },
+  {
+    "rank": "4",
+    "name": "Paul McBeth",
+    "power": 4,
+    "accuracy": 5,
+    "recovery": 4,
+    "resilience": 5,
+    "versatility": 5
+  },
+  {
+    "rank": "5",
+    "name": "Isaac Robinson",
+    "power": 3,
+    "accuracy": 5,
+    "recovery": 4,
+    "resilience": 4,
+    "versatility": 1
+  },
+  {
+    "rank": "6",
+    "name": "Anthony Barela",
+    "power": 5,
+    "accuracy": 4,
+    "recovery": 3,
+    "resilience": 4,
+    "versatility": 4
+  }
+]

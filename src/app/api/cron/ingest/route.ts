@@ -113,13 +113,39 @@ export async function GET(request: Request) {
 
                 const upsertData = validScores.map(player => {
                     const playerScores = (player.Scores || '').split(',').map((s: string) => parseInt(s));
-                    let eagles = 0, birdies = 0, pars = 0, bogeys = 0, doubleBogeys = 0, tripleBogeys = 0;
+                    let eagles = 0, birdies = 0, pars = 0, bogeys = 0, doubleBogeys = 0, tripleBogeys = 0, aces = 0;
+                    let currentStreak = 0;
+                    let streaksHit = 0;
+                    let validHoleCount = 0;
+                    let holesOverPar = 0;
 
                     playerScores.forEach((score: number, index: number) => {
                         if (isNaN(score)) return;
                         const holePar = holes[index]?.Par;
                         if (!holePar) return;
+
+                        validHoleCount++;
                         const diff = score - holePar;
+
+                        if (score === 1 && holePar > 1) {
+                            aces++;
+                        }
+
+                        // Streak logic (Birdie or Eagle)
+                        if (diff <= -1) {
+                            currentStreak++;
+                            if (currentStreak === 3) {
+                                streaksHit++;
+                                currentStreak = 0; // Reset so 6 consecutive = 2 streaks
+                            }
+                        } else {
+                            currentStreak = 0; // Par or worse breaks streak
+                        }
+
+                        if (diff >= 1) {
+                            holesOverPar++;
+                        }
+
                         if (diff <= -2) eagles++;
                         else if (diff === -1) birdies++;
                         else if (diff === 0) pars++;
@@ -128,7 +154,12 @@ export async function GET(request: Request) {
                         else if (diff > 2) tripleBogeys++;
                     });
 
-                    const fantasyPoints = (eagles * 8) + (birdies * 3) + (bogeys * -2) + (doubleBogeys * -4) + (tripleBogeys * -5);
+                    // Bonus: +5 points for a fully clean 18-hole round
+                    const bogeyFreeBonus = (validHoleCount >= 18 && holesOverPar === 0) ? 5 : 0;
+                    const streakBonus = streaksHit * 3;
+                    const aceBonus = aces * 15;
+
+                    const fantasyPoints = (eagles * 8) + (birdies * 3) + (bogeys * -2) + (doubleBogeys * -4) + (tripleBogeys * -5) + streakBonus + bogeyFreeBonus + aceBonus;
 
                     const playerStatsRecord = advancedStatsData.find((a: any) =>
                         a.score?.liveResult?.pdgaNum === player.PDGANum
