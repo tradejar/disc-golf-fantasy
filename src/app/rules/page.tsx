@@ -47,7 +47,7 @@ function StatPill({ label, value }: { label: string; value: string }) {
             padding: '0.6rem 0',
             borderBottom: '1px solid #1e293b',
         }}>
-            <span style={{ color: '#64748b', fontSize: '0.9rem' }}>{label}</span>
+            <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>{label}</span>
             <span style={{ color: '#f8fafc', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{value}</span>
         </div>
     );
@@ -60,13 +60,13 @@ export default function RulesPage() {
 
                 {/* Page header */}
                 <div style={{ padding: '2rem 2rem 1.5rem' }}>
-                    <Link href="/" style={{ color: '#475569', fontSize: '0.8rem', textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem' }}>
+                    <Link href="/" style={{ color: '#94a3b8', fontSize: '0.8rem', textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem' }}>
                         ← Back
                     </Link>
                     <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.03em', color: '#f8fafc' }}>
                         How to Play
                     </h1>
-                    <p style={{ margin: '0.4rem 0 0', color: '#475569', fontSize: '0.9rem' }}>
+                    <p style={{ margin: '0.4rem 0 0', color: '#94a3b8', fontSize: '0.9rem' }}>
                         DGPT Fantasy 2026
                     </p>
                 </div>
@@ -109,7 +109,8 @@ export default function RulesPage() {
                     <div style={SECTION_STYLE}>
                         <h2 style={H2_STYLE}>Hole Scoring</h2>
                         <div>
-                            <StatPill label="Eagle or better" value="+8 pts" />
+                            <StatPill label="Albatross (−3 or better) 🦅" value="+24 pts" />
+                            <StatPill label="Eagle (−2)" value="+8 pts" />
                             <StatPill label="Birdie" value="+3 pts" />
                             <StatPill label="Par" value="0 pts" />
                             <StatPill label="Bogey" value="−2 pts" />
@@ -128,8 +129,12 @@ export default function RulesPage() {
                             <StatPill label="Bogey-free round" value="+5 pts" />
                             <StatPill label="3 birdies in a row" value="+3 pts" />
                         </div>
-                        <p style={{ ...BODY_STYLE, marginTop: '0.75rem', fontSize: '0.8rem', color: '#475569' }}>
-                            Ace bonus stacks with Eagle hole points. Birdie streak bonus awarded per 3 consecutive birdies.
+                        <p style={{ ...BODY_STYLE, marginTop: '0.75rem', fontSize: '0.8rem', color: '#94a3b8' }}>
+                            An ace on a <strong>par-3</strong> scores <strong>+15 pts only</strong> (ace bonus; eagle bonus does not apply). An ace on a <strong>par-4+</strong> scores <strong>+24 pts only</strong> (albatross bonus; ace bonus does not apply). Aces always count toward birdie streaks.
+
+                        </p>
+                        <p style={{ ...BODY_STYLE, marginTop: '0.5rem', fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                            💡 Player prices update automatically after each PDGA event based on official rating changes. Prices may occasionally fluctuate by $1–3 due to PDGA rating corrections. Existing drafted rosters are never affected mid-tournament.
                         </p>
                     </div>
 
@@ -154,6 +159,54 @@ export default function RulesPage() {
                             <StatPill label="Top 50" value="+2 pts" />
                             <StatPill label="Top 100" value="+1 pt" />
                         </div>
+                    </div>
+
+                    {DIVIDER}
+
+                    {/* Course Difficulty Bonus */}
+                    <div style={SECTION_STYLE}>
+                        <h2 style={H2_STYLE}>⛰ Course Difficulty Bonus</h2>
+                        <p style={{ ...BODY_STYLE, marginBottom: '1rem' }}>
+                            Not all courses are created equal — and your fantasy score shouldn't pretend they are.
+                            We calculate a bonus for every tournament based on how hard that course actually played
+                            compared to a <strong style={{ color: '#f8fafc' }}>normal DGPT event</strong>.
+                        </p>
+                        <p style={{ ...BODY_STYLE, marginBottom: '1rem' }}>
+                            <strong style={{ color: '#f8fafc' }}>Think of it like running:</strong> if you normally
+                            finish a 10km race in 50 minutes but today's course has a mountain in it and you finish in
+                            54.5 minutes, that course was about <strong style={{ color: '#38bdf8' }}>~9% harder</strong> than
+                            normal — and you earn a 9% bonus on your points for tackling it.
+                            "Normal" means the{' '}
+                            <strong style={{ color: '#f8fafc' }}>2025 DGPT season average</strong> — a baseline
+                            built from all 10 Elite Series events that year.
+                        </p>
+                        <p style={{ ...BODY_STYLE, marginBottom: '1rem' }}>
+                            <strong style={{ color: '#f8fafc' }}>How it's calculated (after final round completes):</strong>
+                        </p>
+                        <ul style={{ ...UL_STYLE, marginBottom: '1rem' }}>
+                            <li>Take every finisher's total strokes and their PDGA player rating</li>
+                            <li>Drop the <strong style={{ color: '#f8fafc' }}>3 worst finishers</strong> — they may have had an unusually rough week</li>
+                            <li>Compute the <strong style={{ color: '#f8fafc' }}>field average strokes</strong> and <strong style={{ color: '#f8fafc' }}>field average rating</strong></li>
+                            <li>Use the 2025 baseline to <strong style={{ color: '#f8fafc' }}>predict</strong> how many strokes a field of that rating <em>should</em> shoot on a normal course</li>
+                            <li>
+                                <strong style={{ color: '#38bdf8' }}>Bonus % = (actual − predicted) ÷ actual strokes</strong>
+                                <br />
+                                <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                                    e.g. field shot 220, baseline predicted 200 → 20 extra strokes ÷ 220 = <strong style={{ color: '#f8fafc' }}>~9% bonus</strong>
+                                </span>
+                            </li>
+                            <li>That % is added to <strong style={{ color: '#f8fafc' }}>every user's hole-scoring fantasy points</strong> for players in that division</li>
+                        </ul>
+                        <p style={{ ...BODY_STYLE, marginBottom: '0.75rem', fontSize: '0.85rem' }}>
+                            <strong style={{ color: '#f8fafc' }}>2026 season so far:</strong>
+                        </p>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                            <StatPill label="Supreme Flight Open — MPO" value="~0%" />
+                            <StatPill label="Big Easy Open — MPO" value="~9%" />
+                        </div>
+                        <p style={{ ...BODY_STYLE, marginTop: '0.75rem', fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                            💡 Olympus (SFO) plays at or below the 2025 baseline — no bonus needed. Parc des Familles (BEO) played ~20 strokes harder than expected for the field — hence the ~9% bonus. Look for the green <strong style={{ color: '#4ade80' }}>⛰ Course Difficulty Bonus</strong> badge on player scorecards.
+                        </p>
                     </div>
 
                 </div>
