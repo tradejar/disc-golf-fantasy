@@ -106,59 +106,80 @@ export async function GET(request: Request) {
         }
     }
 
-    // ── Per-division difficulty bonus (2025 DGPT baseline-adjusted) ────────────
-    // Formula: bonus% = max(0, (actual_field_mean − predicted_field_mean) / actual × 100)
-    // where predicted = BASELINE_A + BASELINE_B × field_mean_rating
-    // Baseline fitted from all 10 2025 DGPT Elite Series events (weighted OLS):
-    //   intercept = 1017.8, slope = −0.802 strokes per rating point
-    // This captures absolute course difficulty vs a neutral 2025 DGPT event,
-    // controlling for field composition. Applied to hole-scoring pts only.
-    const OUTLIER_TRIM = 3;
-    const BASELINE_A = 1017.8;   // 2025 DGPT OLS intercept
-    const BASELINE_B = -0.802;   // 2025 DGPT OLS slope (strokes per rating pt)
+    // ── Per-division difficulty bonus (PDGA round-rating baseline) ─────────────
+    // Formula: bonus% = max(0, UPPER_BOUND − avg_round_rating_top20)
+    //
+    // Upper bounds are the easiest events in the 2025 DGPT season
+    // (excluding field-skewed events like USDGC and EDGF):
+    //   MPO: 1050 = Discmania Challenge 2025 top-20 avg round rating
+    //   FPO: 977  = Music City Open 2025 top-20 avg round rating
+    //
+    // An event at the upper bound gets 0% bonus; harder courses get progressively
+    // higher bonuses, making fantasy points comparable across course difficulties.
+    const MPO_ROUND_RATING_UPPER = 1050;
+    const FPO_ROUND_RATING_UPPER = 977;
     const difficultyBonusPct = new Map<string, number>(); // division → bonus %
 
     for (const div of ['MPO', 'FPO']) {
         if (!divisionComplete.get(div)) continue; // only when final scores locked
 
-        // Collect (totalStrokes, rating) per player across all rounds
-        const totalsByPlayer = new Map<number, { strokes: number; rating: number | null }>();
-        for (const s of allStats ?? []) {
-            if (s.division !== div || (s.strokes ?? 0) <= 0) continue;
-            const existing = totalsByPlayer.get(s.pdga_number);
-            totalsByPlayer.set(s.pdga_number, {
-                strokes: (existing?.strokes ?? 0) + s.strokes,
-                rating: existing?.rating ?? s.official_rating ?? null,
-            });
+        const upperBound = div === 'MPO' ? MPO_ROUND_RATING_UPPER : FPO_ROUND_RATING_UPPER;
+
+        // Fetch all rounds from PDGA live API and aggregate per-player round ratings
+        const byPlayer = new Map<number, { strokes: number; rds: Set<number>; rr: number[] }>();
+        let maxRd = 0;
+
+        for (let rd = 1; rd <= 5; rd++) {
+            const pdgaUrl = `https://www.pdga.com/apps/tournament/live-api/live_results_fetch_round?TournID=${tournament.pdga_id}&Division=${div}&Round=${rd}`;
+            let rdScores: any[] = [];
+            try {
+                const rdRes = await fetch(pdgaUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(10000) });
+                rdScores = (await rdRes.json()).data?.scores ?? [];
+            } catch (e) {
+                console.warn(`Difficulty bonus [${div}]: failed to fetch round ${rd}`, e);
+                break;
+            }
+
+            const played = rdScores.filter((s: any) => s.HasRoundScore === 1 && (s.RoundScore ?? 0) > 0);
+            if (!played.length) break;
+
+            // Skip non-stroke rounds (e.g. match-play): median score must be >= 48
+            const sortedScores = played.map((s: any) => s.RoundScore as number).sort((a: number, b: number) => a - b);
+            const med = sortedScores[Math.floor(sortedScores.length / 2)];
+            if (med < 48) continue;
+
+            maxRd = rd;
+            for (const s of played) {
+                if (!byPlayer.has(s.PDGANum)) byPlayer.set(s.PDGANum, { strokes: 0, rds: new Set(), rr: [] });
+                const p = byPlayer.get(s.PDGANum)!;
+                p.strokes += s.RoundScore ?? 0;
+                p.rds.add(rd);
+                if ((s.RoundRating ?? 0) > 0) p.rr.push(s.RoundRating);
+            }
         }
 
-        if (totalsByPlayer.size < OUTLIER_TRIM + 2) continue;
-
-        // Sort by total strokes ascending, trim bottom 3 outliers
-        const sorted = [...totalsByPlayer.values()].sort((a, b) => a.strokes - b.strokes);
-        const trimmed = sorted.slice(0, sorted.length - OUTLIER_TRIM);
-
-        const actualFieldMean = trimmed.reduce((s, v) => s + v.strokes, 0) / trimmed.length;
-
-        // Field mean rating (only rated players; fall back to overall mean if sparse)
-        const ratedPlayers = trimmed.filter(p => p.rating && p.rating > 900);
-        const fieldMeanRating = ratedPlayers.length >= 10
-            ? ratedPlayers.reduce((s, p) => s + p.rating!, 0) / ratedPlayers.length
-            : null;
-
-        let bonus = 0;
-        if (fieldMeanRating !== null) {
-            // Baseline-adjusted: how many extra strokes did the course demand?
-            const predictedFieldMean = BASELINE_A + BASELINE_B * fieldMeanRating;
-            const difficultyDelta = actualFieldMean - predictedFieldMean;
-            bonus = Math.max(0, Math.round(difficultyDelta / actualFieldMean * 100));
-            console.log(`Difficulty bonus [${div}]: field_rating=${fieldMeanRating.toFixed(1)}, predicted=${predictedFieldMean.toFixed(1)}, actual=${actualFieldMean.toFixed(1)}, delta=${difficultyDelta.toFixed(1)}, bonus=${bonus}%`);
-        } else {
-            // Fallback if ratings unavailable: old winner-gap method
-            const winner = sorted[0].strokes;
-            bonus = Math.max(0, Math.round(actualFieldMean - winner));
-            console.log(`Difficulty bonus [${div}] (fallback): mean=${actualFieldMean.toFixed(1)}, winner=${winner}, bonus=${bonus}%`);
+        if (!maxRd) {
+            console.log(`Difficulty bonus [${div}]: no valid round data from PDGA API`);
+            continue;
         }
+
+        // Top 20 by total strokes among players who completed the final round
+        const top20 = [...byPlayer.values()]
+            .filter(p => p.rds.has(maxRd))
+            .sort((a, b) => a.strokes - b.strokes)
+            .slice(0, 20)
+            .filter(p => p.rr.length > 0);
+
+        if (top20.length < 10) {
+            console.log(`Difficulty bonus [${div}]: too few players with round ratings (${top20.length})`);
+            continue;
+        }
+
+        const avgRR = Math.round(
+            top20.reduce((s, p) => s + p.rr.reduce((a, b) => a + b, 0) / p.rr.length, 0) / top20.length
+        );
+        const bonus = Math.max(0, upperBound - avgRR);
+        console.log(`Difficulty bonus [${div}]: upper=${upperBound}, top20_avg_rr=${avgRR}, bonus=${bonus}%`);
         if (bonus > 0) difficultyBonusPct.set(div, bonus);
     }
     // ─────────────────────────────────────────────────────────────────────────

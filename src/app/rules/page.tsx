@@ -178,34 +178,43 @@ export default function RulesPage() {
                             normal — and you earn a 9% bonus on your points for tackling it.
                             "Normal" means the{' '}
                             <strong style={{ color: '#f8fafc' }}>2025 DGPT season average</strong> — a baseline
-                            built from all 10 Elite Series events that year.
+                            built from the full 2025 DGPT season.
                         </p>
                         <p style={{ ...BODY_STYLE, marginBottom: '1rem' }}>
-                            <strong style={{ color: '#f8fafc' }}>How it's calculated (after final round completes):</strong>
+                            <strong style={{ color: '#f8fafc' }}>How it works:</strong>
                         </p>
-                        <ul style={{ ...UL_STYLE, marginBottom: '1rem' }}>
-                            <li>Take every finisher's total strokes and their PDGA player rating</li>
-                            <li>Drop the <strong style={{ color: '#f8fafc' }}>3 worst finishers</strong> — they may have had an unusually rough week</li>
-                            <li>Compute the <strong style={{ color: '#f8fafc' }}>field average strokes</strong> and <strong style={{ color: '#f8fafc' }}>field average rating</strong></li>
-                            <li>Use the 2025 baseline to <strong style={{ color: '#f8fafc' }}>predict</strong> how many strokes a field of that rating <em>should</em> shoot on a normal course</li>
-                            <li>
-                                <strong style={{ color: '#38bdf8' }}>Bonus % = (actual − predicted) ÷ actual strokes</strong>
-                                <br />
-                                <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
-                                    e.g. field shot 220, baseline predicted 200 → 20 extra strokes ÷ 220 = <strong style={{ color: '#f8fafc' }}>~9% bonus</strong>
-                                </span>
+                        <ol style={{ ...UL_STYLE, marginBottom: '1rem', listStyleType: 'decimal', paddingLeft: '1.5rem' }}>
+                            <li style={{ marginBottom: '0.6rem' }}>
+                                <strong style={{ color: '#f8fafc' }}>Fetch PDGA round ratings.</strong>{' '}
+                                Once the final round is complete, we pull each player's round-by-round PDGA rating from the live scoring API.
                             </li>
-                            <li>That % is added to <strong style={{ color: '#f8fafc' }}>every user's hole-scoring fantasy points</strong> for players in that division</li>
-                        </ul>
+                            <li style={{ marginBottom: '0.6rem' }}>
+                                <strong style={{ color: '#f8fafc' }}>Take the top-20 finishers</strong> (by total strokes) and average their round ratings across all completed rounds.
+                            </li>
+                            <li style={{ marginBottom: '0.6rem' }}>
+                                <strong style={{ color: '#f8fafc' }}>Compare to our 2025 baseline ceiling.</strong>{' '}
+                                The ceiling is the easiest event from the 2025 DGPT season: <em>1050 for MPO</em> (Discmania Challenge) and <em>977 for FPO</em> (Music City Open). These represent a course where no difficulty bonus is warranted.
+                            </li>
+                            <li style={{ marginBottom: '0.6rem' }}>
+                                <strong style={{ color: '#f8fafc' }}>Calculate: bonus% = ceiling − top-20 avg round rating.</strong>{' '}
+                                If a course plays harder than the ceiling, the difference is the bonus. If easier or equal, no bonus is applied.
+                            </li>
+                            <li>
+                                <strong style={{ color: '#f8fafc' }}>Apply to your points.</strong>{' '}
+                                That bonus % is added to every user's scoring fantasy points for players in that division, making performances on harder courses fairly comparable to easier ones.
+                            </li>
+                        </ol>
                         <p style={{ ...BODY_STYLE, marginBottom: '0.75rem', fontSize: '0.85rem' }}>
                             <strong style={{ color: '#f8fafc' }}>2026 season so far:</strong>
                         </p>
                         <div style={{ marginBottom: '0.5rem' }}>
-                            <StatPill label="Supreme Flight Open — MPO" value="~0%" />
-                            <StatPill label="Big Easy Open — MPO" value="~9%" />
+                            <StatPill label="Supreme Flight Open — MPO" value="3%" />
+                            <StatPill label="Supreme Flight Open — FPO" value="0%" />
+                            <StatPill label="Big Easy Open — MPO" value="17%" />
+                            <StatPill label="Big Easy Open — FPO" value="10%" />
                         </div>
                         <p style={{ ...BODY_STYLE, marginTop: '0.75rem', fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic' }}>
-                            💡 Olympus (SFO) plays at or below the 2025 baseline — no bonus needed. Parc des Familles (BEO) played ~20 strokes harder than expected for the field — hence the ~9% bonus. Look for the green <strong style={{ color: '#4ade80' }}>⛰ Course Difficulty Bonus</strong> badge on player scorecards.
+                            💡 Based on top-20 avg PDGA round ratings vs the 2025 season ceiling (MPO: 1050 Discmania, FPO: 977 Music City). Olympus (SFO) played close to ceiling — 3% MPO bonus, 0% FPO. Parc des Familles (BEO) was meaningfully harder — 17% MPO, 10% FPO. Look for the green <strong style={{ color: '#4ade80' }}>⛰ Course Difficulty Bonus</strong> badge on player scorecards.
                         </p>
                     </div>
 
