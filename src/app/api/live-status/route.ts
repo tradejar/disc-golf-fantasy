@@ -17,6 +17,13 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
+    const lockTime = getLockTime(tournament);
+    const now = new Date();
+
+    // Hard lock time gate: never lock the draft before the scheduled lockHour,
+    // even if PDGA returns data early (practice rounds, placeholders, etc.)
+    const isPastHardLock = now >= lockTime;
+
     // A tournament is "live" when our ingest cron has placed round 1 data into player_stats.
     // The ingest cron runs every 10 minutes on Fri/Sat/Sun and calls the PDGA live API.
     // The moment the first card tees off, PDGA returns real scores and ingest saves them here.
@@ -25,20 +32,27 @@ export async function GET(request: Request) {
         .select('id')
         .eq('tournament_id', tournamentId)
         .eq('round_number', 1)
+        .gt('strokes', 0)   // 0 strokes = PDGA placeholder row, not a real score
         .limit(1);
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const isLive = Array.isArray(data) && data.length > 0;
-    const lockTime = getLockTime(tournament);
+    const hasData = Array.isArray(data) && data.length > 0;
+
+    // Only report isLive if BOTH conditions are met:
+    // 1. PDGA has round 1 data (actual scoring started)
+    // 2. We are past the scheduled hard lock time
+    const isLive = hasData && isPastHardLock;
 
     return NextResponse.json({
         tournamentId,
         isLive,
-        // Fallback hard-lock still applies if PDGA data never shows up
         hardLockTime: lockTime.toISOString(),
-        checkedAt: new Date().toISOString(),
+        isPastHardLock,
+        hasData,
+        checkedAt: now.toISOString(),
     });
 }
+

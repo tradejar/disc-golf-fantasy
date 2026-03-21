@@ -125,7 +125,7 @@ export async function POST(req: Request) {
                         user_id: userId,
                         tournament_id: tournamentId,
                         roster_data: roster,
-                        budget_remaining: budgetRemaining,
+                        budget_remaining: Math.max(0, budgetRemaining),
                         total_points: null,
                         tournament_rank: null,
                         breakdown_data: null

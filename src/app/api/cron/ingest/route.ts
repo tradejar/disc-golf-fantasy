@@ -27,9 +27,12 @@ function getActiveTournament() {
     const now = new Date();
     return SEASON_2026.find(t => {
         const start = new Date(t.startDate);
-        // Include 1 day after end for final-round ingestion
+        // Run until end of the day after endDate (23:59:59 UTC) so that
+        // final-round results, sudden death resolution, and PDGA placement
+        // updates are all captured even if they happen late in the evening.
         const end = new Date(t.endDate);
-        end.setDate(end.getDate() + 1);
+        end.setUTCDate(end.getUTCDate() + 1);
+        end.setUTCHours(23, 59, 59, 999);
         return now >= start && now <= end;
     }) || null;
 }
@@ -65,7 +68,7 @@ export async function GET(request: Request) {
 
         // Try all rounds 1–4. Rounds not yet started return 404 and are skipped.
         // Rounds in progress are re-upserted each run so live scores stay current.
-        const MAX_ROUNDS = 4;
+        const MAX_ROUNDS = 5; // Pro Worlds has 5 rounds
         const results = [];
 
         for (let ROUND = 1; ROUND <= MAX_ROUNDS; ROUND++) {
@@ -111,9 +114,26 @@ export async function GET(request: Request) {
                     continue;
                 }
 
+                // Build ScoreID → PDGANum map so we can join the stats response.
+                // PDGA's stats API only returns scoreId + name, no pdgaNum directly.
+                const scoreIdToPdga = new Map<number, number>();
+                scores.forEach((s: any) => {
+                    if (s.ScoreID && s.PDGANum) scoreIdToPdga.set(s.ScoreID, s.PDGANum);
+                });
+
+                // Build PDGANum → stats record map for O(1) lookup during upsert
+                const statsByPdgaNum = new Map<number, any>();
+                advancedStatsData.forEach((a: any) => {
+                    const pdgaNum = scoreIdToPdga.get(a.score?.scoreId);
+                    if (pdgaNum) statsByPdgaNum.set(pdgaNum, a);
+                });
+                if (statsByPdgaNum.size > 0) {
+                    console.log(`Advanced stats matched for ${statsByPdgaNum.size} players`);
+                }
+
                 const upsertData = validScores.map(player => {
                     const playerScores = (player.Scores || '').split(',').map((s: string) => parseInt(s));
-                    let eagles = 0, birdies = 0, pars = 0, bogeys = 0, doubleBogeys = 0, tripleBogeys = 0, aces = 0;
+                    let albatrosses = 0, eagles = 0, birdies = 0, pars = 0, bogeys = 0, doubleBogeys = 0, tripleBogeys = 0, aces = 0;
                     let currentStreak = 0;
                     let streaksHit = 0;
                     let validHoleCount = 0;
@@ -126,32 +146,42 @@ export async function GET(request: Request) {
 
                         validHoleCount++;
                         const diff = score - holePar;
+                        const isAce = score === 1 && holePar > 1;
 
-                        if (score === 1 && holePar > 1) {
-                            aces++;
-                        }
-
-                        // Streak logic (Birdie or Eagle)
-                        if (diff <= -1) {
+                        if (isAce && diff <= -3) {
+                            // Albatross ace (par-4 or par-5 hole-in-one):
+                            // Only the albatross bonus (+24) applies — ace bonus does NOT stack.
+                            albatrosses++;
                             currentStreak++;
-                            if (currentStreak === 3) {
-                                streaksHit++;
-                                currentStreak = 0; // Reset so 6 consecutive = 2 streaks
-                            }
+                            if (currentStreak === 3) { streaksHit++; currentStreak = 0; }
+                        } else if (isAce) {
+                            // Eagle-equivalent ace (par-3 hole-in-one):
+                            // Only the ace bonus (+15) applies — eagle bonus does NOT stack.
+                            aces++;
+                            currentStreak++;
+                            if (currentStreak === 3) { streaksHit++; currentStreak = 0; }
                         } else {
-                            currentStreak = 0; // Par or worse breaks streak
-                        }
+                            // Normal hole classification
+                            if (diff <= -1) {
+                                currentStreak++;
+                                if (currentStreak === 3) {
+                                    streaksHit++;
+                                    currentStreak = 0; // Reset so 6 consecutive = 2 streaks
+                                }
+                            } else {
+                                currentStreak = 0; // Par or worse breaks streak
+                            }
 
-                        if (diff >= 1) {
-                            holesOverPar++;
-                        }
+                            if (diff >= 1) holesOverPar++;
 
-                        if (diff <= -2) eagles++;
-                        else if (diff === -1) birdies++;
-                        else if (diff === 0) pars++;
-                        else if (diff === 1) bogeys++;
-                        else if (diff === 2) doubleBogeys++;
-                        else if (diff > 2) tripleBogeys++;
+                            if (diff <= -3) albatrosses++;       // -3 or better (not an ace)
+                            else if (diff === -2) eagles++;      // exactly -2 (not an ace)
+                            else if (diff === -1) birdies++;
+                            else if (diff === 0) pars++;
+                            else if (diff === 1) bogeys++;
+                            else if (diff === 2) doubleBogeys++;
+                            else if (diff > 2) tripleBogeys++;
+                        }
                     });
 
                     // Bonus: +5 points for a fully clean 18-hole round
@@ -159,11 +189,9 @@ export async function GET(request: Request) {
                     const streakBonus = streaksHit * 3;
                     const aceBonus = aces * 15;
 
-                    const fantasyPoints = (eagles * 8) + (birdies * 3) + (bogeys * -2) + (doubleBogeys * -4) + (tripleBogeys * -5) + streakBonus + bogeyFreeBonus + aceBonus;
+                    const fantasyPoints = (albatrosses * 24) + (eagles * 8) + (birdies * 3) + (bogeys * -2) + (doubleBogeys * -4) + (tripleBogeys * -5) + streakBonus + bogeyFreeBonus + aceBonus;
 
-                    const playerStatsRecord = advancedStatsData.find((a: any) =>
-                        a.score?.liveResult?.pdgaNum === player.PDGANum
-                    );
+                    const playerStatsRecord = statsByPdgaNum.get(player.PDGANum);
 
                     let fairwayPct = 0, c1InRegPct = 0, c2InRegPct = 0, scramblePct = 0, c1xPct = 0, c2Pct = 0;
                     if (playerStatsRecord?.stats) {
@@ -185,7 +213,7 @@ export async function GET(request: Request) {
                         strokes: player.RoundScore,
                         to_par: player.RoundtoPar,
                         placement: player.RunningPlace,
-                        eagles, birdies, pars, bogeys,
+                        albatrosses, eagles, birdies, pars, bogeys, aces,
                         double_bogeys: doubleBogeys,
                         triple_bogeys: tripleBogeys,
                         fantasy_points: fantasyPoints,

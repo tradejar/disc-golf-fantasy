@@ -31,6 +31,8 @@ export default function SeasonLeaderboardClient({ title, subtitle, leagueId = nu
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [expanded, setExpanded] = useState<string | null>(null);
+    // Fix #1: selected tournament filter (null = all / season total)
+    const [filterTournamentId, setFilterTournamentId] = useState<string | null>(null);
 
     useEffect(() => {
         setLoading(true);
@@ -52,43 +54,80 @@ export default function SeasonLeaderboardClient({ title, subtitle, leagueId = nu
         return t.startDate <= today;
     });
 
+    // Apply per-tournament filter to season totals
+    const filteredSeason = filterTournamentId
+        ? season
+            .map(e => {
+                const te = e.tournaments.find(t => t.tournamentId === filterTournamentId);
+                return { ...e, totalPoints: te?.points ?? 0, tournaments: te ? [te] : [] };
+            })
+            .filter(e => e.tournaments.length > 0)
+            .sort((a, b) => b.totalPoints - a.totalPoints)
+            .map((e, i) => ({ ...e, rank: i + 1 }))
+        : season;
+
     return (
         <div>
             {/* Header */}
             <h1 style={{ color: '#f8fafc', fontSize: '1.8rem', marginBottom: '0.25rem' }}>
                 {title}
             </h1>
-            <p style={{ color: '#94a3b8', marginBottom: '2rem' }}>
+            <p style={{ color: '#94a3b8', marginBottom: '1.5rem' }}>
                 {subtitle}
             </p>
 
-            {/* Per-tournament quick links */}
-            <div className={styles.badgeContainer}>
-                <span className={styles.individualLabel}>Individual:</span>
-                {SEASON_2026.map(t => {
-                    const url = leagueId ? `/leagues/${leagueId}` : `/leaderboard/${t.id}`;
-                    return (
-                        <Link
-                            key={t.id}
-                            href={url}
-                            className={styles.tournamentBadge}
-                        >
+            {/* Fix #1: Tournament filter dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.75rem', flexWrap: 'wrap' }}>
+                <span style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+                    Individual:
+                </span>
+                <select
+                    value={filterTournamentId ?? ''}
+                    onChange={e => setFilterTournamentId(e.target.value || null)}
+                    style={{
+                        background: '#1e293b',
+                        border: '1px solid #334155',
+                        borderRadius: '8px',
+                        color: filterTournamentId ? '#38bdf8' : '#94a3b8',
+                        fontSize: '0.875rem',
+                        padding: '0.45rem 0.85rem',
+                        cursor: 'pointer',
+                        outline: 'none',
+                        minWidth: '220px',
+                        maxWidth: '100%',
+                        fontWeight: filterTournamentId ? 600 : 400,
+                    }}
+                >
+                    <option value="">— Season Total —</option>
+                    {SEASON_2026.map(t => (
+                        <option key={t.id} value={t.id}>
                             {t.name.replace('2026 ', '')}
-                        </Link>
-                    );
-                })}
+                        </option>
+                    ))}
+                </select>
+                {filterTournamentId && (
+                    <button
+                        onClick={() => setFilterTournamentId(null)}
+                        style={{
+                            background: 'none', border: 'none', color: '#64748b',
+                            cursor: 'pointer', fontSize: '0.8rem', padding: '0.2rem 0.5rem',
+                        }}
+                    >
+                        ✕ Clear
+                    </button>
+                )}
             </div>
 
             {/* Season standings */}
             {loading && <div style={{ color: '#94a3b8' }}>Loading season standings...</div>}
             {error && <div style={{ color: '#f87171' }}>Error: {error}</div>}
-            {!loading && !error && season.length === 0 && (
+            {!loading && !error && filteredSeason.length === 0 && (
                 <div style={{ color: '#94a3b8', textAlign: 'center', padding: '3rem 0' }}>
                     No entries yet. Draft a team to get on the board!
                 </div>
             )}
 
-            {!loading && !error && season.map(entry => (
+            {!loading && !error && filteredSeason.map(entry => (
                 <div
                     key={entry.userId}
                     style={{
@@ -132,8 +171,9 @@ export default function SeasonLeaderboardClient({ title, subtitle, leagueId = nu
                     {/* Expanded breakdown */}
                     {expanded === entry.userId && (
                         <div style={{ borderTop: '1px solid #334155', padding: '0.75rem 1.25rem', background: '#0f172a' }}>
-                            {SEASON_2026.map(t => {
+                            {(filterTournamentId ? SEASON_2026.filter(t => t.id === filterTournamentId) : SEASON_2026).map(t => {
                                 const te = entry.tournaments.find(x => x.tournamentId === t.id);
+                                const leaderboardUrl = leagueId ? `/leaderboard/${t.id}?leagueId=${leagueId}` : `/leaderboard/${t.id}`;
                                 return (
                                     <div key={t.id} style={{
                                         display: 'flex',
@@ -144,7 +184,7 @@ export default function SeasonLeaderboardClient({ title, subtitle, leagueId = nu
                                         opacity: te ? 1 : 0.4
                                     }}>
                                         <Link
-                                            href={`/leaderboard/${t.id}`}
+                                            href={leaderboardUrl}
                                             style={{ color: '#38bdf8', textDecoration: 'none', fontSize: '0.85rem' }}
                                             onClick={e => e.stopPropagation()}
                                         >

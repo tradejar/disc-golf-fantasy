@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs';
 import NavBar from '@/components/NavBar';
+import ProfileSync from '@/components/ProfileSync';
+import CookieNotice from '@/components/CookieNotice';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,7 +37,9 @@ export default function RootLayout({
         </head>
         <body className={`${geistSans.variable} ${geistMono.variable}`}>
           <NavBar />
+          <ProfileSync />
           {children}
+          <CookieNotice />
         </body>
       </html>
     </ClerkProvider>

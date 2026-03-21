@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './HistoryClient.module.css';
 import { SEASON_2026, getLockTime } from '@/data/tournaments';
 
@@ -9,12 +9,73 @@ interface HistoryClientProps {
     initialEntries: unknown[];
 }
 
-export default function HistoryClient({ userId, initialEntries }: HistoryClientProps) {
-    const [entries, setEntries] = useState<any[]>(initialEntries);
-    const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
+const POLL_INTERVAL_MS = 45_000;
 
-    // We no longer need to fetch on the client side since TournamentsPage
-    // fetches the entries securely via the server-side Supabase Admin client.
+export default function HistoryClient({ userId, initialEntries }: HistoryClientProps) {
+    const [entries, setEntries] = useState<any[]>(initialEntries as any[]);
+    const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
+    const [updatedIds, setUpdatedIds] = useState<Set<string>>(new Set());
+    const prevPointsRef = useRef<Map<string, number>>(new Map());
+    const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // Detect which tournament is currently live (between lockHour and end of week)
+    const now = new Date();
+    const activeTournament = SEASON_2026.find(t => {
+        const lock = getLockTime(t);
+        const end = new Date(t.endDate + 'T23:59:59');
+        return now >= lock && now <= end;
+    });
+
+    // Seed initial points map
+    useEffect(() => {
+        const m = new Map<string, number>();
+        (initialEntries as any[]).forEach(e => m.set(e.id, e.total_points ?? 0));
+        prevPointsRef.current = m;
+    }, [initialEntries]);
+
+    const pollLiveEntry = useCallback(async () => {
+        if (!activeTournament || !userId) return;
+        try {
+            const res = await fetch(`/api/leaderboard?tournamentId=${activeTournament.id}&userId=${userId}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            const myEntry = (data.entries || []).find((e: any) => e.userId === userId);
+            if (!myEntry) return;
+
+            const changed = new Set<string>();
+            setEntries(prev => prev.map(e => {
+                if (e.tournament_id !== activeTournament.id) return e;
+                const prevPts = prevPointsRef.current.get(e.id) ?? 0;
+                const newPts = myEntry.totalPoints ?? 0;
+                if (prevPts !== newPts) changed.add(e.id);
+                return {
+                    ...e,
+                    total_points: myEntry.totalPoints,
+                    tournament_rank: myEntry.rank,
+                    breakdown_data: myEntry.breakdownData,
+                };
+            }));
+
+            if (changed.size > 0) {
+                // Update ref with new points
+                changed.forEach(id => prevPointsRef.current.set(id, myEntry.totalPoints ?? 0));
+                setUpdatedIds(changed);
+                setTimeout(() => setUpdatedIds(new Set()), 1200);
+            }
+        } catch { /* ignore */ }
+    }, [activeTournament, userId]);
+
+    useEffect(() => {
+        if (!activeTournament || !userId) return;
+
+        const start = () => { pollTimerRef.current = setInterval(pollLiveEntry, POLL_INTERVAL_MS); };
+        const stop = () => { if (pollTimerRef.current) clearInterval(pollTimerRef.current); };
+        const onVisibility = () => { document.hidden ? stop() : (pollLiveEntry(), start()); };
+
+        start();
+        document.addEventListener('visibilitychange', onVisibility);
+        return () => { stop(); document.removeEventListener('visibilitychange', onVisibility); };
+    }, [activeTournament, userId, pollLiveEntry]);
 
     if (!userId) {
         return (
@@ -63,7 +124,14 @@ export default function HistoryClient({ userId, initialEntries }: HistoryClientP
                                 </div>
                                 <div className={styles.statBox}>
                                     <label>Pts</label>
-                                    <span>{entry.total_points?.toFixed(1) ?? '—'}</span>
+                                    <span
+                                        key={`${entry.id}-${entry.total_points}`}
+                                        style={updatedIds.has(entry.id) ? {
+                                            display: 'inline-block',
+                                            animation: 'popUpdate 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+                                            color: '#38bdf8',
+                                        } : undefined}
+                                    >{entry.total_points?.toFixed(1) ?? '—'}</span>
                                 </div>
                                 <a
                                     href={`/leaderboard/${entry.tournament_id}`}
@@ -200,11 +268,13 @@ export default function HistoryClient({ userId, initialEntries }: HistoryClientP
                                                                     <div style={{ color: '#38bdf8', fontWeight: 'bold' }}><label>Pts:</label> {r.totalPoints}</div>
                                                                 </div>
                                                                 <div className={styles.miniBreakdown} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                                                                    <span title="Albatross or better (-3+)" style={{ color: (r.breakdown?.albatrosses || 0) > 0 ? '#fbbf24' : undefined }}>Alb: {r.breakdown?.albatrosses || 0}</span>
                                                                     <span title="Eagles">Egli: {r.breakdown?.eagles || 0}</span>
                                                                     <span title="Birdies">B: {r.breakdown?.birdies || 0}</span>
                                                                     <span title="Pars">P: {r.breakdown?.pars || 0}</span>
                                                                     <span title="Bogeys">Bg: {r.breakdown?.bogeys || 0}</span>
                                                                     <span title="Double Bogeys">Dbl: {r.breakdown?.doubles || 0}</span>
+                                                                    <span title="Triple Bogey or Worse" style={{ color: (r.breakdown?.triples || 0) > 0 ? '#ef4444' : undefined }}>Tri+: {r.breakdown?.triples || 0}</span>
                                                                 </div>
                                                                 <div className={styles.advancedStatsGrid} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '0.85rem' }}>
                                                                     <div>
@@ -250,11 +320,13 @@ export default function HistoryClient({ userId, initialEntries }: HistoryClientP
                                                                     <div style={{ color: '#3b82f6', fontWeight: 'bold' }}><label>Pts:</label> {totals.totalPoints?.toFixed(1) || totals.totalPoints}</div>
                                                                 </div>
                                                                 <div className={styles.miniBreakdown} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                                                                    <span title="Albatross or better (-3+)" style={{ color: (totals.breakdown?.albatrosses || 0) > 0 ? '#fbbf24' : undefined }}>Alb: {totals.breakdown?.albatrosses || 0}</span>
                                                                     <span title="Eagles">Egli: {totals.breakdown?.eagles || 0}</span>
                                                                     <span title="Birdies">B: {totals.breakdown?.birdies || 0}</span>
                                                                     <span title="Pars">P: {totals.breakdown?.pars || 0}</span>
                                                                     <span title="Bogeys">Bg: {totals.breakdown?.bogeys || 0}</span>
                                                                     <span title="Double Bogeys">Dbl: {totals.breakdown?.doubles || 0}</span>
+                                                                    <span title="Triple Bogey or Worse" style={{ color: (totals.breakdown?.triples || 0) > 0 ? '#ef4444' : undefined }}>Tri+: {totals.breakdown?.triples || 0}</span>
                                                                 </div>
                                                                 <div className={styles.advancedStatsGrid} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '0.85rem' }}>
                                                                     <div>

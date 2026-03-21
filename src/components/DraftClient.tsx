@@ -13,13 +13,16 @@ interface DraftProps {
     isLocked?: boolean;
     lockTime?: string;
     existingEntry?: { id: string; roster_data: unknown; budget_remaining: number } | null;
+    carryoverBudget?: number; // Leftover from previous tournament — adds to $950 base cap
 }
 
-const BUDGET_CAP = 950;
+
 const SLOTS_MPO = 4;
 const SLOTS_FPO = 2;
 
-export default function DraftClient({ players, tournamentId, tournamentName, isLocked = false, lockTime, existingEntry }: DraftProps) {
+export default function DraftClient({ players, tournamentId, tournamentName, isLocked = false, lockTime, existingEntry, carryoverBudget = 0 }: DraftProps) {
+    const BASE_BUDGET = 950;
+    const BUDGET_CAP = BASE_BUDGET + carryoverBudget;
     const [roster, setRoster] = useState<Player[]>([]);
     const [confirmed, setConfirmed] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -28,6 +31,7 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
     const [simResults, setSimResults] = useState<{ player: Player, stats: RoundStats }[] | null>(null);
     const [activeTab, setActiveTab] = useState<'MPO' | 'FPO'>('MPO');
     const [searchTerm, setSearchTerm] = useState('');
+    const [isPremium, setIsPremium] = useState(false);
     // Live countdown derived from lockTime
     const [clientLocked, setClientLocked] = useState(isLocked);
     // Approximate display countdown — purely cosmetic, does NOT trigger lock
@@ -42,23 +46,41 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
     const controlsTop = NAV_HEIGHT + dashboardHeight;
 
     useEffect(() => {
+        // Fetch premium status for UI gating (star ratings, etc.)
+        fetch('/api/premium/status').then(r => r.json()).then(d => {
+            if (d.isPremium) setIsPremium(true);
+        }).catch(() => { /* non-critical, fail silently */ });
+    }, []);
+
+    useEffect(() => {
         // Restore existing entry on mount.
         // Convert old static IDs ("1", "2") to new PDGA-based IDs by matching players in the pool
         // to prevent duplicate ghost players on re-saves.
         if (existingEntry) {
             const rawRoster = (existingEntry.roster_data as Player[]) || [];
             const mappedRoster = rawRoster.map(saved => {
-                // Try matching by pdgaNumber first, then name
-                const currentPoolPlayer = players.find(p =>
+                // Supplement with live pool data (updated rating, skills, etc.)
+                // but ALWAYS keep the saved.price — it is the locked-in purchase price.
+                // We start from `saved` so price can never be accidentally overwritten.
+                const livePlayer = players.find(p =>
                     (saved.pdgaNumber && p.pdgaNumber === saved.pdgaNumber) ||
                     (p.firstName === saved.firstName && p.lastName === saved.lastName)
                 );
-                // CRITICAL FIX: Preserve the original purchase price so dynamic inflation 
-                // between sessions doesn't push the user's budget into the negative!
-                if (currentPoolPlayer) {
-                    return { ...currentPoolPlayer, price: saved.price ?? currentPoolPlayer.price };
-                }
-                return saved;
+                return {
+                    ...saved,
+                    // Pull in updated skills & rating from live pool, but keep saved price
+                    ...(livePlayer ? {
+                        rating: livePlayer.rating,
+                        tier: livePlayer.tier,
+                        power: livePlayer.power,
+                        accuracy: livePlayer.accuracy,
+                        recovery: livePlayer.recovery,
+                        resilience: livePlayer.resilience,
+                        versatility: livePlayer.versatility,
+                    } : {}),
+                    // price is ALWAYS from the saved entry — never from the live pool
+                    price: saved.price,
+                };
             });
 
             setRoster(mappedRoster);
@@ -314,7 +336,7 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
                 {/* Centering wrapper — on mobile this wraps into two rows */}
                 <div className={styles.dashboardInner}>
                     <div className={styles.metric}>
-                        <span className={styles.metricLabel}>Budget</span>
+                        <span className={styles.metricLabel}>Budget{carryoverBudget > 0 ? ` (+$${carryoverBudget} carry)` : ''}</span>
                         <span className={`${styles.metricValue} ${remainingBudget < 0 ? styles.danger : ''}`}>${remainingBudget}</span>
                     </div>
 
@@ -520,9 +542,11 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
                                         isSelected={isSelected}
                                         disabled={clientLocked || (!isSelected && (isFullType || tooExpensive))}
                                         isRegistered={isRegistered}
+                                        isPremium={isPremium}
                                     />
                                 );
                             })}
+
                     </div>
                 )
             }

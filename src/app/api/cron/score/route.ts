@@ -179,8 +179,23 @@ export async function GET(request: Request) {
             top20.reduce((s, p) => s + p.rr.reduce((a, b) => a + b, 0) / p.rr.length, 0) / top20.length
         );
         const bonus = Math.max(0, upperBound - avgRR);
+        difficultyBonusPct.set(div, bonus);
         console.log(`Difficulty bonus [${div}]: upper=${upperBound}, top20_avg_rr=${avgRR}, bonus=${bonus}%`);
-        if (bonus > 0) difficultyBonusPct.set(div, bonus);
+    }
+
+    try {
+        const mpoBonus = difficultyBonusPct.get('MPO') ?? 0;
+        const fpoBonus = difficultyBonusPct.get('FPO') ?? 0;
+        if (divisionComplete.get('MPO') || divisionComplete.get('FPO')) {
+            await supabaseAdmin.from('tournament_difficulty_bonuses').upsert({
+                tournament_id: tournament.id,
+                mpo_bonus_pct: mpoBonus,
+                fpo_bonus_pct: fpoBonus,
+                computed_at: now.toISOString(),
+            }, { onConflict: 'tournament_id' });
+        }
+    } catch (e) {
+        console.warn('Score cron: failed to persist difficulty bonus', e);
     }
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -221,7 +236,7 @@ export async function GET(request: Request) {
             const realRounds = rounds.filter(r => (r.strokes ?? 0) > 0);
 
             if (realRounds.length > 0) {
-                let pts = 0, strokes = 0, toPar = 0, albatrosses = 0, eagles = 0, birdies = 0, pars = 0, bogeys = 0, doubles = 0;
+                let pts = 0, strokes = 0, toPar = 0, albatrosses = 0, eagles = 0, birdies = 0, pars = 0, bogeys = 0, doubles = 0, triples = 0;
                 let c1xSum = 0, c2Sum = 0, fairwaySum = 0, c1RegSum = 0, c2RegSum = 0, scrambleSum = 0, validRounds = 0;
                 const roundsData: any[] = [];
 
@@ -246,7 +261,7 @@ export async function GET(request: Request) {
                     pts += rPts;
                     strokes += r.strokes; toPar += r.to_par;
                     albatrosses += r.albatrosses || 0; eagles += r.eagles || 0; birdies += r.birdies || 0;
-                    pars += r.pars || 0; bogeys += r.bogeys || 0; doubles += r.double_bogeys || 0;
+                    pars += r.pars || 0; bogeys += r.bogeys || 0; doubles += r.double_bogeys || 0; triples += r.triple_bogeys || 0;
 
                     const hasAdvanced = (r.fairway_pct > 0 || r.c1_in_reg_pct > 0 || r.c1x_pct > 0);
                     if (hasAdvanced) {
@@ -262,24 +277,24 @@ export async function GET(request: Request) {
                     });
                 }
 
-                totalPoints += pts;
+                const holeScoringPts = pts; // snapshot before bonuses — difficulty multiplier applies only to this
+                totalPoints += holeScoringPts;
                 const placement = realRounds[realRounds.length - 1]?.placement ?? null;
                 const totalAces = realRounds.reduce((sum, r) => sum + (r.aces || 0), 0);
 
-                // Difficulty bonus — applied to hole-scoring pts before placement
+                // Difficulty bonus — applied ONLY to hole-scoring points, never to placement.
                 const playerDiv = realRounds[0]?.division ?? null;
                 const isDivComplete = playerDiv ? (divisionComplete.get(playerDiv) ?? false) : false;
                 const divBonus = playerDiv ? (difficultyBonusPct.get(playerDiv) ?? 0) : 0;
+                let bonusAdded = 0;
                 if (divBonus > 0 && isDivComplete) {
                     // Clamp to 0 so negative scores are never penalised further by the multiplier.
-                    // e.g. pts=-8, bonus=25% → bonusAdded=max(0, -2)=0 instead of making it -10.
-                    const bonusAdded = Math.max(0, Math.round(pts * divBonus / 100));
+                    bonusAdded = Math.max(0, Math.round(holeScoringPts * divBonus / 100));
                     pts += bonusAdded;
                     totalPoints += bonusAdded;
                 }
 
-                // Placement bonus: applied per-division only once that division's
-                // final round is fully complete (≥95% of the r1 field has scored).
+                // Placement bonus: added AFTER difficulty calculation — not subject to multiplier.
                 let placementPts = 0;
                 if (isDivComplete && placement && placement > 0) {
                     placementPts = getPlacementPoints(placement);
@@ -289,7 +304,7 @@ export async function GET(request: Request) {
 
 
                 breakdownData[player.id] = {
-                    totals: { strokes, toPar, totalPoints: pts, tournamentRank: placement, placementPoints: placementPts, difficultyBonusPct: divBonus, breakdown: { albatrosses, eagles, birdies, pars, bogeys, doubles, triples: 0, aces: totalAces }, advanced: validRounds > 0 ? { c1xPutting: +(c1xSum / validRounds).toFixed(2), c2Putting: +(c2Sum / validRounds).toFixed(2), fairwayHits: +(fairwaySum / validRounds).toFixed(2), c1InReg: +(c1RegSum / validRounds).toFixed(2), c2InReg: +(c2RegSum / validRounds).toFixed(2), scramble: +(scrambleSum / validRounds).toFixed(2) } : null, bonuses: { bogeyFree: false, streak3: false, ace: totalAces > 0 } },
+                    totals: { strokes, toPar, totalPoints: pts, tournamentRank: placement, placementPoints: placementPts, difficultyBonusPct: divBonus, breakdown: { albatrosses, eagles, birdies, pars, bogeys, doubles, triples, aces: totalAces }, advanced: validRounds > 0 ? { c1xPutting: +(c1xSum / validRounds).toFixed(2), c2Putting: +(c2Sum / validRounds).toFixed(2), fairwayHits: +(fairwaySum / validRounds).toFixed(2), c1InReg: +(c1RegSum / validRounds).toFixed(2), c2InReg: +(c2RegSum / validRounds).toFixed(2), scramble: +(scrambleSum / validRounds).toFixed(2) } : null, bonuses: { bogeyFree: false, streak3: false, ace: totalAces > 0 } },
                     rounds: roundsData,
                 };
             } else {

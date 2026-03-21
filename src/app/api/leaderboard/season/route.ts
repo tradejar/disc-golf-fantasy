@@ -1,11 +1,29 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SEASON_2026 } from '@/data/tournaments';
+import { auth } from '@clerk/nextjs/server';
 
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const leagueId = searchParams.get('leagueId') || null;
+
+        // Fix #2: for league-scoped requests, enforce that the caller is a member
+        if (leagueId) {
+            const { userId } = await auth();
+            if (!userId) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+            const { data: membership } = await supabaseAdmin
+                .from('league_members')
+                .select('league_id')
+                .eq('league_id', leagueId)
+                .eq('user_id', userId)
+                .maybeSingle();
+            if (!membership) {
+                return NextResponse.json({ error: 'Not a member of this league' }, { status: 403 });
+            }
+        }
 
         // Fetch all entries for all 2026 tournaments
         const tournamentIds = SEASON_2026.map(t => t.id);
@@ -87,8 +105,28 @@ export async function GET(request: Request) {
             });
         });
 
-        // Sort by total season points
+        // Determine which tournaments are "complete" — lock time has passed AND end+1 day is in the past.
+        // In-progress tournaments (scoring underway mid-round) are excluded from season totals
+        // so partial scores don't skew standings.
+        const now2 = new Date();
+        const completedTournamentIds = new Set(
+            SEASON_2026.filter(t => {
+                const endPlus = new Date(t.endDate);
+                endPlus.setUTCDate(endPlus.getUTCDate() + 1);
+                endPlus.setUTCHours(23, 59, 59, 999);
+                return now2 > endPlus;
+            }).map(t => t.id)
+        );
+
+        // Sort by total season points (only from completed tournaments)
         const season = Array.from(userMap.values())
+            .map(u => ({
+                ...u,
+                // Recalculate totalPoints using only completed tournament entries
+                totalPoints: u.tournaments
+                    .filter(t => completedTournamentIds.has(t.tournamentId))
+                    .reduce((sum, t) => sum + (t.points ?? 0), 0),
+            }))
             .sort((a, b) => b.totalPoints - a.totalPoints)
             .map((u, index) => ({ ...u, rank: index + 1 }));
 

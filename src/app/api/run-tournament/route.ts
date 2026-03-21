@@ -72,6 +72,7 @@ export async function POST(req: Request) {
                 let pts = 0;
                 let strokes = 0;
                 let toPar = 0;
+                let albatrosses = 0;
                 let eagles = 0;
                 let birdies = 0;
                 let pars = 0;
@@ -91,6 +92,7 @@ export async function POST(req: Request) {
                     // Fallback to manual calculation if fantasy_points doesn't exist yet
                     if (rPts === undefined || rPts === null) {
                         rPts = 0;
+                        rPts += (r.albatrosses || 0) * rule.albatross;
                         rPts += (r.eagles || 0) * rule.eagle;
                         rPts += (r.birdies || 0) * rule.birdie;
                         rPts += (r.pars || 0) * rule.par;
@@ -106,6 +108,7 @@ export async function POST(req: Request) {
                     strokes += r.strokes;
                     toPar += r.to_par;
 
+                    albatrosses += r.albatrosses || 0;
                     eagles += r.eagles;
                     birdies += r.birdies;
                     pars += r.pars;
@@ -129,7 +132,7 @@ export async function POST(req: Request) {
                         strokes: r.strokes,
                         toPar: r.to_par,
                         totalPoints: rPts,
-                        breakdown: { eagles: r.eagles, birdies: r.birdies, pars: r.pars, bogeys: r.bogeys, doubles: r.double_bogeys, triples: 0, aces: 0 },
+                        breakdown: { albatrosses: r.albatrosses || 0, eagles: r.eagles, birdies: r.birdies, pars: r.pars, bogeys: r.bogeys, doubles: r.double_bogeys, triples: 0, aces: 0 },
                         advanced: hasStats ? {
                             c1xPutting: r.c1x_pct || 0,
                             c2Putting: r.c2_pct || 0,
@@ -149,7 +152,7 @@ export async function POST(req: Request) {
                     totalPoints: pts,
                     tournamentRank: placement,
                     placementPoints: 0,
-                    breakdown: { eagles, birdies, pars, bogeys, doubles, triples: 0, aces: 0 },
+                    breakdown: { albatrosses, eagles, birdies, pars, bogeys, doubles, triples: 0, aces: 0 },
                     advanced: validRounds === rounds.length && rounds.length > 0 ? {
                         c1xPutting: Number((c1xSum / validRounds).toFixed(2)),
                         c2Putting: Number((c2Sum / validRounds).toFixed(2)),

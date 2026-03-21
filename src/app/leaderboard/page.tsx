@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { auth } from '@clerk/nextjs/server';
+import { getLockTime, SEASON_2026 } from '@/data/tournaments';
 import SeasonLeaderboardTabs from '@/components/SeasonLeaderboardTabs';
 import Link from 'next/link';
 
@@ -12,19 +13,23 @@ export default async function SeasonLeaderboardPage() {
             .from('league_members')
             .select(`
                 league_id,
-                leagues ( id, name )
+                archived_at,
+                leagues ( id, name, tournament_ids )
             `)
-            .eq('user_id', userId);
+            .eq('user_id', userId)
+            .is('archived_at', null);   // ← exclude leagues the user has archived
 
         if (!error && data) {
-            // @ts-ignore
-            leagues = data.map(m => m.leagues).filter(Boolean) as { id: string; name: string }[];
+            leagues = (data as any[])
+                .map(m => m.leagues)
+                .filter(Boolean)
+                .map((l: any) => ({ id: l.id, name: l.name }));
         }
     }
 
     return (
         <main style={{ background: '#0f172a', minHeight: '100vh', padding: '2rem' }}>
-            {userId && leagues.length > 0 && (
+            {userId && (
                 <div style={{ maxWidth: '800px', margin: '0 auto', marginBottom: '1rem' }}>
                     <Link href="/leagues/create" style={{ color: '#3b82f6', textDecoration: 'none', fontSize: '0.9rem' }}>+ Create a New Mini-League</Link>
                 </div>

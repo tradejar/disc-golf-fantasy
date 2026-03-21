@@ -17,33 +17,44 @@ export async function POST(req: Request) {
         // 1. Find the League by Access Code
         const { data: league, error: findError } = await supabaseAdmin
             .from('leagues')
-            .select('id, name, entry_fee')
+            .select('id, name, entry_fee, invite_paused')
             .eq('access_code', accessCode.toUpperCase().trim())
             .maybeSingle();
 
         if (findError) throw new Error(`Database error looking up league: ${findError.message}`);
         if (!league) return NextResponse.json({ error: 'Invalid Access Code. League not found.' }, { status: 404 });
+        if (league.invite_paused) return NextResponse.json({ error: 'Invitations for this league are currently paused by the creator.' }, { status: 403 });
 
-        // Phase 1: Free Leagues only. (Phase 2 will handle Stripe redirect here if entry_fee > 0)
-        // Ensure they aren't already in the league
+        // Check not already a paid/pending member
         const { data: existingMember } = await supabaseAdmin
             .from('league_members')
-            .select('league_id')
+            .select('league_id, payment_status')
             .eq('league_id', league.id)
             .eq('user_id', userId)
             .maybeSingle();
 
+        if (existingMember?.payment_status === 'paid') {
+            return NextResponse.json({ error: 'You are already a member of this league!' }, { status: 400 });
+        }
+
+        // 2a. Paid league → tell client to go through Stripe checkout
+        if (league.entry_fee && league.entry_fee > 0) {
+            return NextResponse.json({
+                requiresPayment: true,
+                leagueId: league.id,
+                leagueName: league.name,
+                entryFee: league.entry_fee,
+            });
+        }
+
+        // 2b. Free league → join directly
         if (existingMember) {
             return NextResponse.json({ error: 'You are already a member of this league!' }, { status: 400 });
         }
 
-        // 2. Add User to League
         const { error: joinError } = await supabaseAdmin
             .from('league_members')
-            .insert({
-                league_id: league.id,
-                user_id: userId
-            });
+            .insert({ league_id: league.id, user_id: userId, payment_status: 'free' });
 
         if (joinError) throw new Error(`Failed to join league: ${joinError.message}`);
 

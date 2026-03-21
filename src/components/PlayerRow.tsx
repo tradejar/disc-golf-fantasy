@@ -9,9 +9,10 @@ interface PlayerRowProps {
     disabled: boolean;
     isSelected: boolean;
     isRegistered?: boolean;
+    isPremium?: boolean;
 }
 
-export default function PlayerRow({ player, onDraft, disabled, isSelected, isRegistered }: PlayerRowProps) {
+export default function PlayerRow({ player, onDraft, disabled, isSelected, isRegistered, isPremium = false }: PlayerRowProps) {
     const value = player.price > 0 ? (player.rating / player.price).toFixed(2) : '-';
 
     return (
@@ -33,7 +34,7 @@ export default function PlayerRow({ player, onDraft, disabled, isSelected, isReg
                     )}
                 </span>
                 <span className={styles.division}>{player.division}</span>
-                <PlayerRatings player={player} />
+                <PlayerRatings player={player} isPremium={isPremium} />
             </div>
 
             <div className={styles.mobileStats}>

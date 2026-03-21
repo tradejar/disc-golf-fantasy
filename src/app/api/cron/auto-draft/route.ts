@@ -6,10 +6,8 @@ import { Player } from '@/data/mock-schema';
 
 export const maxDuration = 60;
 
-// Auto-draft uses $850 budget — $100 less than the standard $950.
-// This is a fairness tax: users who draft manually can spend more.
-const BUDGET_CAP = 850;
-const FULL_BUDGET = 950; // Standard manual-draft budget (for reference)
+// Auto-draft is premium-only. Premium users get the full standard budget.
+const BUDGET = 950;
 const SLOTS_MPO = 4;
 const SLOTS_FPO = 2;
 
@@ -44,7 +42,7 @@ function generateAutoDraft(players: Player[]): Player[] | null {
         if (pickedFpo.length < SLOTS_FPO) continue;
 
         const total = [...pickedMpo, ...pickedFpo].reduce((s, p) => s + p.price, 0);
-        if (total <= BUDGET_CAP) {
+        if (total <= BUDGET) {
             return [...pickedMpo, ...pickedFpo];
         }
     }
@@ -53,7 +51,7 @@ function generateAutoDraft(players: Player[]): Player[] | null {
     const cheapMpo = mpo.sort((a, b) => a.price - b.price).slice(0, SLOTS_MPO);
     const cheapFpo = fpo.sort((a, b) => a.price - b.price).slice(0, SLOTS_FPO);
     const total = [...cheapMpo, ...cheapFpo].reduce((s, p) => s + p.price, 0);
-    return total <= BUDGET_CAP ? [...cheapMpo, ...cheapFpo] : null;
+    return total <= BUDGET ? [...cheapMpo, ...cheapFpo] : null;
 }
 
 export async function GET(request: Request) {
@@ -144,6 +142,13 @@ export async function GET(request: Request) {
                 continue;
             }
 
+            // Get premium users — auto-draft is premium-only
+            const { data: premiumRows } = await supabaseAdmin
+                .from('user_premium')
+                .select('user_id')
+                .eq('active', true);
+            const premiumUserIds = new Set((premiumRows ?? []).map(r => r.user_id));
+
             // Get users who already have an entry for this tournament
             const { data: existingEntries } = await supabaseAdmin
                 .from('entries')
@@ -152,7 +157,10 @@ export async function GET(request: Request) {
 
             const enteredUserIds = new Set((existingEntries || []).map(e => e.user_id));
 
-            const usersWithoutEntry = profiles.filter(p => !enteredUserIds.has(p.id));
+            // Only auto-draft premium users who haven't entered yet
+            const usersWithoutEntry = profiles.filter(p =>
+                !enteredUserIds.has(p.id) && premiumUserIds.has(p.id)
+            );
             results[tournamentId].alreadyEntered = enteredUserIds.size;
 
             for (const profile of usersWithoutEntry) {
@@ -162,9 +170,7 @@ export async function GET(request: Request) {
                     continue;
                 }
 
-                const budgetRemaining = FULL_BUDGET - roster.reduce((s, p) => s + p.price, 0);
-                // Note: budgetRemaining is calculated vs the $950 standard cap, so auto-drafted
-                // entries show a higher remaining budget — reflecting their $850 constraint.
+                const budgetRemaining = BUDGET - roster.reduce((s, p) => s + p.price, 0);
 
                 let insertResult = await supabaseAdmin
                     .from('entries')

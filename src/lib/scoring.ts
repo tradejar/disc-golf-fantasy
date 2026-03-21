@@ -1,7 +1,8 @@
 
 export interface ScoringRule {
     name: string;
-    eagle: number;
+    albatross: number; // -3 or better
+    eagle: number;    // -2
     birdie: number;
     par: number;
     bogey: number;
@@ -20,6 +21,7 @@ export interface RoundStats {
     placementPoints?: number; // Added after full field sim
     tournamentRank?: number;
     breakdown: {
+        albatrosses: number;
         eagles: number;
         birdies: number;
         pars: number;
@@ -46,7 +48,8 @@ export interface RoundStats {
 export const SCORING_RULES = {
     CUSTOM_USER: {
         name: 'User Custom',
-        eagle: 8,
+        albatross: 24, // -3 or better — the rarest shot in disc golf
+        eagle: 8,     // -2
         birdie: 3,
         par: 0,
         bogey: -2,

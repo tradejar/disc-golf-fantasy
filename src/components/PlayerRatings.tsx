@@ -1,17 +1,47 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Player } from '@/data/mock-schema';
+import Link from 'next/link';
 
 interface Props {
     player: Player;
+    isPremium?: boolean;
 }
 
-export default function PlayerRatings({ player }: Props) {
+export default function PlayerRatings({ player, isPremium = false }: Props) {
     const { power, accuracy, recovery, resilience, versatility } = player;
 
     // If player doesn't have ratings, don't break the layout but show placeholders
     const hasRatings = power !== undefined || accuracy !== undefined || recovery !== undefined;
     if (!hasRatings) return null;
+
+    // Non-premium users see a lock pill instead of the star grid
+    if (!isPremium) {
+        return (
+            <Link
+                href="/premium"
+                style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    marginTop: '0.3rem',
+                    background: 'rgba(251,191,36,0.1)',
+                    border: '1px solid rgba(251,191,36,0.25)',
+                    borderRadius: '6px',
+                    padding: '2px 8px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    color: '#fbbf24',
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                }}
+                onClick={e => e.stopPropagation()}
+            >
+                🔒 Premium
+            </Link>
+        );
+    }
 
     const renderStars = (count?: number) => {
         if (!count) return <span style={{ color: '#64748b', fontSize: '9px' }}>—</span>;

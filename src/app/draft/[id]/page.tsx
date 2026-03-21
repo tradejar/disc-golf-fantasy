@@ -8,6 +8,10 @@ import { notFound, redirect } from 'next/navigation';
 import { calculatePrice, calculateDynamicPrice, FormHistory } from '@/lib/pricing';
 import { Player } from '@/data/mock-schema';
 
+// Must always render fresh — isLocked is time-sensitive and must never be cached
+export const dynamic = 'force-dynamic';
+
+
 export default async function DraftPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const tournament = SEASON_2026.find(t => t.id === id);
@@ -94,15 +98,39 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
     // and track entryId — prevents duplicate inserts on re-save
     const { userId } = await auth();
     let existingEntry: { id: string; roster_data: unknown; budget_remaining: number } | null = null;
+    let carryoverBudget = 0;
 
     if (userId) {
-        const { data } = await supabaseAdmin
+        // Fetch the current tournament entry (for pre-populating picks)
+        const { data: currentEntry } = await supabaseAdmin
             .from('entries')
             .select('id, roster_data, budget_remaining')
             .eq('user_id', userId)
             .eq('tournament_id', tournament.id)
             .maybeSingle();
-        existingEntry = data ?? null;
+        existingEntry = currentEntry ?? null;
+
+        // ── Budget Carry-Over ─────────────────────────────────────────────────
+        // Find the most recently COMPLETED tournament (locked before now, in season order)
+        // and carry its leftover budget into this draft's cap.
+        // budget_remaining is saved as Math.max(0, …) so it's always non-negative.
+        const completedTournaments = SEASON_2026
+            .filter(t => getLockTime(t) <= now && t.id !== tournament.id)
+            .sort((a, b) => getLockTime(b).getTime() - getLockTime(a).getTime()); // most recent first
+
+        if (completedTournaments.length > 0) {
+            const previousTournamentId = completedTournaments[0].id;
+            const { data: prevEntry } = await supabaseAdmin
+                .from('entries')
+                .select('budget_remaining')
+                .eq('user_id', userId)
+                .eq('tournament_id', previousTournamentId)
+                .maybeSingle();
+
+            if (prevEntry) {
+                carryoverBudget = Math.max(0, prevEntry.budget_remaining);
+            }
+        }
     }
 
     return (
@@ -114,6 +142,7 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
                 isLocked={isLocked}
                 lockTime={lockTime.toISOString()}
                 existingEntry={existingEntry}
+                carryoverBudget={carryoverBudget}
             />
         </main>
     );

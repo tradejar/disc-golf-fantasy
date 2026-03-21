@@ -19,7 +19,6 @@ export async function GET(request: Request) {
         }
 
         // Picks are hidden until the draft locks (= first card tees off / PDGA streams).
-        // Using getLockTime instead of midnight to match the actual lock trigger.
         const now = new Date();
         const lockTime = getLockTime(tournament);
         const isStarted = now >= lockTime;
@@ -33,15 +32,15 @@ export async function GET(request: Request) {
                 .eq('league_id', leagueId);
 
             if (lmError) {
-                console.error("League members query error:", lmError);
-                return NextResponse.json({ error: "Failed to verify league membership." }, { status: 500 });
+                console.error('League members query error:', lmError);
+                return NextResponse.json({ error: 'Failed to verify league membership.' }, { status: 500 });
             }
             authorizedLeagueMembers = leagueMembersData?.map(m => m.user_id) || [];
         }
 
         let entriesQuery = supabaseAdmin
             .from('entries')
-            .select('id, user_id, roster_data, total_points, tournament_rank, created_at, budget_remaining')
+            .select('id, user_id, roster_data, breakdown_data, total_points, tournament_rank, created_at, budget_remaining')
             .filter('tournament_id', 'eq', tournamentId);
 
         if (authorizedLeagueMembers) {
@@ -106,6 +105,7 @@ export async function GET(request: Request) {
                 totalPoints: entry.total_points ?? null,
                 budgetRemaining: entry.budget_remaining,
                 roster,
+                breakdownData: (isStarted || isOwn) ? (entry.breakdown_data ?? null) : null,
                 picksHidden: !isStarted && !isOwn,
                 autoDrafted: autoDraftedMap.get(entry.id) ?? false,
                 createdAt: entry.created_at,
@@ -118,6 +118,7 @@ export async function GET(request: Request) {
             isStarted,
             entries: leaderboard
         });
+
     } catch (e: unknown) {
         console.error('Leaderboard error:', e);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
