@@ -24,7 +24,7 @@ export async function POST(req: Request) {
         mode: 'subscription',
         line_items: [{ price: priceId, quantity: 1 }],
         metadata: { userId },
-        success_url: `${appUrl}/premium?upgraded=1`,
+        success_url: `${appUrl}/api/premium/activate?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${appUrl}/premium?cancelled=1`,
     });
 

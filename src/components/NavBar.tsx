@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import SubscriptionPage from './SubscriptionPage';
 
 const NAV_LINKS = [
     { href: '/season', label: 'Season' },
@@ -29,7 +30,7 @@ function TierBadge() {
 
     if (isPremium) {
         return (
-            <span style={{
+            <Link href="/premium" style={{
                 display: 'inline-flex', alignItems: 'center', gap: '4px',
                 background: 'linear-gradient(135deg, rgba(251,191,36,0.15), rgba(245,158,11,0.1))',
                 border: '1px solid rgba(251,191,36,0.35)',
@@ -39,10 +40,11 @@ function TierBadge() {
                 fontWeight: 800,
                 color: '#fbbf24',
                 letterSpacing: '0.02em',
+                textDecoration: 'none',
                 userSelect: 'none',
             }}>
                 ⚡ Premium
-            </span>
+            </Link>
         );
     }
 
@@ -122,6 +124,13 @@ export default function NavBar() {
                         {/* Tier badge — shown only to signed-in users */}
                         <TierBadge />
                         <UserButton>
+                            <UserButton.UserProfilePage
+                                label="Subscription"
+                                labelIcon={<span style={{ fontSize: '0.9rem' }}>⚡</span>}
+                                url="subscription"
+                            >
+                                <SubscriptionPage />
+                            </UserButton.UserProfilePage>
                             <UserButton.MenuItems>
                                 <UserButton.Link
                                     label="Manage Subscription"

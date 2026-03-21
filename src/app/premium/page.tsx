@@ -16,12 +16,14 @@ function PremiumContent() {
     const [plan, setPlan] = useState<'monthly' | 'yearly'>('yearly');
     const [loading, setLoading] = useState(false);
     const [isPremium, setIsPremium] = useState(false);
+    const [activePlan, setActivePlan] = useState<'monthly' | 'yearly' | null>(null);
     const upgraded = searchParams.get('upgraded') === '1';
     const cancelled = searchParams.get('cancelled') === '1';
 
     useEffect(() => {
         fetch('/api/premium/status').then(r => r.json()).then(d => {
             if (d.isPremium) setIsPremium(true);
+            if (d.plan) setActivePlan(d.plan);
         }).catch(() => { });
     }, []);
 
@@ -96,71 +98,81 @@ function PremiumContent() {
                     ))}
                 </div>
 
-                {/* Plan picker + checkout */}
-                {!isPremium && (
-                    <div style={{ background: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '2rem' }}>
-                        <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>Choose a plan</div>
+                {/* Plan picker + checkout — always shown so premium users can switch plans */}
+                <div style={{ background: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '2rem' }}>
+                    <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>
+                        {isPremium ? 'Your plan · Switch any time' : 'Choose a plan'}
+                    </div>
 
-                        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                            {/* Monthly */}
-                            {(['monthly', 'yearly'] as const).map(p => (
+                    <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                        {/* Monthly */}
+                        {(['monthly', 'yearly'] as const).map(p => {
+                            const isActive = activePlan === p;
+                            return (
                                 <button
                                     key={p}
-                                    onClick={() => setPlan(p)}
+                                    onClick={() => !isActive && setPlan(p)}
+                                    disabled={isActive}
                                     style={{
                                         flex: '1 1 200px',
                                         padding: '1.1rem 1.25rem',
                                         borderRadius: '12px',
-                                        border: `2px solid ${plan === p ? '#fbbf24' : '#334155'}`,
-                                        background: plan === p ? 'rgba(251,191,36,0.08)' : '#0f172a',
-                                        color: plan === p ? '#fbbf24' : '#94a3b8',
-                                        cursor: 'pointer',
+                                        border: `2px solid ${isActive ? 'rgba(251,191,36,0.5)' : plan === p ? '#fbbf24' : '#334155'}`,
+                                        background: isActive ? 'rgba(251,191,36,0.06)' : plan === p ? 'rgba(251,191,36,0.08)' : '#0f172a',
+                                        color: isActive ? '#fbbf24' : plan === p ? '#fbbf24' : '#94a3b8',
+                                        cursor: isActive ? 'default' : 'pointer',
                                         textAlign: 'left',
                                         transition: 'all 0.15s',
+                                        opacity: isActive ? 0.75 : 1,
                                     }}
                                 >
-                                    <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.2rem' }}>
-                                        {p === 'monthly' ? '$4.99 / month' : '$39.99 / year'}
+                                    <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        {p === 'monthly' ? '$2.99 / month' : '$19.99 / year'}
+                                        {isActive && <span style={{ fontSize: '0.65rem', background: 'rgba(251,191,36,0.2)', borderRadius: '4px', padding: '1px 6px', fontWeight: 700 }}>Active</span>}
                                     </div>
                                     <div style={{ fontSize: '0.78rem', opacity: 0.8 }}>
-                                        {p === 'monthly' ? 'Billed monthly, cancel anytime' : 'Save ~33% vs monthly · Best value'}
+                                        {p === 'monthly' ? 'Billed monthly, cancel anytime' : 'Save ~44% vs monthly · Best value'}
                                     </div>
-                                    {p === 'yearly' && (
+                                    {p === 'yearly' && !isActive && (
                                         <div style={{ marginTop: '0.35rem', display: 'inline-block', background: 'rgba(251,191,36,0.15)', borderRadius: '4px', padding: '1px 7px', fontSize: '0.7rem', fontWeight: 800, color: '#fbbf24' }}>
                                             POPULAR
                                         </div>
                                     )}
                                 </button>
-                            ))}
-                        </div>
-
-                        <button
-                            onClick={handleCheckout}
-                            disabled={loading}
-                            style={{
-                                width: '100%',
-                                padding: '1rem',
-                                borderRadius: '10px',
-                                border: 'none',
-                                background: loading ? '#334155' : 'linear-gradient(135deg, #f59e0b, #fbbf24)',
-                                color: loading ? '#64748b' : '#0f172a',
-                                fontWeight: 900,
-                                fontSize: '1.05rem',
-                                cursor: loading ? 'not-allowed' : 'pointer',
-                                transition: 'all 0.15s',
-                                boxShadow: loading ? 'none' : '0 4px 20px rgba(251,191,36,0.3)',
-                            }}
-                        >
-                            {loading
-                                ? 'Redirecting…'
-                                : `Subscribe ${plan === 'monthly' ? '— $4.99/mo' : '— $39.99/yr'} →`}
-                        </button>
-
-                        <p style={{ color: '#475569', fontSize: '0.78rem', textAlign: 'center', marginTop: '1rem', marginBottom: 0 }}>
-                            Secured by Stripe · Cancel anytime in your account · No hidden fees
-                        </p>
+                            );
+                        })}
                     </div>
-                )}
+
+                    <button
+                        onClick={handleCheckout}
+                        disabled={loading || activePlan === plan}
+                        style={{
+                            width: '100%',
+                            padding: '1rem',
+                            borderRadius: '10px',
+                            border: 'none',
+                            background: (loading || activePlan === plan) ? '#334155' : 'linear-gradient(135deg, #f59e0b, #fbbf24)',
+                            color: (loading || activePlan === plan) ? '#64748b' : '#0f172a',
+                            fontWeight: 900,
+                            fontSize: '1.05rem',
+                            cursor: (loading || activePlan === plan) ? 'not-allowed' : 'pointer',
+                            transition: 'all 0.15s',
+                            boxShadow: (loading || activePlan === plan) ? 'none' : '0 4px 20px rgba(251,191,36,0.3)',
+                        }}
+                    >
+                        {loading
+                            ? 'Redirecting…'
+                            : activePlan === plan
+                                ? `✓ Current plan`
+                                : isPremium
+                                    ? `Switch to ${plan} — ${plan === 'monthly' ? '$2.99/mo' : '$19.99/yr'} →`
+                                    : `Subscribe ${plan === 'monthly' ? '— $2.99/mo' : '— $19.99/yr'} →`}
+                    </button>
+
+                    <p style={{ color: '#475569', fontSize: '0.78rem', textAlign: 'center', marginTop: '1rem', marginBottom: 0 }}>
+                        Secured by Stripe · Cancel anytime in your account · No hidden fees
+                    </p>
+                </div>
             </div>
         </main>
     );
