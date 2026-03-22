@@ -6,6 +6,8 @@ import { SEASON_2026 } from '@/data/tournaments';
 interface WeatherData {
     temp: number;
     condition: string;
+    windSpeed?: number;
+    forecast?: { temp: number; condition: string; windSpeed: number } | null;
 }
 
 function getUpcomingTournament() {
@@ -20,22 +22,35 @@ export default function TopScrollBar() {
     const [weather, setWeather] = useState<WeatherData | null>(null);
     const upcoming = getUpcomingTournament();
 
-    // Fetch current weather for upcoming tournament via Open-Meteo
+    // Fetch current weather + event-day forecast
     useEffect(() => {
         if (!upcoming.lat || !upcoming.lon) return;
-        fetch(`/api/weather?lat=${upcoming.lat}&lon=${upcoming.lon}`)
+        const eventHour = upcoming.lockHour ?? 13; // Use lock hour as proxy for round start
+        const url = `/api/weather?lat=${upcoming.lat}&lon=${upcoming.lon}&date=${upcoming.startDate}&hour=${eventHour}`;
+        fetch(url)
             .then(r => r.json())
             .then(d => { if (typeof d.temp === 'number') setWeather(d); })
             .catch(() => { });
-    }, [upcoming.id, upcoming.lat, upcoming.lon]);
+    }, [upcoming.id, upcoming.lat, upcoming.lon, upcoming.startDate, upcoming.lockHour]);
 
     const distStr = upcoming.totalDistanceFt
         ? `${upcoming.totalDistanceFt.toLocaleString()}ft`
         : 'n/a';
     const parStr = upcoming.par ? `Par ${upcoming.par}` : 'Par —';
-    const weatherStr = weather ? `${weather.condition} ${weather.temp}°F` : 'Weather: —';
 
-    // Previous year's champion for this same event/course (from tournament data)
+    // Current conditions
+    const weatherStr = weather
+        ? `${weather.condition} ${weather.temp}°F`
+        : 'Weather: —';
+
+    // Prognosis for event day
+    const prognosisStr = weather
+        ? weather.forecast
+            ? `PROGNOSIS: ${weather.forecast.temp}°F ${weather.forecast.condition} ${weather.forecast.windSpeed}mph`
+            : 'PROGNOSIS: Unavailable'
+        : 'PROGNOSIS: —';
+
+    // Previous year's champion
     const champParts: string[] = [];
     if (upcoming.prevChampMPO) champParts.push(`MPO: ${upcoming.prevChampMPO}`);
     if (upcoming.prevChampFPO) champParts.push(`FPO: ${upcoming.prevChampFPO}`);
@@ -44,10 +59,12 @@ export default function TopScrollBar() {
         : '';
 
     const sep = '          ';
-    const tickerText = `NEXT STOP: ${upcoming.name.replace(/^2026\s*/i, '')}  ·  ${upcoming.location}  ·  ${parStr}  ·  ${distStr}  ·  ${weatherStr}${champStr}`;
-    // 4 copies so the viewport never shows both ends simultaneously (avoids "half-empty" look)
+    const tickerText = `NEXT STOP: ${upcoming.name.replace(/^2026\s*/i, '')}  ·  ${upcoming.location}  ·  ${parStr}  ·  ${distStr}  ·  ${weatherStr}  ·  ${prognosisStr}${champStr}`;
     const content = [tickerText, tickerText, tickerText, tickerText].join(sep);
 
+    const GREEN = '#4ade80';
+    const BLUE = '#38bdf8';
+    const AMBER = '#fbbf24';
 
     return (
         <div className="info-ticker" style={{
@@ -67,25 +84,23 @@ export default function TopScrollBar() {
             <span
                 className="ticker-track"
                 style={{
-                    ['--ticker-dur' as string]: '40s',
+                    ['--ticker-dur' as string]: '55s',
                     fontWeight: 700,
                     letterSpacing: '0.05em',
                     color: '#fff',
                     padding: '0 1rem',
                 }}
             >
-                {content.split(/(NEXT STOP:|PREV CHAMP:)/g).map((part, i) => {
+                {content.split(/(NEXT STOP:|PREV CHAMP:|PROGNOSIS:)/g).map((part, i) => {
                     if (part === 'NEXT STOP:' || part === 'PREV CHAMP:') {
-                        return (
-                            <span key={i} style={{ color: '#4ade80', marginRight: '2px' }}>
-                                {part}
-                            </span>
-                        );
+                        return <span key={i} style={{ color: GREEN, marginRight: '2px' }}>{part}</span>;
                     }
-                    return part.split(/(\d+°F)/g).map((chunk, j) => {
-                        if (/\d+°F/.test(chunk)) {
-                            return <span key={`${i}-${j}`} style={{ color: '#38bdf8' }}>{chunk}</span>;
-                        }
+                    if (part === 'PROGNOSIS:') {
+                        return <span key={i} style={{ color: AMBER, marginRight: '2px' }}>{part}</span>;
+                    }
+                    return part.split(/(\d+°F|\d+mph)/g).map((chunk, j) => {
+                        if (/\d+°F/.test(chunk)) return <span key={`${i}-${j}`} style={{ color: BLUE }}>{chunk}</span>;
+                        if (/\d+mph/.test(chunk)) return <span key={`${i}-${j}`} style={{ color: BLUE }}>{chunk}</span>;
                         return <span key={`${i}-${j}`}>{chunk}</span>;
                     });
                 })}

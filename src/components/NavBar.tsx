@@ -6,10 +6,11 @@ import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import SubscriptionPage from './SubscriptionPage';
 
 const NAV_LINKS = [
-    { href: '/season', label: 'Season' },
+    { href: '/draft', label: 'Draft' },
     { href: '/leagues', label: 'Leagues' },
-    { href: '/tournaments', label: 'My History' },
     { href: '/leaderboard', label: 'Leaderboard' },
+    { href: '/tournaments', label: 'My History' },
+    { href: '/stats', label: 'Stats' },
     { href: '/rules', label: 'Rules' },
 ];
 
