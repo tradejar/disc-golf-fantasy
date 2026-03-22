@@ -1,8 +1,20 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SEASON_2026 } from '@/data/tournaments';
+import { MOCK_MPO_PLAYERS, MOCK_FPO_PLAYERS } from '@/data/players';
 
 export const revalidate = 300;
+
+// Build a lookup map from players.ts (the source of truth for player names)
+const PLAYER_NAME_MAP = new Map<number, { name: string; division: 'MPO' | 'FPO' }>();
+for (const p of MOCK_MPO_PLAYERS) {
+    if (p.pdgaNumber != null)
+        PLAYER_NAME_MAP.set(p.pdgaNumber, { name: `${p.firstName} ${p.lastName}`, division: 'MPO' });
+}
+for (const p of MOCK_FPO_PLAYERS) {
+    if (p.pdgaNumber != null)
+        PLAYER_NAME_MAP.set(p.pdgaNumber, { name: `${p.firstName} ${p.lastName}`, division: 'FPO' });
+}
 
 interface PlayerStats {
     pdgaNumber: string;
@@ -33,40 +45,32 @@ export async function GET(request: Request) {
     }
 
     try {
-        // 1. Fetch breakdown_data from entries for this tournament
-        const { data: entries, error: entriesError } = await supabaseAdmin
+        // Fetch all breakdown_data from entries
+        const { data: entries, error } = await supabaseAdmin
             .from('entries')
             .select('breakdown_data')
             .eq('tournament_id', tournamentId)
             .not('breakdown_data', 'is', null)
-            .limit(100);
+            .limit(200);
 
-        if (entriesError) throw entriesError;
-        if (!entries || entries.length === 0) {
-            return NextResponse.json({ players: [] });
-        }
+        if (error) throw error;
+        if (!entries || entries.length === 0) return NextResponse.json({ players: [] });
 
-        // 2. Collect unique players from all entries
-        // Keys may be plain PDGA numbers ("38008") or prefixed ("m_38008" / "f_38008")
-        const playerMap = new Map<string, PlayerStats>();
+        // Collect unique players — keys may be "38008", "m_38008", or "f_38008"
+        const playerMap = new Map<number, PlayerStats>();
 
         for (const entry of entries) {
             const bd = entry.breakdown_data;
             if (!bd || typeof bd !== 'object') continue;
 
             for (const [rawKey, playerData] of Object.entries(bd as Record<string, unknown>)) {
-                // Determine division from prefix (if any) and strip it
-                let division: 'MPO' | 'FPO' = 'MPO';
-                let pdgaNum = rawKey;
-                if (rawKey.startsWith('f_')) {
-                    division = 'FPO';
-                    pdgaNum = rawKey.slice(2);
-                } else if (rawKey.startsWith('m_')) {
-                    division = 'MPO';
-                    pdgaNum = rawKey.slice(2);
+                // Strip prefix to get clean PDGA number
+                let pdgaStr = rawKey;
+                if (rawKey.startsWith('m_') || rawKey.startsWith('f_')) {
+                    pdgaStr = rawKey.slice(2);
                 }
-
-                if (playerMap.has(pdgaNum)) continue; // first occurrence wins
+                const pdgaNum = parseInt(pdgaStr, 10);
+                if (isNaN(pdgaNum) || playerMap.has(pdgaNum)) continue;
 
                 const pd = playerData as Record<string, unknown>;
                 const totals = pd.totals as Record<string, unknown> | undefined;
@@ -83,9 +87,15 @@ export async function GET(request: Request) {
 
                 if (!breakdown) continue;
 
+                // Look up name and division from players.ts
+                const info = PLAYER_NAME_MAP.get(pdgaNum);
+                // Fallback division from key prefix if not in our roster
+                let division: 'MPO' | 'FPO' = info?.division ?? 'MPO';
+                if (rawKey.startsWith('f_')) division = 'FPO';
+
                 playerMap.set(pdgaNum, {
-                    pdgaNumber: pdgaNum,
-                    name: `#${pdgaNum}`, // placeholder until name lookup
+                    pdgaNumber: pdgaStr,
+                    name: info?.name ?? `#${pdgaNum}`,
                     division,
                     toPar: (totals.toPar as number) ?? 0,
                     breakdown: {
@@ -108,30 +118,7 @@ export async function GET(request: Request) {
             }
         }
 
-        if (playerMap.size === 0) return NextResponse.json({ players: [] });
-
-        // 3. Look up player names from players table
-        const pdgaNums = [...playerMap.keys()].map(Number).filter(n => !isNaN(n));
-
-        const { data: playersData } = await supabaseAdmin
-            .from('players')
-            .select('pdga_number, name, division')
-            .in('pdga_number', pdgaNums);
-
-        for (const p of (playersData ?? [])) {
-            const key = String(p.pdga_number);
-            const existing = playerMap.get(key);
-            if (existing) {
-                existing.name = p.name as string;
-                // Only override division from DB if we didn't detect it from prefix
-                if (!existing.division || existing.division === 'MPO') {
-                    const div = (p.division as string ?? '').toUpperCase();
-                    if (div === 'FPO' || div === 'F') existing.division = 'FPO';
-                }
-            }
-        }
-
-        // 4. Sort by toPar (best first) within each division
+        // Sort by toPar (best first)
         const players = [...playerMap.values()].sort((a, b) => a.toPar - b.toPar);
 
         return NextResponse.json({ players });

@@ -42,46 +42,32 @@ function buildStatsText(players: PlayerStat[]) {
     ).join('     ');
 }
 
-// Seamlessly looping ticker — uses a ref to measure actual content width
-function SeamlessTicker({ text, speed = 60 }: { text: string; speed?: number }) {
+// Seamlessly looping ticker using global ticker-track class
+function SeamlessTicker({ text, speed = 27 }: { text: string; speed?: number }) {
     const innerRef = useRef<HTMLSpanElement>(null);
-    const [duration, setDuration] = useState(40);
+    const [duration, setDuration] = useState(80);
 
     useEffect(() => {
         if (innerRef.current) {
-            const w = innerRef.current.scrollWidth / 2; // half because we duplicate
-            setDuration(Math.max(20, w / speed));
+            const w = innerRef.current.scrollWidth / 2;
+            setDuration(Math.max(40, w / speed));
         }
     }, [text, speed]);
 
     return (
         <div style={{ overflow: 'hidden', width: '100%' }}>
-            <style>{`
-                @keyframes seamlessScroll {
-                    from { transform: translateX(0); }
-                    to   { transform: translateX(-50%); }
-                }
-                .seamless-inner {
-                    display: inline-block;
-                    white-space: nowrap;
-                    will-change: transform;
-                }
-                .seamless-inner:hover { animation-play-state: paused !important; }
-            `}</style>
             <span
                 ref={innerRef}
-                className="seamless-inner"
+                className="ticker-track"
                 style={{
-                    animation: `seamlessScroll ${duration}s linear infinite`,
+                    ['--ticker-dur' as string]: `${duration}s`,
                     fontSize: '0.72rem',
                     color: '#111827',
                     fontWeight: 500,
                     letterSpacing: '0.01em',
                     padding: '4px 0',
-                    display: 'inline-block',
                 }}
             >
-                {/* Exact duplicate — animate -50% so it loops perfectly */}
                 <span>{text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <span>{text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
             </span>
@@ -128,16 +114,14 @@ export default function PreviousTournament() {
     if (!previous) return null;
 
     const displayName = previous.name.replace(/^2026\s*/i, '').toUpperCase();
-    const mpo = players.filter(p => p.division === 'MPO').slice(0, 12);
-    const fpo = players.filter(p => p.division === 'FPO').slice(0, 12);
+    // All players who cashed — no artificial cap
+    const mpo = players.filter(p => p.division === 'MPO');
+    const fpo = players.filter(p => p.division === 'FPO');
 
-    // Fallback: if no division split, split by index
-    const allPlayers = mpo.length === 0 && fpo.length === 0 ? players.slice(0, 12) : [];
-
-    const mpoScores = buildScoreText(mpo.length ? mpo : allPlayers.slice(0, 6));
-    const fpoScores = buildScoreText(fpo.length ? fpo : allPlayers.slice(6));
-    const mpoStats = buildStatsText(mpo.length ? mpo : allPlayers.slice(0, 6));
-    const fpoStats = buildStatsText(fpo.length ? fpo : allPlayers.slice(6));
+    const mpoScores = buildScoreText(mpo);
+    const fpoScores = buildScoreText(fpo);
+    const mpoStats = buildStatsText(mpo);
+    const fpoStats = buildStatsText(fpo);
 
     const pendingText = loading ? 'Loading...' : 'No data available for this tournament';
 
