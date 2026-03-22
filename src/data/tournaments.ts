@@ -50,7 +50,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96402', pdga_id: '96402',
         name: '2026 MVP Big Easy Open',
         startDate: '2026-03-13', endDate: '2026-03-15', rounds: 3,
-        location: 'Jefferson Parish, LA', lockHour: 14,
+        location: 'Parc des Familles, New Orleans, LA', lockHour: 14,
         distance: 4, technical: 4, elevation: 1, climate: 4, bias: 4,
         holes: 18, par: 54, totalDistanceFt: 8750,
         lat: 29.69, lon: -90.20,
