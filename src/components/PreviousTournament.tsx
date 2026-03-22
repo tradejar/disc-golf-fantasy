@@ -85,7 +85,7 @@ function SeamlessTicker({ children, speed, tickerKey }: { children: ReactNode; s
             <span
                 ref={innerRef}
                 className="ticker-track"
-                style={{ ['--ticker-dur' as string]: `${duration}s` }}
+                style={{ ['--ticker-dur' as string]: `${duration}s`, color: '#111827', fontWeight: 500, letterSpacing: '0.01em' }}
             >
                 <span style={{ display: 'inline' }}>{children}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <span style={{ display: 'inline' }}>{children}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
