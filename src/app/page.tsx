@@ -5,7 +5,7 @@ import PreviousTournament from '@/components/PreviousTournament';
 
 export default async function HomePage() {
   return (
-    <main style={{ background: '#f3f4f6', minHeight: '100vh' }}>
+    <main style={{ background: '#f3f4f6' }}>
       {/* ── Top info ticker — sticky below NavBar ── */}
       <TopScrollBar />
 

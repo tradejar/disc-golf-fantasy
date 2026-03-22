@@ -70,7 +70,7 @@ export default function HomeCards() {
                             className={`circ-disc${clicked === card.href ? ' pressed' : ''}`}
                             style={{
                                 background: COL_COLORS[card.col],
-                                boxShadow: `0 3px 10px ${COL_COLORS[card.col]}44`,
+                                boxShadow: `0 6px 16px rgba(0,0,0,0.28), 0 2px 4px rgba(0,0,0,0.18), 0 3px 10px ${COL_COLORS[card.col]}55`,
                             }}
                         />
                         <span className="circ-label">{card.label}</span>
