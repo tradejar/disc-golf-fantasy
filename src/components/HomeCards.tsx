@@ -3,124 +3,130 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Gradient stops cycling blue → teal → green across 3 columns
+const CARD_COLORS = [
+    { col: 0, color: '#3b82f6', glow: 'rgba(59,130,246,0.5)' },   // blue
+    { col: 1, color: '#06b6d4', glow: 'rgba(6,182,212,0.5)' },    // teal
+    { col: 2, color: '#10b981', glow: 'rgba(16,185,129,0.5)' },   // green
+];
+
 const NAV_CARDS = [
-    {
-        href: '/season',
-        label: 'Season',
-        desc: 'Draft your roster for each event and track live scores as they happen.',
-        accent: '#3b82f6',
-    },
-    {
-        href: '/leagues',
-        label: 'Leagues',
-        desc: 'Create private leagues, invite friends, and compete for your own prizepool.',
-        accent: '#8b5cf6',
-    },
-    {
-        href: '/leaderboard',
-        label: 'Leaderboard',
-        desc: "See who's leading the 2026 season standings across all completed events.",
-        accent: '#f59e0b',
-    },
-    {
-        href: '/tournaments',
-        label: 'My History',
-        desc: 'Review your entries, final rosters, and point totals from past tournaments.',
-        accent: '#10b981',
-    },
+    { href: '/season', label: 'DRAFT', icon: '🥏', col: 0 },
+    { href: '/leagues', label: 'LEAGUES', icon: '🏆', col: 1 },
+    { href: '/leaderboard', label: 'LEADERBOARD', icon: '📊', col: 2 },
+    { href: '/tournaments', label: 'MY HISTORY', icon: '📅', col: 0 },
+    { href: '/leaderboard?tab=stats', label: 'STATS', icon: '📈', col: 1 },
+    { href: '/premium', label: 'SUBSCRIPTION', icon: '⚡', col: 2 },
 ];
 
 export default function HomeCards() {
     const router = useRouter();
-    const [hovered, setHovered] = useState<string | null>(null);
     const [clicked, setClicked] = useState<string | null>(null);
+    const [hovered, setHovered] = useState<string | null>(null);
 
     const handleClick = (href: string) => {
         setClicked(href);
         setTimeout(() => {
             setClicked(null);
             router.push(href);
-        }, 280);
+        }, 320);
     };
 
     return (
         <>
             <style>{`
-        @keyframes cardFlash {
-          0%   { opacity: 1; transform: scale(1); }
-          30%  { opacity: 0.85; transform: scale(0.97); }
-          60%  { opacity: 1; transform: scale(1.015); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-        .home-card {
-          display: flex;
-          align-items: stretch;
-          background: #111827;
-          border: 1px solid #1e293b;
-          border-radius: 10px;
-          text-decoration: none;
-          overflow: hidden;
-          cursor: pointer;
-          transition:
-            transform 0.18s cubic-bezier(.22,1,.36,1),
-            box-shadow 0.18s ease,
-            border-color 0.18s ease;
-        }
-        .home-card:hover {
-          transform: translateY(-4px) scale(1.01);
-        }
-        .home-card.clicked {
-          animation: cardFlash 0.28s ease forwards;
-        }
-      `}</style>
+                @keyframes circleRipple {
+                    0%   { box-shadow: 0 0 0 0px var(--btn-glow); opacity: 1; transform: scale(0.93); }
+                    40%  { box-shadow: 0 0 0 14px transparent; opacity: 0.8; transform: scale(1.06); }
+                    70%  { transform: scale(0.97); }
+                    100% { box-shadow: 0 0 0 0px transparent; opacity: 1; transform: scale(1); }
+                }
+                .circ-btn {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 0.6rem;
+                    cursor: pointer;
+                    background: none;
+                    border: none;
+                    padding: 0;
+                    flex: 1;
+                    min-width: 0;
+                }
+                .circ-inner {
+                    width: 88px;
+                    height: 88px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 2rem;
+                    transition: transform 0.15s ease, box-shadow 0.15s ease;
+                    position: relative;
+                }
+                .circ-btn:hover .circ-inner {
+                    transform: scale(1.07);
+                }
+                .circ-inner.clicked {
+                    animation: circleRipple 0.32s cubic-bezier(.22,1,.36,1) forwards;
+                }
+                .circ-label {
+                    font-size: 0.62rem;
+                    font-weight: 800;
+                    letter-spacing: 0.08em;
+                    color: #cbd5e1;
+                    text-transform: uppercase;
+                    text-align: center;
+                    line-height: 1.2;
+                }
+                @media (min-width: 400px) {
+                    .circ-inner { width: 96px; height: 96px; }
+                }
+                @media (min-width: 600px) {
+                    .circ-inner { width: 108px; height: 108px; font-size: 2.3rem; }
+                    .circ-label { font-size: 0.7rem; }
+                }
+            `}</style>
 
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                gap: '0.75rem',
-                marginBottom: '4rem',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '1.4rem 0.5rem',
+                padding: '2.5rem 1.2rem',
+                maxWidth: '520px',
+                margin: '0 auto',
+                width: '100%',
             }}>
-                {NAV_CARDS.map(card => {
-                    const isHovered = hovered === card.href;
+                {NAV_CARDS.map((card) => {
+                    const { color, glow } = CARD_COLORS[card.col];
                     const isClicked = clicked === card.href;
+                    const isHovered = hovered === card.href;
 
                     return (
-                        <div
+                        <button
                             key={card.href}
-                            className={`home-card${isClicked ? ' clicked' : ''}`}
-                            style={{
-                                boxShadow: isHovered
-                                    ? `0 8px 32px ${card.accent}33, 0 2px 8px rgba(0,0,0,0.4)`
-                                    : '0 2px 8px rgba(0,0,0,0.2)',
-                                borderColor: isHovered ? `${card.accent}66` : '#1e293b',
-                            }}
+                            className="circ-btn"
+                            onClick={() => handleClick(card.href)}
                             onMouseEnter={() => setHovered(card.href)}
                             onMouseLeave={() => setHovered(null)}
-                            onClick={() => handleClick(card.href)}
+                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                            // @ts-expect-error css custom props
+                            style={{ '--btn-glow': glow }}
                         >
-                            {/* Left accent bar — expands on hover */}
-                            <div style={{
-                                width: isHovered ? '6px' : '4px',
-                                background: card.accent,
-                                flexShrink: 0,
-                                transition: 'width 0.18s ease',
-                            }} />
-                            <div style={{ padding: '1.75rem 1.5rem' }}>
-                                <div style={{
-                                    color: isHovered ? card.accent : 'white',
-                                    fontWeight: 800,
-                                    fontSize: '1.3rem',
-                                    marginBottom: '0.5rem',
-                                    letterSpacing: '-0.02em',
-                                    transition: 'color 0.18s ease',
-                                }}>
-                                    {card.label}
-                                </div>
-                                <div style={{ color: '#475569', fontSize: '0.9rem', lineHeight: 1.55 }}>
-                                    {card.desc}
-                                </div>
+                            <div
+                                className={`circ-inner${isClicked ? ' clicked' : ''}`}
+                                style={{
+                                    background: `radial-gradient(circle at 35% 35%, ${color}dd, ${color}88)`,
+                                    boxShadow: isHovered
+                                        ? `0 0 0 3px ${color}44, 0 8px 28px ${glow}`
+                                        : `0 4px 16px ${color}44`,
+                                    border: `2px solid ${color}66`,
+                                }}
+                            >
+                                {card.icon}
                             </div>
-                        </div>
+                            <span className="circ-label">{card.label}</span>
+                        </button>
                     );
                 })}
             </div>

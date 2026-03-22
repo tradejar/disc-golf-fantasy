@@ -14,6 +14,12 @@ export interface SeasonTournament {
     elevation?: number;
     climate?: number;
     bias?: number;
+    /** Number of holes on the main course */
+    holes?: number;
+    /** Par for one full round */
+    par?: number;
+    /** Total layout distance in feet (one round) */
+    totalDistanceFt?: number;
 }
 
 /**
@@ -32,21 +38,24 @@ export const SEASON_2026: SeasonTournament[] = [
         name: '2026 Discraft\u2019s Supreme Flight Open',
         startDate: '2026-02-27', endDate: '2026-03-01', rounds: 3,
         location: 'Brooksville, FL', lockHour: 13,
-        distance: 4, technical: 4, elevation: 4, climate: 4, bias: 4
+        distance: 4, technical: 4, elevation: 4, climate: 4, bias: 4,
+        holes: 18, par: 54, totalDistanceFt: 8340,
     },
     {
         id: '96402', pdga_id: '96402',
         name: '2026 MVP Big Easy Open',
         startDate: '2026-03-13', endDate: '2026-03-15', rounds: 3,
         location: 'Jefferson Parish, LA', lockHour: 14,
-        distance: 4, technical: 4, elevation: 1, climate: 4, bias: 4
+        distance: 4, technical: 4, elevation: 1, climate: 4, bias: 4,
+        holes: 18, par: 54, totalDistanceFt: 8750,
     },
     {
         id: '96403', pdga_id: '96403',
         name: '2026 Queen City Classic',
         startDate: '2026-03-27', endDate: '2026-03-29', rounds: 3,
         location: 'Charlotte, NC', lockHour: 13,
-        distance: 2, technical: 4, elevation: 3, climate: 3, bias: 3
+        distance: 2, technical: 4, elevation: 3, climate: 3, bias: 3,
+        holes: 18, par: 54, totalDistanceFt: 7600,
     },
     // ── April ─────────────────────────────────────────────────────────────────
     {
@@ -54,21 +63,24 @@ export const SEASON_2026: SeasonTournament[] = [
         name: '2026 PDGA Champions Cup',
         startDate: '2026-04-09', endDate: '2026-04-12', rounds: 4,
         location: 'Lynchburg, VA', lockHour: 13,
-        distance: 4, technical: 4, elevation: 3, climate: 3, bias: 4
+        distance: 4, technical: 4, elevation: 3, climate: 3, bias: 4,
+        holes: 18, par: 54, totalDistanceFt: 9200,
     },
     {
         id: '96405', pdga_id: '96405',
         name: '2026 Play it Again Sports Jonesboro Open',
         startDate: '2026-04-17', endDate: '2026-04-19', rounds: 3,
         location: 'Jonesboro, AR', lockHour: 14,
-        distance: 3, technical: 3, elevation: 3, climate: 4, bias: 3
+        distance: 3, technical: 3, elevation: 3, climate: 4, bias: 3,
+        holes: 18, par: 54, totalDistanceFt: 8120,
     },
     {
         id: '96406', pdga_id: '96406',
         name: 'GRIPeq 44th Kansas City Wide Open',
         startDate: '2026-04-24', endDate: '2026-04-26', rounds: 3,
         location: 'Liberty, MO', lockHour: 14,
-        distance: 4, technical: 3, elevation: 3, climate: 3, bias: 2
+        distance: 4, technical: 3, elevation: 3, climate: 3, bias: 2,
+        holes: 18, par: 60, totalDistanceFt: 9800,
     },
     // ── May ───────────────────────────────────────────────────────────────────
     {
@@ -76,21 +88,24 @@ export const SEASON_2026: SeasonTournament[] = [
         name: '2026 Waco Annual Charity Open',
         startDate: '2026-05-01', endDate: '2026-05-03', rounds: 3,
         location: 'Waco, TX', lockHour: 14,
-        distance: 2, technical: 4, elevation: 2, climate: 3, bias: 3
+        distance: 2, technical: 4, elevation: 2, climate: 3, bias: 3,
+        holes: 18, par: 54, totalDistanceFt: 7480,
     },
     {
         id: '96408', pdga_id: '96408',
         name: '2026 Open at Austin',
         startDate: '2026-05-07', endDate: '2026-05-10', rounds: 4,
         location: 'Austin, TX', lockHour: 14,
-        distance: 3, technical: 4, elevation: 3, climate: 4, bias: 3
+        distance: 3, technical: 4, elevation: 3, climate: 4, bias: 3,
+        holes: 18, par: 54, totalDistanceFt: 8850,
     },
     {
         id: '96409', pdga_id: '96409',
         name: '2026 OTB Open',
         startDate: '2026-05-21', endDate: '2026-05-24', rounds: 4,
         location: 'Stockton, CA', lockHour: 16,
-        distance: 4, technical: 1, elevation: 1, climate: 4, bias: 2
+        distance: 4, technical: 1, elevation: 1, climate: 4, bias: 2,
+        holes: 18, par: 54, totalDistanceFt: 9450,
     },
     // ── June ──────────────────────────────────────────────────────────────────
     {
@@ -98,42 +113,48 @@ export const SEASON_2026: SeasonTournament[] = [
         name: '2026 DGPT Northwest Championship',
         startDate: '2026-06-04', endDate: '2026-06-07', rounds: 4,
         location: 'Portland, OR', lockHour: 16,
-        distance: 4, technical: 3, elevation: 2, climate: 2, bias: 4
+        distance: 4, technical: 3, elevation: 2, climate: 2, bias: 4,
+        holes: 18, par: 54, totalDistanceFt: 8600,
     },
     {
         id: '97339', pdga_id: '97339',
         name: '2026 European Open',
         startDate: '2026-06-18', endDate: '2026-06-21', rounds: 4,
         location: 'Tallinn, Estonia', lockHour: 6,
-        distance: 3, technical: 2, elevation: 3, climate: 3, bias: 3
+        distance: 3, technical: 2, elevation: 3, climate: 3, bias: 3,
+        holes: 18, par: 54, totalDistanceFt: 7900,
     },
     {
         id: '96411', pdga_id: '96411',
         name: '2026 Swedish Open',
         startDate: '2026-06-26', endDate: '2026-06-28', rounds: 3,
         location: 'Borg\u00e5s, Sweden', lockHour: 7,
-        distance: 2, technical: 4, elevation: 4, climate: 2, bias: 3
+        distance: 2, technical: 4, elevation: 4, climate: 2, bias: 3,
+        holes: 18, par: 54, totalDistanceFt: 7250,
     },
     // ── July ──────────────────────────────────────────────────────────────────
     {
         id: '96412', pdga_id: '96412',
         name: '2026 Ale Open',
         startDate: '2026-07-03', endDate: '2026-07-05', rounds: 3,
-        location: 'Nol, Sweden', lockHour: 7
+        location: 'Nol, Sweden', lockHour: 7,
+        holes: 18, par: 54, totalDistanceFt: 7100,
     },
     {
         id: '96413', pdga_id: '96413',
         name: '2026 Heinola Open',
         startDate: '2026-07-10', endDate: '2026-07-12', rounds: 3,
         location: 'Heinola, Finland', lockHour: 6,
-        distance: 3, technical: 4, elevation: 4, climate: 2, bias: 3
+        distance: 3, technical: 4, elevation: 4, climate: 2, bias: 3,
+        holes: 18, par: 54, totalDistanceFt: 8300,
     },
     {
         id: '97341', pdga_id: '97341',
         name: '2026 US Women\u2019s Disc Golf Championship',
         startDate: '2026-07-16', endDate: '2026-07-19', rounds: 4,
         location: 'Salt Lake City, UT', lockHour: 15,
-        distance: 3, technical: 3, elevation: 4, climate: 4, bias: 3
+        distance: 3, technical: 3, elevation: 4, climate: 4, bias: 3,
+        holes: 18, par: 54, totalDistanceFt: 8750,
     },
     // ── Late July / August ────────────────────────────────────────────────────
     {
@@ -141,28 +162,32 @@ export const SEASON_2026: SeasonTournament[] = [
         name: '2026 Ledgestone Open',
         startDate: '2026-07-30', endDate: '2026-08-02', rounds: 4,
         location: 'Peoria, IL', lockHour: 14,
-        distance: 4, technical: 4, elevation: 2, climate: 4, bias: 3
+        distance: 4, technical: 4, elevation: 2, climate: 4, bias: 3,
+        holes: 18, par: 54, totalDistanceFt: 9100,
     },
     {
         id: '96415', pdga_id: '96415',
         name: '2026 Discmania Challenge',
         startDate: '2026-08-07', endDate: '2026-08-09', rounds: 3,
         location: 'Indianola, IA', lockHour: 14,
-        distance: 3, technical: 3, elevation: 2, climate: 3, bias: 3
+        distance: 3, technical: 3, elevation: 2, climate: 3, bias: 3,
+        holes: 18, par: 54, totalDistanceFt: 8000,
     },
     {
         id: '96416', pdga_id: '96416',
         name: '2026 Preserve Championship',
         startDate: '2026-08-14', endDate: '2026-08-16', rounds: 3,
         location: 'Clearwater, MN', lockHour: 14,
-        distance: 4, technical: 3, elevation: 1, climate: 2, bias: 3
+        distance: 4, technical: 3, elevation: 1, climate: 2, bias: 3,
+        holes: 18, par: 54, totalDistanceFt: 9350,
     },
     {
         id: '97344', pdga_id: '97344',
         name: '2026 PDGA Pro World Championships',
         startDate: '2026-08-26', endDate: '2026-08-30', rounds: 5,
         location: 'Milford, MI', lockHour: 13,
-        distance: 4, technical: 4, elevation: 4, climate: 2, bias: 4
+        distance: 4, technical: 4, elevation: 4, climate: 2, bias: 4,
+        holes: 18, par: 54, totalDistanceFt: 9800,
     },
     // ── September ─────────────────────────────────────────────────────────────
     {
@@ -170,21 +195,24 @@ export const SEASON_2026: SeasonTournament[] = [
         name: '2026 LWS Open at Idlewild',
         startDate: '2026-09-04', endDate: '2026-09-06', rounds: 3,
         location: 'Burlington, KY', lockHour: 13,
-        distance: 3, technical: 4, elevation: 3, climate: 3, bias: 3
+        distance: 3, technical: 4, elevation: 3, climate: 3, bias: 3,
+        holes: 18, par: 54, totalDistanceFt: 7850,
     },
     {
         id: '96418', pdga_id: '96418',
         name: '2026 Green Mountain Championship',
         startDate: '2026-09-17', endDate: '2026-09-20', rounds: 4,
         location: 'Jeffersonville, VT', lockHour: 13,
-        distance: 4, technical: 4, elevation: 4, climate: 4, bias: 4
+        distance: 4, technical: 4, elevation: 4, climate: 4, bias: 4,
+        holes: 18, par: 54, totalDistanceFt: 9600,
     },
     {
         id: '96419', pdga_id: '96419',
         name: '2026 MVP Open x OTB',
         startDate: '2026-09-24', endDate: '2026-09-27', rounds: 4,
         location: 'Leicester, MA', lockHour: 13,
-        distance: 3, technical: 4, elevation: 3, climate: 2, bias: 4
+        distance: 3, technical: 4, elevation: 3, climate: 2, bias: 4,
+        holes: 18, par: 54, totalDistanceFt: 8450,
     },
     // ── October ───────────────────────────────────────────────────────────────
     {
@@ -192,14 +220,15 @@ export const SEASON_2026: SeasonTournament[] = [
         name: '2026 US Disc Golf Championship',
         startDate: '2026-10-08', endDate: '2026-10-11', rounds: 4,
         location: 'Rock Hill, SC', lockHour: 13,
-        distance: 4, technical: 4, elevation: 2, climate: 3, bias: 1
+        distance: 4, technical: 4, elevation: 2, climate: 3, bias: 1,
+        holes: 18, par: 54, totalDistanceFt: 9050,
     },
     {
         id: '96421', pdga_id: '96421',
         name: '2026 DGPT Powerball Cup',
         startDate: '2026-10-15', endDate: '2026-10-18', rounds: 4,
         location: 'Lynchburg, VA', lockHour: 13,
-        distance: 4, technical: 3, elevation: 4, climate: 3, bias: 2
+        distance: 4, technical: 3, elevation: 4, climate: 3, bias: 2,
+        holes: 18, par: 54, totalDistanceFt: 9200,
     },
 ];
-

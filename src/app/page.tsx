@@ -1,66 +1,69 @@
 import { auth } from '@clerk/nextjs/server';
-import Link from 'next/link';
 import { SignInButton } from '@clerk/nextjs';
+import TopScrollBar from '@/components/TopScrollBar';
+import FeatureScrollBar from '@/components/FeatureScrollBar';
 import HomeCards from '@/components/HomeCards';
-
 
 export default async function HomePage() {
   const { userId } = await auth();
 
   return (
-    <main style={{ background: '#0f172a', minHeight: '100vh', padding: '2rem' }}>
-      <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+    <main style={{ background: '#111827', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* ── Scrolling info bars ── */}
+      <TopScrollBar />
+      <FeatureScrollBar />
 
-        {/* ─── Hero ─── */}
-        <section style={{ padding: '4rem 0 3rem' }}>
-          <h1 style={{
-            color: 'white',
-            fontSize: '3rem',
-            fontWeight: 900,
-            margin: '0 0 1rem',
-            letterSpacing: '-0.04em',
-            lineHeight: 1.1,
-          }}>
-            DGPT Fantasy 2026
-          </h1>
-          <p style={{
-            color: '#64748b',
-            fontSize: '1.15rem',
-            margin: '0 0 2.5rem',
-            lineHeight: 1.65,
-            maxWidth: '480px',
-          }}>
-            Pick your roster of PDGA pros, earn fantasy points on every birdie and eagle, and compete across the full 2026 DGPT season.
-          </p>
-
-          {!userId && (
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <SignInButton mode="modal">
-                <button style={{
-                  background: '#3b82f6', color: 'white', border: 'none',
-                  padding: '0.9rem 2.2rem', borderRadius: '8px', fontWeight: 700,
-                  fontSize: '1rem', cursor: 'pointer', letterSpacing: '-0.01em',
-                }}>
-                  Sign in to play
-                </button>
-              </SignInButton>
-              <Link href="/rules" style={{
-                background: 'transparent', color: '#475569', border: '1px solid #334155',
-                padding: '0.9rem 2rem', borderRadius: '8px', fontWeight: 600,
-                fontSize: '1rem', textDecoration: 'none', letterSpacing: '-0.01em',
-              }}>
-                How scoring works
-              </Link>
-            </div>
-          )}
-        </section>
-
-        {/* ─── Nav cards ─── */}
+      {/* ── Circular navigation grid ── */}
+      <section style={{
+        background: '#1e2433',
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingTop: '1.5rem',
+        paddingBottom: '1.5rem',
+      }}>
         <HomeCards />
 
-        {/* ─── Announcements area (intentionally clear for future use) ─── */}
-
-      </div>
+        {/* Sign-in prompt for logged-out users */}
+        {!userId && (
+          <div style={{
+            marginTop: '1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0 1.5rem',
+          }}>
+            <p style={{
+              color: '#6b7280',
+              fontSize: '0.85rem',
+              textAlign: 'center',
+              margin: 0,
+              maxWidth: '260px',
+            }}>
+              Sign in to draft your roster and compete in the 2026 season
+            </p>
+            <SignInButton mode="modal">
+              <button style={{
+                background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
+                color: 'white',
+                border: 'none',
+                padding: '0.75rem 2rem',
+                borderRadius: '50px',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                letterSpacing: '0.02em',
+                boxShadow: '0 4px 16px rgba(59,130,246,0.4)',
+                transition: 'opacity 0.15s',
+              }}>
+                Sign in to play →
+              </button>
+            </SignInButton>
+          </div>
+        )}
+      </section>
     </main>
   );
 }
