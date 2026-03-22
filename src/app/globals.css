@@ -67,3 +67,32 @@ a {
 .ticker-track:hover {
   animation-play-state: paused;
 }
+
+/* ── App container: full-width on mobile, zoomed & centred on desktop ── */
+.page-main {
+  background: #f3f4f6;
+}
+
+.app-content {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+
+  /* Dark desktop background to frame the mobile-sized app */
+  .page-main {
+    background: #0d1117;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0;
+  }
+
+  /* Zoom the app content to ~1.8× so it fills a typical desktop nicely */
+  .app-content {
+    width: 390px;
+    flex-shrink: 0;
+    zoom: 1.8;
+    transform-origin: top center;
+  }
+}
