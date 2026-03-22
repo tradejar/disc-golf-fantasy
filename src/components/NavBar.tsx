@@ -25,15 +25,14 @@ function TierBadge() {
             .catch(() => setIsPremium(false));
     }, []);
 
-    // Don't render until we know the status
     if (isPremium === null) return null;
 
     if (isPremium) {
         return (
             <Link href="/premium" style={{
                 display: 'inline-flex', alignItems: 'center', gap: '4px',
-                background: 'linear-gradient(135deg, rgba(251,191,36,0.15), rgba(245,158,11,0.1))',
-                border: '1px solid rgba(251,191,36,0.35)',
+                background: 'rgba(251,191,36,0.2)',
+                border: '1px solid rgba(251,191,36,0.5)',
                 borderRadius: '20px',
                 padding: '2px 10px',
                 fontSize: '0.72rem',
@@ -41,7 +40,6 @@ function TierBadge() {
                 color: '#fbbf24',
                 letterSpacing: '0.02em',
                 textDecoration: 'none',
-                userSelect: 'none',
             }}>
                 ⚡ Premium
             </Link>
@@ -51,28 +49,45 @@ function TierBadge() {
     return (
         <Link href="/premium" style={{
             display: 'inline-flex', alignItems: 'center', gap: '4px',
-            background: 'rgba(100,116,139,0.12)',
-            border: '1px solid #334155',
+            background: 'rgba(255,255,255,0.15)',
+            border: '1px solid rgba(255,255,255,0.3)',
             borderRadius: '20px',
             padding: '2px 8px 2px 10px',
             fontSize: '0.72rem',
             fontWeight: 700,
-            color: '#94a3b8',
+            color: 'white',
             textDecoration: 'none',
             letterSpacing: '0.02em',
-            transition: 'all 0.15s',
             whiteSpace: 'nowrap',
-        }}
-            onMouseEnter={e => {
-                (e.currentTarget as HTMLAnchorElement).style.borderColor = '#fbbf24';
-                (e.currentTarget as HTMLAnchorElement).style.color = '#fbbf24';
-            }}
-            onMouseLeave={e => {
-                (e.currentTarget as HTMLAnchorElement).style.borderColor = '#334155';
-                (e.currentTarget as HTMLAnchorElement).style.color = '#94a3b8';
-            }}
-        >
-            Free · <span style={{ color: '#f59e0b', fontWeight: 900 }}>Upgrade ↑</span>
+        }}>
+            Free · <span style={{ color: '#fff', fontWeight: 900 }}>Upgrade ↑</span>
+        </Link>
+    );
+}
+
+// DGF circle logo badge
+function DGFBadge() {
+    return (
+        <Link href="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
+            <div style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: 'radial-gradient(circle at 35% 35%, #60a5fa, #2563eb)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                border: '2px solid rgba(255,255,255,0.25)',
+            }}>
+                <span style={{
+                    color: 'white',
+                    fontWeight: 900,
+                    fontSize: '0.75rem',
+                    letterSpacing: '-0.03em',
+                    lineHeight: 1,
+                }}>DGF</span>
+            </div>
         </Link>
     );
 }
@@ -82,46 +97,70 @@ export default function NavBar() {
 
     return (
         <>
-            {/* Fixed header — position:fixed is immune to iOS URL bar jitter */}
+            <style>{`
+                @media (max-width: 640px) {
+                    .desktop-nav { display: none !important; }
+                    .hamburger { display: flex !important; }
+                }
+                .hamburger-line {
+                    display: block;
+                    width: 22px;
+                    height: 2px;
+                    background: white;
+                    transition: all 0.2s;
+                }
+            `}</style>
+
+            {/* Fixed green header */}
             <header style={{
                 position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
+                top: 0, left: 0, right: 0,
                 zIndex: 50,
                 padding: '0 1rem',
                 height: `${NAV_HEIGHT}px`,
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                background: '#0f172a',
-                borderBottom: '1px solid #334155',
+                background: 'linear-gradient(135deg, #16a34a, #15803d)',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
             }}>
-                {/* Logo */}
-                <Link href="/" style={{ fontWeight: 900, fontSize: '1.2rem', color: '#38bdf8', textDecoration: 'none', letterSpacing: '-0.03em', flexShrink: 0 }}>
-                    DGF
-                </Link>
+                {/* Left: DGF Badge */}
+                <DGFBadge />
 
-                {/* Desktop nav */}
+                {/* Center: desktop nav */}
                 <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }} className="desktop-nav">
                     {NAV_LINKS.map(l => (
-                        <Link key={l.href} href={l.href} style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                        <Link key={l.href} href={l.href} style={{
+                            color: 'rgba(255,255,255,0.9)',
+                            textDecoration: 'none',
+                            fontWeight: 600,
+                            fontSize: '0.9rem',
+                            letterSpacing: '0.01em',
+                        }}>
                             {l.label}
                         </Link>
                     ))}
                 </nav>
 
-                {/* Right side: auth + tier badge + hamburger */}
+                {/* Right: auth + hamburger */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
                     <SignedOut>
                         <SignInButton mode="modal">
-                            <button style={{ background: '#3b82f6', color: 'white', padding: '0.45rem 0.9rem', borderRadius: '6px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem' }}>
+                            <button style={{
+                                background: 'rgba(255,255,255,0.2)',
+                                color: 'white',
+                                padding: '0.4rem 1rem',
+                                borderRadius: '20px',
+                                border: '1px solid rgba(255,255,255,0.4)',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                            }}>
                                 Sign In
                             </button>
                         </SignInButton>
                     </SignedOut>
                     <SignedIn>
-                        {/* Tier badge — shown only to signed-in users */}
                         <TierBadge />
                         <UserButton>
                             <UserButton.UserProfilePage
@@ -151,29 +190,31 @@ export default function NavBar() {
                         onClick={() => setOpen(o => !o)}
                         className="hamburger"
                         aria-label="Menu"
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', display: 'none', flexDirection: 'column', gap: '5px' }}
+                        style={{
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            padding: '4px', display: 'none',
+                            flexDirection: 'column', gap: '5px',
+                        }}
                     >
-                        <span style={{ display: 'block', width: '22px', height: '2px', background: open ? '#38bdf8' : 'white', transition: 'all 0.2s', transform: open ? 'translateY(7px) rotate(45deg)' : 'none' }} />
-                        <span style={{ display: 'block', width: '22px', height: '2px', background: 'white', opacity: open ? 0 : 1, transition: 'all 0.2s' }} />
-                        <span style={{ display: 'block', width: '22px', height: '2px', background: open ? '#38bdf8' : 'white', transition: 'all 0.2s', transform: open ? 'translateY(-7px) rotate(-45deg)' : 'none' }} />
+                        <span className="hamburger-line" style={{ transform: open ? 'translateY(7px) rotate(45deg)' : 'none' }} />
+                        <span className="hamburger-line" style={{ opacity: open ? 0 : 1 }} />
+                        <span className="hamburger-line" style={{ transform: open ? 'translateY(-7px) rotate(-45deg)' : 'none' }} />
                     </button>
                 </div>
             </header>
 
-            {/* Spacer — always 56px to push page content below the fixed header */}
+            {/* Spacer */}
             <div style={{ height: `${NAV_HEIGHT}px`, flexShrink: 0 }} />
 
-            {/* Mobile dropdown — also fixed so it floats over content without affecting layout */}
+            {/* Mobile dropdown */}
             {open && (
                 <nav style={{
                     position: 'fixed',
                     top: `${NAV_HEIGHT}px`,
-                    left: 0,
-                    right: 0,
+                    left: 0, right: 0,
                     zIndex: 49,
-                    background: '#1e293b',
-                    borderBottom: '1px solid #334155',
-                    padding: '0.5rem 0',
+                    background: '#15803d',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
                 }} className="mobile-menu">
                     {NAV_LINKS.map(l => (
                         <Link
@@ -185,9 +226,9 @@ export default function NavBar() {
                                 padding: '0.85rem 1.5rem',
                                 color: 'white',
                                 textDecoration: 'none',
-                                fontWeight: 'bold',
+                                fontWeight: 600,
                                 fontSize: '1rem',
-                                borderBottom: '1px solid #334155',
+                                borderBottom: '1px solid rgba(255,255,255,0.1)',
                             }}
                         >
                             {l.label}
@@ -209,13 +250,6 @@ export default function NavBar() {
                     </Link>
                 </nav>
             )}
-
-            <style>{`
-                @media (max-width: 640px) {
-                    .desktop-nav { display: none !important; }
-                    .hamburger { display: flex !important; }
-                }
-            `}</style>
         </>
     );
 }

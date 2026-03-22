@@ -3,128 +3,109 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Gradient stops cycling blue → teal → green across 3 columns
-const CARD_COLORS = [
-    { col: 0, color: '#3b82f6', glow: 'rgba(59,130,246,0.5)' },   // blue
-    { col: 1, color: '#06b6d4', glow: 'rgba(6,182,212,0.5)' },    // teal
-    { col: 2, color: '#10b981', glow: 'rgba(16,185,129,0.5)' },   // green
+const NAV_CARDS = [
+    { href: '/season', label: 'DRAFT', col: 0 },
+    { href: '/leagues', label: 'LEAGUES', col: 1 },
+    { href: '/leaderboard', label: 'LEADERBOARD', col: 2 },
+    { href: '/tournaments', label: 'MY HISTORY', col: 0 },
+    { href: '/leaderboard?tab=stats', label: 'STATS', col: 1 },
+    { href: '/premium', label: 'SUBSCRIPTION', col: 2 },
 ];
 
-const NAV_CARDS = [
-    { href: '/season', label: 'DRAFT', icon: '🥏', col: 0 },
-    { href: '/leagues', label: 'LEAGUES', icon: '🏆', col: 1 },
-    { href: '/leaderboard', label: 'LEADERBOARD', icon: '📊', col: 2 },
-    { href: '/tournaments', label: 'MY HISTORY', icon: '📅', col: 0 },
-    { href: '/leaderboard?tab=stats', label: 'STATS', icon: '📈', col: 1 },
-    { href: '/premium', label: 'SUBSCRIPTION', icon: '⚡', col: 2 },
-];
+// 3-column color progression matching design: blue · teal · green
+const COL_COLORS = ['#4a7ff5', '#14b8a6', '#22c55e'];
 
 export default function HomeCards() {
     const router = useRouter();
     const [clicked, setClicked] = useState<string | null>(null);
-    const [hovered, setHovered] = useState<string | null>(null);
 
     const handleClick = (href: string) => {
         setClicked(href);
         setTimeout(() => {
             setClicked(null);
             router.push(href);
-        }, 320);
+        }, 280);
     };
 
     return (
         <>
             <style>{`
-                @keyframes circleRipple {
-                    0%   { box-shadow: 0 0 0 0px var(--btn-glow); opacity: 1; transform: scale(0.93); }
-                    40%  { box-shadow: 0 0 0 14px transparent; opacity: 0.8; transform: scale(1.06); }
-                    70%  { transform: scale(0.97); }
-                    100% { box-shadow: 0 0 0 0px transparent; opacity: 1; transform: scale(1); }
+                @keyframes circlePress {
+                    0%   { transform: scale(1); }
+                    25%  { transform: scale(0.91); }
+                    60%  { transform: scale(1.05); }
+                    100% { transform: scale(1); }
                 }
                 .circ-btn {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    gap: 0.6rem;
-                    cursor: pointer;
+                    gap: 0.55rem;
                     background: none;
                     border: none;
+                    cursor: pointer;
                     padding: 0;
                     flex: 1;
                     min-width: 0;
+                    -webkit-tap-highlight-color: transparent;
                 }
-                .circ-inner {
-                    width: 88px;
-                    height: 88px;
+                .circ-disc {
+                    width: 80px;
+                    height: 80px;
                     border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 2rem;
                     transition: transform 0.15s ease, box-shadow 0.15s ease;
-                    position: relative;
                 }
-                .circ-btn:hover .circ-inner {
-                    transform: scale(1.07);
+                .circ-btn:active .circ-disc,
+                .circ-disc.pressed {
+                    animation: circlePress 0.28s cubic-bezier(.22,1,.36,1) forwards;
                 }
-                .circ-inner.clicked {
-                    animation: circleRipple 0.32s cubic-bezier(.22,1,.36,1) forwards;
+                .circ-btn:hover .circ-disc {
+                    transform: scale(1.06);
                 }
                 .circ-label {
-                    font-size: 0.62rem;
+                    font-size: 0.6rem;
                     font-weight: 800;
-                    letter-spacing: 0.08em;
-                    color: #cbd5e1;
+                    letter-spacing: 0.07em;
+                    color: #374151;
                     text-transform: uppercase;
                     text-align: center;
                     line-height: 1.2;
+                    margin-top: 2px;
                 }
-                @media (min-width: 400px) {
-                    .circ-inner { width: 96px; height: 96px; }
+                @media (min-width: 360px) {
+                    .circ-disc { width: 88px; height: 88px; }
                 }
-                @media (min-width: 600px) {
-                    .circ-inner { width: 108px; height: 108px; font-size: 2.3rem; }
-                    .circ-label { font-size: 0.7rem; }
+                @media (min-width: 480px) {
+                    .circ-disc { width: 100px; height: 100px; }
+                    .circ-label { font-size: 0.68rem; }
                 }
             `}</style>
 
             <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '1.4rem 0.5rem',
-                padding: '2.5rem 1.2rem',
-                maxWidth: '520px',
+                gap: '1.6rem 0.25rem',
+                padding: '2rem 1rem 2.5rem',
+                maxWidth: '440px',
                 margin: '0 auto',
                 width: '100%',
             }}>
-                {NAV_CARDS.map((card) => {
-                    const { color, glow } = CARD_COLORS[card.col];
-                    const isClicked = clicked === card.href;
-                    const isHovered = hovered === card.href;
-
+                {NAV_CARDS.map(card => {
+                    const color = COL_COLORS[card.col];
+                    const isPressed = clicked === card.href;
                     return (
                         <button
                             key={card.href}
                             className="circ-btn"
                             onClick={() => handleClick(card.href)}
-                            onMouseEnter={() => setHovered(card.href)}
-                            onMouseLeave={() => setHovered(null)}
-                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                            // @ts-expect-error css custom props
-                            style={{ '--btn-glow': glow }}
                         >
                             <div
-                                className={`circ-inner${isClicked ? ' clicked' : ''}`}
+                                className={`circ-disc${isPressed ? ' pressed' : ''}`}
                                 style={{
-                                    background: `radial-gradient(circle at 35% 35%, ${color}dd, ${color}88)`,
-                                    boxShadow: isHovered
-                                        ? `0 0 0 3px ${color}44, 0 8px 28px ${glow}`
-                                        : `0 4px 16px ${color}44`,
-                                    border: `2px solid ${color}66`,
+                                    background: color,
+                                    boxShadow: `0 4px 14px ${color}55`,
                                 }}
-                            >
-                                {card.icon}
-                            </div>
+                            />
                             <span className="circ-label">{card.label}</span>
                         </button>
                     );
