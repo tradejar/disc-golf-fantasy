@@ -13,7 +13,7 @@ const FULL_TEXT =
 
 export default function FeatureScrollBar() {
     return (
-        <div style={{
+        <div className="feature-ticker" style={{
             background: '#fff',
             overflow: 'hidden',
             height: '32px',

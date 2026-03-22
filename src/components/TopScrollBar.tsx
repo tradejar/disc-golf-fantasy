@@ -47,7 +47,7 @@ export default function TopScrollBar() {
     const content = `${tickerText}          ${tickerText}`;
 
     return (
-        <div style={{
+        <div className="info-ticker" style={{
             background: '#000',
             overflow: 'hidden',
             height: '28px',
