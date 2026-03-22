@@ -43,8 +43,11 @@ export default function TopScrollBar() {
         ? `  ·  PREV CHAMP:  ${champParts.join('  ·  ')}`
         : '';
 
+    const sep = '          ';
     const tickerText = `NEXT STOP: ${upcoming.name.replace(/^2026\s*/i, '')}  ·  ${upcoming.location}  ·  ${parStr}  ·  ${distStr}  ·  ${weatherStr}${champStr}`;
-    const content = `${tickerText}          ${tickerText}`;
+    // 4 copies so the viewport never shows both ends simultaneously (avoids "half-empty" look)
+    const content = [tickerText, tickerText, tickerText, tickerText].join(sep);
+
 
     return (
         <div className="info-ticker" style={{

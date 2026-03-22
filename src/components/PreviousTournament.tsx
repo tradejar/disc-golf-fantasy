@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, ReactNode } from 'react';
 import { SEASON_2026 } from '@/data/tournaments';
 
 interface PlayerStat {
@@ -26,36 +26,49 @@ function getPreviousTournament() {
 
 function pct(n: number) { return `${Math.round(n)}%`; }
 function toParStr(n: number) { return n === 0 ? 'E' : n > 0 ? `+${n}` : `${n}`; }
-
-// Only include players whose name was resolved (not a #NUMBER fallback)
 function hasName(p: PlayerStat) { return !p.name.startsWith('#'); }
 
-function buildScoreText(players: PlayerStat[]) {
+const GAP = '\u00a0\u00a0\u00a0\u00a0\u00a0'; // 5 non-breaking spaces between players
+
+function buildScoreNodes(players: PlayerStat[]): ReactNode {
     const named = players.filter(hasName);
-    if (!named.length) return 'Results pending...';
-    return named.map(p =>
-        `${p.name} (${toParStr(p.toPar)})  Egl:${p.breakdown.eagles}  B:${p.breakdown.birdies}  P:${p.breakdown.pars}  Bg:${p.breakdown.bogeys}  Dbl:${p.breakdown.doubles}  Trpl+:${p.breakdown.triples}`
-    ).join('     ');
+    if (!named.length) return <span>Results pending…</span>;
+    return (
+        <>
+            {named.map((p, i) => (
+                <React.Fragment key={p.pdgaNumber}>
+                    {i > 0 && GAP}
+                    <strong>{p.name}</strong>
+                    {' '}
+                    <em>({toParStr(p.toPar)}) Egl:{p.breakdown.eagles} B:{p.breakdown.birdies} P:{p.breakdown.pars} Bg:{p.breakdown.bogeys} Dbl:{p.breakdown.doubles} Trpl+:{p.breakdown.triples}</em>
+                </React.Fragment>
+            ))}
+        </>
+    );
 }
 
-function buildStatsText(players: PlayerStat[]) {
+function buildStatsNodes(players: PlayerStat[]): ReactNode {
     const named = players.filter(hasName);
-    if (!named.length) return 'Stats pending...';
-    return named.map(p =>
-        `${p.name}  FW:${pct(p.advanced.fairwayHits)}  C1Reg:${pct(p.advanced.c1InReg)}  C2Reg:${pct(p.advanced.c2InReg)}  Scr:${pct(p.advanced.scramble)}  C1X:${pct(p.advanced.c1xPutting)}  C2:${pct(p.advanced.c2Putting)}`
-    ).join('     ');
+    if (!named.length) return <span>Stats pending…</span>;
+    return (
+        <>
+            {named.map((p, i) => (
+                <React.Fragment key={p.pdgaNumber}>
+                    {i > 0 && GAP}
+                    <strong>{p.name}</strong>
+                    {' '}
+                    <em>FW:{pct(p.advanced.fairwayHits)} C1Reg:{pct(p.advanced.c1InReg)} C2Reg:{pct(p.advanced.c2InReg)} Scr:{pct(p.advanced.scramble)} C1X:{pct(p.advanced.c1xPutting)} C2:{pct(p.advanced.c2Putting)}</em>
+                </React.Fragment>
+            ))}
+        </>
+    );
 }
 
-// BASE speed 14px/s — each row gets a ±5% variance for organic feel
 const BASE_SPEED = 14;
-const ROW_SPEEDS = [
-    BASE_SPEED * 1.00,  // Scores MPO  — exactly base
-    BASE_SPEED * 0.95,  // Scores FPO  — 5% slower
-    BASE_SPEED * 1.05,  // Stats MPO   — 5% faster
-    BASE_SPEED * 0.97,  // Stats FPO   — 3% slower
-];
+const ROW_SPEEDS = [BASE_SPEED * 1.00, BASE_SPEED * 0.95, BASE_SPEED * 1.05, BASE_SPEED * 0.97];
 
-function SeamlessTicker({ text, speed }: { text: string; speed: number }) {
+// tickerKey triggers re-measurement when player data changes
+function SeamlessTicker({ children, speed, tickerKey }: { children: ReactNode; speed: number; tickerKey: string }) {
     const innerRef = useRef<HTMLSpanElement>(null);
     const [duration, setDuration] = useState(120);
 
@@ -64,30 +77,24 @@ function SeamlessTicker({ text, speed }: { text: string; speed: number }) {
             const w = innerRef.current.scrollWidth / 2;
             setDuration(Math.max(60, w / speed));
         }
-    }, [text, speed]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tickerKey, speed]);
 
     return (
         <div style={{ overflow: 'hidden', width: '100%' }}>
             <span
                 ref={innerRef}
                 className="ticker-track"
-                style={{
-                    ['--ticker-dur' as string]: `${duration}s`,
-                    fontSize: '0.72rem',
-                    color: '#111827',
-                    fontWeight: 500,
-                    letterSpacing: '0.01em',
-                    padding: '3px 0 5px',
-                }}
+                style={{ ['--ticker-dur' as string]: `${duration}s` }}
             >
-                <span>{text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                <span>{text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <span style={{ display: 'inline' }}>{children}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <span style={{ display: 'inline' }}>{children}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
             </span>
         </div>
     );
 }
 
-function TickerRow({ label, text, speed }: { label: string; text: string; speed: number }) {
+function TickerRow({ label, children, speed, tickerKey }: { label: string; children: ReactNode; speed: number; tickerKey: string }) {
     return (
         <div style={{ borderTop: '1px solid #f0f0f0' }}>
             <div style={{
@@ -97,7 +104,7 @@ function TickerRow({ label, text, speed }: { label: string; text: string; speed:
             }}>
                 {label}
             </div>
-            <SeamlessTicker text={text} speed={speed} />
+            <SeamlessTicker speed={speed} tickerKey={tickerKey}>{children}</SeamlessTicker>
         </div>
     );
 }
@@ -120,11 +127,11 @@ export default function PreviousTournament() {
     const displayName = previous.name.replace(/^2026\s*/i, '').toUpperCase();
     const mpo = players.filter(p => p.division === 'MPO');
     const fpo = players.filter(p => p.division === 'FPO');
+    const hasData = players.filter(hasName).length > 0;
 
-    const mpoScores = buildScoreText(mpo);
-    const fpoScores = buildScoreText(fpo);
-    const mpoStats = buildStatsText(mpo);
-    const fpoStats = buildStatsText(fpo);
+    // tickerKey changes when data arrives — triggers SeamlessTicker re-measurement
+    const mpoKey = mpo.filter(hasName).map(p => p.pdgaNumber).join(',');
+    const fpoKey = fpo.filter(hasName).map(p => p.pdgaNumber).join(',');
 
     const pendingText = loading ? 'Loading...' : 'No data available for this tournament';
 
@@ -149,16 +156,24 @@ export default function PreviousTournament() {
                 </div>
             </div>
 
-            {players.filter(hasName).length === 0 ? (
+            {!hasData ? (
                 <div style={{ padding: '12px', fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center' }}>
                     {pendingText}
                 </div>
             ) : (
                 <>
-                    <TickerRow label="Scores MPO" text={mpoScores} speed={ROW_SPEEDS[0]} />
-                    <TickerRow label="Scores FPO" text={fpoScores} speed={ROW_SPEEDS[1]} />
-                    <TickerRow label="Stats MPO" text={mpoStats} speed={ROW_SPEEDS[2]} />
-                    <TickerRow label="Stats FPO" text={fpoStats} speed={ROW_SPEEDS[3]} />
+                    <TickerRow label="Scores MPO" speed={ROW_SPEEDS[0]} tickerKey={mpoKey}>
+                        {buildScoreNodes(mpo)}
+                    </TickerRow>
+                    <TickerRow label="Scores FPO" speed={ROW_SPEEDS[1]} tickerKey={fpoKey}>
+                        {buildScoreNodes(fpo)}
+                    </TickerRow>
+                    <TickerRow label="Stats MPO" speed={ROW_SPEEDS[2]} tickerKey={mpoKey + '-s'}>
+                        {buildStatsNodes(mpo)}
+                    </TickerRow>
+                    <TickerRow label="Stats FPO" speed={ROW_SPEEDS[3]} tickerKey={fpoKey + '-s'}>
+                        {buildStatsNodes(fpo)}
+                    </TickerRow>
                 </>
             )}
         </section>
