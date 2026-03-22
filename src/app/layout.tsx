@@ -28,12 +28,20 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" style={{ WebkitTextSizeAdjust: '100%', MozTextSizeAdjust: '100%' } as React.CSSProperties}>
         <head>
           <link rel="manifest" href="/manifest.json" />
           <meta name="theme-color" content="#0f172a" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+          <style dangerouslySetInnerHTML={{
+            __html: `
+            .ticker-track, .ticker-track span {
+              font-size: 11px !important;
+              -webkit-text-size-adjust: 100% !important;
+              text-size-adjust: 100% !important;
+            }
+          ` }} />
         </head>
         <body className={`${geistSans.variable} ${geistMono.variable}`}>
           <NavBar />
