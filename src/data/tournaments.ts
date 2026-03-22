@@ -24,6 +24,10 @@ export interface SeasonTournament {
     lat?: number;
     /** Longitude for weather API */
     lon?: number;
+    /** Previous year's MPO champion at this tournament/course */
+    prevChampMPO?: string;
+    /** Previous year's FPO champion at this tournament/course */
+    prevChampFPO?: string;
 }
 
 /**

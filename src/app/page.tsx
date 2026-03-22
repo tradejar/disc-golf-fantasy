@@ -6,27 +6,26 @@ import PreviousTournament from '@/components/PreviousTournament';
 export default async function HomePage() {
   return (
     <main style={{ background: '#f3f4f6', minHeight: '100vh' }}>
-      <div style={{
-        maxWidth: '480px',
-        margin: '0 auto',
+      {/* ── Top info ticker — sticky below NavBar ── */}
+      <TopScrollBar />
+
+      {/* ── Feature description ticker — sticky below info ticker ── */}
+      <FeatureScrollBar />
+
+      {/* ── Circular navigation grid ── */}
+      <section style={{
         background: '#f3f4f6',
-        position: 'relative',
-        overflow: 'hidden',  /* clips ticker duplicates on desktop */
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingTop: '8px',
+        paddingBottom: '8px',
       }}>
-        {/* ── Top info ticker (black) ── */}
-        <TopScrollBar />
+        <HomeCards />
+      </section>
 
-        {/* ── Feature description ticker (white) ── */}
-        <FeatureScrollBar />
-
-        {/* ── Circular navigation grid ── */}
-        <section style={{ background: '#f3f4f6', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <HomeCards />
-        </section>
-
-        {/* ── Previous tournament results ── */}
-        <PreviousTournament />
-      </div>
+      {/* ── Previous tournament results ── */}
+      <PreviousTournament />
     </main>
   );
 }
