@@ -40,3 +40,19 @@ a {
     color-scheme: dark;
   }
 }
+
+/* ── Ticker animations — defined globally so React re-renders don't reset them ── */
+@keyframes tickerScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.ticker-track {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+  animation: tickerScroll var(--ticker-dur, 40s) linear infinite;
+}
+.ticker-track:hover {
+  animation-play-state: paused;
+}

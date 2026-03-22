@@ -72,59 +72,46 @@ export default function TopScrollBar() {
     const content = `${tickerText}          ${tickerText}`;
 
     return (
-        <>
-            <style>{`
-                @keyframes topTicker {
-                    0%   { transform: translateX(0); }
-                    100% { transform: translateX(-50%); }
-                }
-                .top-ticker-track {
-                    display: inline-block;
-                    white-space: nowrap;
-                    animation: topTicker 40s linear infinite;
-                    will-change: transform;
-                }
-                .top-ticker-track:hover {
-                    animation-play-state: paused;
-                }
-            `}</style>
-            <div style={{
-                background: '#000',
-                overflow: 'hidden',
-                height: '28px',
-                display: 'flex',
-                alignItems: 'center',
-                borderBottom: '1px solid #1a1a1a',
-                userSelect: 'none',
-                flexShrink: 0,
-            }}>
-                <span className="top-ticker-track" style={{
+        <div style={{
+            background: '#000',
+            overflow: 'hidden',
+            height: '28px',
+            display: 'flex',
+            alignItems: 'center',
+            borderBottom: '1px solid #1a1a1a',
+            userSelect: 'none',
+            flexShrink: 0,
+        }}>
+            <span
+                className="ticker-track"
+                style={{
+                    ['--ticker-dur' as string]: '40s',
                     fontSize: '0.72rem',
                     fontWeight: 700,
                     letterSpacing: '0.05em',
                     color: '#fff',
                     padding: '0 1rem',
-                }}>
-                    {content.split(/(NEXT STOP:|PREV:)/g).map((part, i) => {
-                        if (part === 'NEXT STOP:' || part === 'PREV:') {
-                            return (
-                                <span key={i} style={{ color: '#4ade80', marginRight: '2px' }}>
-                                    {part}
-                                </span>
-                            );
+                }}
+            >
+                {content.split(/(NEXT STOP:|PREV:)/g).map((part, i) => {
+                    if (part === 'NEXT STOP:' || part === 'PREV:') {
+                        return (
+                            <span key={i} style={{ color: '#4ade80', marginRight: '2px' }}>
+                                {part}
+                            </span>
+                        );
+                    }
+                    return part.split(/(\([+-]?\d+\)|[\u2600-\u26FF][\u0000-\uffff]*?\d+°F)/g).map((chunk, j) => {
+                        if (/^\([+-]?\d+\)$/.test(chunk)) {
+                            return <span key={`${i}-${j}`} style={{ color: '#fbbf24' }}>{chunk}</span>;
                         }
-                        return part.split(/(\([+-]?\d+\)|[\u2600-\u26FF][\u0000-\uffff]*?\d+°F)/g).map((chunk, j) => {
-                            if (/^\([+-]?\d+\)$/.test(chunk)) {
-                                return <span key={`${i}-${j}`} style={{ color: '#fbbf24' }}>{chunk}</span>;
-                            }
-                            if (/\d+°F/.test(chunk)) {
-                                return <span key={`${i}-${j}`} style={{ color: '#38bdf8' }}>{chunk}</span>;
-                            }
-                            return <span key={`${i}-${j}`}>{chunk}</span>;
-                        });
-                    })}
-                </span>
-            </div>
-        </>
+                        if (/\d+°F/.test(chunk)) {
+                            return <span key={`${i}-${j}`} style={{ color: '#38bdf8' }}>{chunk}</span>;
+                        }
+                        return <span key={`${i}-${j}`}>{chunk}</span>;
+                    });
+                })}
+            </span>
+        </div>
     );
 }
