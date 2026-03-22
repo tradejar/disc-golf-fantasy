@@ -4,17 +4,11 @@ import { useEffect, useState } from 'react';
 import { SEASON_2026 } from '@/data/tournaments';
 
 interface LeaderboardEntry {
-    user_id: string;
-    display_name: string;
-    division: 'MPO' | 'FPO';
-    total_points: number;
-    pdga_number?: number;
-    pdga_rating?: number;
-    birdie_total?: number;
-    eagle_total?: number;
-    par_total?: number;
-    double_bogey_total?: number;
-    albatross_total?: number;
+    entryId: string;
+    displayName: string;
+    totalPoints: number;
+    pdgaRating?: number;
+    budgetRemaining?: number;
 }
 
 interface TournamentResult {
@@ -31,32 +25,30 @@ function getPreviousTournament() {
 }
 
 function buildScoreTicker(entries: LeaderboardEntry[]): string {
-    if (!entries.length) return 'Results pending...';
+    if (!entries.length) return '';
     return entries.map((e, i) => {
-        const rating = e.pdga_rating ? `(${e.pdga_rating})` : '';
-        const pts = `${e.total_points}pts`;
-        return `${i + 1}. ${e.display_name}${rating} – ${pts}`;
+        const rating = e.pdgaRating ? ` (${e.pdgaRating})` : '';
+        return `${i + 1}. ${e.displayName}${rating} – ${e.totalPoints}pts`;
     }).join('   ');
 }
 
 function buildStatsTicker(entries: LeaderboardEntry[]): string {
-    if (!entries.length) return 'Stats pending...';
-    return entries.map(e => {
-        const parts = [];
-        if (e.eagle_total) parts.push(`Egl:${e.eagle_total}`);
-        if (e.birdie_total) parts.push(`Brd:${e.birdie_total}`);
-        if (e.par_total) parts.push(`Par:${e.par_total}`);
-        if (e.double_bogey_total) parts.push(`Dbl:${e.double_bogey_total}`);
-        return `${e.display_name} – ${parts.join(' ') || e.total_points + 'pts'}`;
+    if (!entries.length) return '';
+    // Show budget remaining as a proxy for roster efficiency
+    return entries.map((e, i) => {
+        const budget = typeof e.budgetRemaining === 'number'
+            ? ` · $${e.budgetRemaining.toFixed(0)} left`
+            : '';
+        return `${i + 1}. ${e.displayName} – ${e.totalPoints}pts${budget}`;
     }).join('   ');
 }
 
 function TickerRow({ label, text }: { label: string; text: string }) {
-    const content = `${text}     ★     ${text}     ★     `;
+    const content = `${text}    ·    ${text}    ·    `;
     return (
         <div style={{ borderTop: '1px solid #f0f0f0' }}>
             <div style={{
-                fontSize: '0.65rem',
+                fontSize: '0.62rem',
                 color: '#9ca3af',
                 fontWeight: 700,
                 letterSpacing: '0.07em',
@@ -65,18 +57,19 @@ function TickerRow({ label, text }: { label: string; text: string }) {
             }}>
                 {label}
             </div>
-            <div style={{ overflow: 'hidden', background: '#f9fafb' }}>
+            <div style={{ overflow: 'hidden' }}>
                 <style>{`
-                    @keyframes prevScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-                    .prev-row { display: inline-block; white-space: nowrap; animation: prevScroll 30s linear infinite; }
-                    .prev-row:hover { animation-play-state: paused; }
+                    @keyframes pScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+                    .prow { display: inline-block; white-space: nowrap; animation: pScroll 28s linear infinite; }
+                    .prow:hover { animation-play-state: paused; }
                 `}</style>
-                <span className="prev-row" style={{
-                    fontSize: '0.71rem',
+                <span className="prow" style={{
+                    fontSize: '0.72rem',
                     color: '#111827',
                     fontWeight: 500,
-                    padding: '3px 12px 5px',
+                    padding: '3px 12px 6px',
                     display: 'inline-block',
+                    letterSpacing: '0.01em',
                 }}>
                     {content}
                 </span>
@@ -87,8 +80,7 @@ function TickerRow({ label, text }: { label: string; text: string }) {
 
 export default function PreviousTournament() {
     const [result, setResult] = useState<TournamentResult | null>(null);
-    const [mpoEntries, setMpoEntries] = useState<LeaderboardEntry[]>([]);
-    const [fpoEntries, setFpoEntries] = useState<LeaderboardEntry[]>([]);
+    const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
     const previous = getPreviousTournament();
 
     useEffect(() => {
@@ -99,13 +91,12 @@ export default function PreviousTournament() {
             .then(d => { if (d.result) setResult(d.result); })
             .catch(() => { });
 
-        // Fetch leaderboard entries for this tournament
+        // Fetch leaderboard entries for this specific tournament
         fetch(`/api/leaderboard?tournamentId=${previous.id}`)
             .then(r => r.json())
             .then(d => {
-                const entries: LeaderboardEntry[] = d.entries ?? [];
-                setMpoEntries(entries.filter(e => e.division === 'MPO').slice(0, 8));
-                setFpoEntries(entries.filter(e => e.division === 'FPO').slice(0, 8));
+                const all: LeaderboardEntry[] = d.entries ?? [];
+                setEntries(all.slice(0, 10));
             })
             .catch(() => { });
     }, [previous?.id]);
@@ -114,22 +105,29 @@ export default function PreviousTournament() {
 
     const displayName = previous.name.replace(/^2026\s*/i, '').toUpperCase();
 
-    const mpoScore = buildScoreTicker(mpoEntries) ||
-        (result?.mpo_winner ? `Winner: ${result.mpo_winner} ${result.mpo_score ?? ''}` : 'Results pending...');
-    const fpoScore = buildScoreTicker(fpoEntries) ||
-        (result?.fpo_winner ? `Winner: ${result.fpo_winner} ${result.fpo_score ?? ''}` : 'Results pending...');
-    const mpoStats = buildStatsTicker(mpoEntries);
-    const fpoStats = buildStatsTicker(fpoEntries);
+    const scoreTicker = buildScoreTicker(entries) ||
+        (result?.mpo_winner ? `MPO: ${result.mpo_winner} ${result.mpo_score ?? ''} · FPO: ${result.fpo_winner ?? '—'} ${result.fpo_score ?? ''}` : 'Results pending...');
+
+    const statsTicker = buildStatsTicker(entries) || scoreTicker;
+
+    // Split into MPO/FPO if we have winner data from tournament_results
+    const mpoScore = entries.length > 0 ? buildScoreTicker(entries.slice(0, 5)) :
+        (result?.mpo_winner ? `MPO Winner: ${result.mpo_winner} ${result.mpo_score ?? ''}` : 'Pending...');
+    const fpoScore = result?.fpo_winner
+        ? `FPO Winner: ${result.fpo_winner} ${result.fpo_score ?? ''}`
+        : (entries.length ? buildScoreTicker(entries.slice(5)) || buildScoreTicker(entries) : 'Pending...');
+    const mpoStats = entries.length > 0 ? buildStatsTicker(entries.slice(0, 5)) : 'Stats pending...';
+    const fpoStats = entries.length > 0 ? buildStatsTicker(entries.slice(5)) || buildStatsTicker(entries) : 'Stats pending...';
 
     return (
         <section style={{ background: 'white', borderTop: '1px solid #e5e7eb' }}>
             {/* Section label */}
             <div style={{
                 padding: '8px 12px 4px',
-                fontSize: '0.68rem',
+                fontSize: '0.62rem',
                 fontWeight: 700,
                 color: '#9ca3af',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.07em',
                 textTransform: 'uppercase',
             }}>
                 Previous Tournament
@@ -150,12 +148,11 @@ export default function PreviousTournament() {
                 }}>
                     {displayName}
                 </div>
-                <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.76rem', marginTop: '3px' }}>
+                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.76rem', marginTop: '3px' }}>
                     {previous.location}
                 </div>
             </div>
 
-            {/* 4 ticker rows */}
             <TickerRow label="Scores MPO" text={mpoScore} />
             <TickerRow label="Scores FPO" text={fpoScore} />
             <TickerRow label="Stats MPO" text={mpoStats} />

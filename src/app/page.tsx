@@ -5,12 +5,7 @@ import PreviousTournament from '@/components/PreviousTournament';
 
 export default async function HomePage() {
   return (
-    <main style={{
-      background: '#f3f4f6',
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
+    <main style={{ background: '#f3f4f6' }}>
       {/* ── Top info ticker (black) ── */}
       <TopScrollBar />
 
@@ -20,7 +15,6 @@ export default async function HomePage() {
       {/* ── Circular navigation grid ── */}
       <section style={{
         background: '#f3f4f6',
-        flex: 1,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
