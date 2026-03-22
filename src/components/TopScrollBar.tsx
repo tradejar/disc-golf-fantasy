@@ -59,7 +59,7 @@ export default function TopScrollBar() {
         : '';
 
     const sep = '          ';
-    const tickerText = `NEXT STOP: ${upcoming.name.replace(/^2026\s*/i, '')}  ·  ${upcoming.location}  ·  ${parStr}  ·  ${distStr}  ·  ${weatherStr}  ·  ${prognosisStr}${champStr}`;
+    const tickerText = `NEXT STOP: ${upcoming.name.replace(/^2026\s*/i, '')}  ·  ${upcoming.location}  ·  ${parStr}  ·  ${distStr}  ·  ${prognosisStr}${champStr}`;
     const content = [tickerText, tickerText, tickerText, tickerText].join(sep);
 
     const GREEN = '#4ade80';
