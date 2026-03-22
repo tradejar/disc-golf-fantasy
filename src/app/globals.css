@@ -1,6 +1,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -57,9 +59,9 @@ a {
   white-space: nowrap;
   will-change: transform;
   animation: tickerScroll var(--ticker-dur, 40s) linear infinite;
-  font-size: 0.72rem;
-  -webkit-text-size-adjust: none;
-  text-size-adjust: none;
+  font-size: 11px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 .ticker-track:hover {
