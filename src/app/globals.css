@@ -43,8 +43,13 @@ a {
 
 /* ── Ticker animations — defined globally so React re-renders don't reset them ── */
 @keyframes tickerScroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 .ticker-track {
@@ -52,7 +57,11 @@ a {
   white-space: nowrap;
   will-change: transform;
   animation: tickerScroll var(--ticker-dur, 40s) linear infinite;
+  font-size: 0.72rem;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
 }
+
 .ticker-track:hover {
   animation-play-state: paused;
 }
