@@ -25,6 +25,7 @@ export default function FeatureScrollBar() {
             position: 'sticky',
             top: `${NAV_HEIGHT + TOP_TICKER_HEIGHT}px`,
             zIndex: 38,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
         }}>
             <span
                 className="ticker-track"

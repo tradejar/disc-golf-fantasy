@@ -59,6 +59,7 @@ export default function TopScrollBar() {
             position: 'sticky',
             top: `${NAV_HEIGHT}px`,
             zIndex: 39,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.45)',
         }}>
             <span
                 className="ticker-track"

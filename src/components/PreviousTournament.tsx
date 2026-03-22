@@ -129,7 +129,7 @@ export default function PreviousTournament() {
     const pendingText = loading ? 'Loading...' : 'No data available for this tournament';
 
     return (
-        <section style={{ background: 'white', borderTop: '1px solid #e5e7eb' }}>
+        <section style={{ background: 'white', borderTop: '1px solid #e5e7eb', boxShadow: '0 -2px 12px rgba(0,0,0,0.08)' }}>
             <div style={{
                 padding: '8px 12px 4px', fontSize: '0.62rem', fontWeight: 700,
                 color: '#9ca3af', letterSpacing: '0.07em', textTransform: 'uppercase',

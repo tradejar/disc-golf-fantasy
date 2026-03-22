@@ -41,8 +41,9 @@ export default function HomeCards() {
                 .circ-disc {
                     border-radius: 50%;
                     width: 68px; height: 68px;
-                    transition: transform 0.13s ease;
+                    transition: transform 0.13s ease, box-shadow 0.13s ease;
                     flex-shrink: 0;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.12);
                 }
                 .circ-btn:hover .circ-disc { transform: scale(1.08); }
                 .circ-disc.pressed { animation: circlePress 0.26s cubic-bezier(.22,1,.36,1) forwards; }
