@@ -10,9 +10,13 @@ interface TournamentResult {
     fpo_score?: string;
 }
 
+interface WeatherData {
+    temp: number;
+    condition: string;
+}
+
 function getUpcomingTournament() {
     const now = new Date();
-    // Find the next tournament that hasn't locked yet, or is currently active
     const upcoming = SEASON_2026.find(t => new Date(t.endDate + 'T23:59:59Z') >= now);
     return upcoming ?? SEASON_2026[SEASON_2026.length - 1];
 }
@@ -25,9 +29,11 @@ function getPreviousTournament() {
 
 export default function TopScrollBar() {
     const [result, setResult] = useState<TournamentResult | null>(null);
+    const [weather, setWeather] = useState<WeatherData | null>(null);
     const upcoming = getUpcomingTournament();
     const previous = getPreviousTournament();
 
+    // Fetch previous tournament winner from Supabase
     useEffect(() => {
         if (!previous) return;
         fetch(`/api/tournament-results?tournamentId=${previous.id}`)
@@ -36,11 +42,21 @@ export default function TopScrollBar() {
             .catch(() => { });
     }, [previous?.id]);
 
-    // Build ticker content
+    // Fetch current weather for upcoming tournament via Open-Meteo
+    useEffect(() => {
+        if (!upcoming.lat || !upcoming.lon) return;
+        fetch(`/api/weather?lat=${upcoming.lat}&lon=${upcoming.lon}`)
+            .then(r => r.json())
+            .then(d => { if (typeof d.temp === 'number') setWeather(d); })
+            .catch(() => { });
+    }, [upcoming.id, upcoming.lat, upcoming.lon]);
+
+    // Build ticker segments
     const distStr = upcoming.totalDistanceFt
         ? `${upcoming.totalDistanceFt.toLocaleString()}ft`
         : 'n/a';
     const parStr = upcoming.par ? `Par ${upcoming.par}` : 'Par —';
+    const weatherStr = weather ? `${weather.condition} ${weather.temp}°F` : 'Weather: —';
 
     const mpoWinner = result?.mpo_winner
         ? `MPO: ${result.mpo_winner}${result.mpo_score ? ` (${result.mpo_score})` : ''}`
@@ -52,9 +68,7 @@ export default function TopScrollBar() {
         ? `  ·  PREV: ${previous.name.replace(/^2026\s*/i, '')}  ·  ${[mpoWinner, fpoWinner].filter(Boolean).join('  ·  ')}`
         : '';
 
-    const tickerText = `NEXT STOP: ${upcoming.name.replace(/^2026\s*/i, '')}  ·  ${upcoming.location}  ·  ${parStr}  ·  ${distStr}  ·  Weather: —°F${prevPart}`;
-
-    // Duplicate content so the loop is seamless
+    const tickerText = `NEXT STOP: ${upcoming.name.replace(/^2026\s*/i, '')}  ·  ${upcoming.location}  ·  ${parStr}  ·  ${distStr}  ·  ${weatherStr}${prevPart}`;
     const content = `${tickerText}          ${tickerText}`;
 
     return (
@@ -91,7 +105,6 @@ export default function TopScrollBar() {
                     color: '#fff',
                     padding: '0 1rem',
                 }}>
-                    {/* Render each segment with styled span for "NEXT STOP:" keyword */}
                     {content.split(/(NEXT STOP:|PREV:)/g).map((part, i) => {
                         if (part === 'NEXT STOP:' || part === 'PREV:') {
                             return (
@@ -100,10 +113,12 @@ export default function TopScrollBar() {
                                 </span>
                             );
                         }
-                        // Highlight scores like (-24)
-                        return part.split(/(\([+-]?\d+\))/g).map((chunk, j) => {
+                        return part.split(/(\([+-]?\d+\)|[\u2600-\u26FF][\u0000-\uffff]*?\d+°F)/g).map((chunk, j) => {
                             if (/^\([+-]?\d+\)$/.test(chunk)) {
                                 return <span key={`${i}-${j}`} style={{ color: '#fbbf24' }}>{chunk}</span>;
+                            }
+                            if (/\d+°F/.test(chunk)) {
+                                return <span key={`${i}-${j}`} style={{ color: '#38bdf8' }}>{chunk}</span>;
                             }
                             return <span key={`${i}-${j}`}>{chunk}</span>;
                         });

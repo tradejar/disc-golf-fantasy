@@ -20,6 +20,10 @@ export interface SeasonTournament {
     par?: number;
     /** Total layout distance in feet (one round) */
     totalDistanceFt?: number;
+    /** Latitude for weather API */
+    lat?: number;
+    /** Longitude for weather API */
+    lon?: number;
 }
 
 /**
@@ -40,6 +44,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Brooksville, FL', lockHour: 13,
         distance: 4, technical: 4, elevation: 4, climate: 4, bias: 4,
         holes: 18, par: 54, totalDistanceFt: 8340,
+        lat: 28.54, lon: -82.39,
     },
     {
         id: '96402', pdga_id: '96402',
@@ -48,6 +53,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Jefferson Parish, LA', lockHour: 14,
         distance: 4, technical: 4, elevation: 1, climate: 4, bias: 4,
         holes: 18, par: 54, totalDistanceFt: 8750,
+        lat: 29.69, lon: -90.20,
     },
     {
         id: '96403', pdga_id: '96403',
@@ -56,6 +62,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Charlotte, NC', lockHour: 13,
         distance: 2, technical: 4, elevation: 3, climate: 3, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 7600,
+        lat: 35.23, lon: -80.84,
     },
     // ── April ─────────────────────────────────────────────────────────────────
     {
@@ -65,6 +72,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Lynchburg, VA', lockHour: 13,
         distance: 4, technical: 4, elevation: 3, climate: 3, bias: 4,
         holes: 18, par: 54, totalDistanceFt: 9200,
+        lat: 37.41, lon: -79.14,
     },
     {
         id: '96405', pdga_id: '96405',
@@ -73,6 +81,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Jonesboro, AR', lockHour: 14,
         distance: 3, technical: 3, elevation: 3, climate: 4, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 8120,
+        lat: 35.84, lon: -90.70,
     },
     {
         id: '96406', pdga_id: '96406',
@@ -81,6 +90,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Liberty, MO', lockHour: 14,
         distance: 4, technical: 3, elevation: 3, climate: 3, bias: 2,
         holes: 18, par: 60, totalDistanceFt: 9800,
+        lat: 39.25, lon: -94.42,
     },
     // ── May ───────────────────────────────────────────────────────────────────
     {
@@ -90,6 +100,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Waco, TX', lockHour: 14,
         distance: 2, technical: 4, elevation: 2, climate: 3, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 7480,
+        lat: 31.55, lon: -97.15,
     },
     {
         id: '96408', pdga_id: '96408',
@@ -98,6 +109,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Austin, TX', lockHour: 14,
         distance: 3, technical: 4, elevation: 3, climate: 4, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 8850,
+        lat: 30.27, lon: -97.74,
     },
     {
         id: '96409', pdga_id: '96409',
@@ -106,6 +118,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Stockton, CA', lockHour: 16,
         distance: 4, technical: 1, elevation: 1, climate: 4, bias: 2,
         holes: 18, par: 54, totalDistanceFt: 9450,
+        lat: 37.96, lon: -121.29,
     },
     // ── June ──────────────────────────────────────────────────────────────────
     {
@@ -115,6 +128,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Portland, OR', lockHour: 16,
         distance: 4, technical: 3, elevation: 2, climate: 2, bias: 4,
         holes: 18, par: 54, totalDistanceFt: 8600,
+        lat: 45.52, lon: -122.68,
     },
     {
         id: '97339', pdga_id: '97339',
@@ -123,6 +137,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Tallinn, Estonia', lockHour: 6,
         distance: 3, technical: 2, elevation: 3, climate: 3, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 7900,
+        lat: 59.44, lon: 24.75,
     },
     {
         id: '96411', pdga_id: '96411',
@@ -131,6 +146,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Borg\u00e5s, Sweden', lockHour: 7,
         distance: 2, technical: 4, elevation: 4, climate: 2, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 7250,
+        lat: 57.91, lon: 11.97,
     },
     // ── July ──────────────────────────────────────────────────────────────────
     {
@@ -139,6 +155,7 @@ export const SEASON_2026: SeasonTournament[] = [
         startDate: '2026-07-03', endDate: '2026-07-05', rounds: 3,
         location: 'Nol, Sweden', lockHour: 7,
         holes: 18, par: 54, totalDistanceFt: 7100,
+        lat: 57.92, lon: 12.07,
     },
     {
         id: '96413', pdga_id: '96413',
@@ -147,6 +164,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Heinola, Finland', lockHour: 6,
         distance: 3, technical: 4, elevation: 4, climate: 2, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 8300,
+        lat: 61.20, lon: 26.03,
     },
     {
         id: '97341', pdga_id: '97341',
@@ -155,6 +173,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Salt Lake City, UT', lockHour: 15,
         distance: 3, technical: 3, elevation: 4, climate: 4, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 8750,
+        lat: 40.76, lon: -111.89,
     },
     // ── Late July / August ────────────────────────────────────────────────────
     {
@@ -164,6 +183,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Peoria, IL', lockHour: 14,
         distance: 4, technical: 4, elevation: 2, climate: 4, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 9100,
+        lat: 40.69, lon: -89.59,
     },
     {
         id: '96415', pdga_id: '96415',
@@ -172,6 +192,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Indianola, IA', lockHour: 14,
         distance: 3, technical: 3, elevation: 2, climate: 3, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 8000,
+        lat: 41.36, lon: -93.56,
     },
     {
         id: '96416', pdga_id: '96416',
@@ -180,6 +201,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Clearwater, MN', lockHour: 14,
         distance: 4, technical: 3, elevation: 1, climate: 2, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 9350,
+        lat: 45.01, lon: -93.97,
     },
     {
         id: '97344', pdga_id: '97344',
@@ -188,6 +210,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Milford, MI', lockHour: 13,
         distance: 4, technical: 4, elevation: 4, climate: 2, bias: 4,
         holes: 18, par: 54, totalDistanceFt: 9800,
+        lat: 42.59, lon: -83.60,
     },
     // ── September ─────────────────────────────────────────────────────────────
     {
@@ -197,6 +220,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Burlington, KY', lockHour: 13,
         distance: 3, technical: 4, elevation: 3, climate: 3, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 7850,
+        lat: 38.95, lon: -84.71,
     },
     {
         id: '96418', pdga_id: '96418',
@@ -205,6 +229,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Jeffersonville, VT', lockHour: 13,
         distance: 4, technical: 4, elevation: 4, climate: 4, bias: 4,
         holes: 18, par: 54, totalDistanceFt: 9600,
+        lat: 44.64, lon: -72.83,
     },
     {
         id: '96419', pdga_id: '96419',
@@ -213,6 +238,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Leicester, MA', lockHour: 13,
         distance: 3, technical: 4, elevation: 3, climate: 2, bias: 4,
         holes: 18, par: 54, totalDistanceFt: 8450,
+        lat: 42.24, lon: -71.90,
     },
     // ── October ───────────────────────────────────────────────────────────────
     {
@@ -222,6 +248,7 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Rock Hill, SC', lockHour: 13,
         distance: 4, technical: 4, elevation: 2, climate: 3, bias: 1,
         holes: 18, par: 54, totalDistanceFt: 9050,
+        lat: 34.92, lon: -81.02,
     },
     {
         id: '96421', pdga_id: '96421',
@@ -230,5 +257,6 @@ export const SEASON_2026: SeasonTournament[] = [
         location: 'Lynchburg, VA', lockHour: 13,
         distance: 4, technical: 3, elevation: 4, climate: 3, bias: 2,
         holes: 18, par: 54, totalDistanceFt: 9200,
+        lat: 37.41, lon: -79.14,
     },
 ];
