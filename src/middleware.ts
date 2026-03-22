@@ -8,6 +8,9 @@ const isPublicRoute = createRouteMatcher([
     '/leaderboard(.*)',
     '/api/leaderboard(.*)',
     '/api/live-status(.*)',
+    '/api/player-stats(.*)',        // Landing page previous tournament ticker
+    '/api/tournament-results(.*)',  // Landing page previous tournament winners
+    '/api/weather(.*)',             // Landing page weather ticker
     '/api/cron(.*)',           // Cron endpoints — protected by CRON_SECRET, not Clerk
     '/api/registered-players(.*)', // Used by draft page before auth resolves
 ]);
