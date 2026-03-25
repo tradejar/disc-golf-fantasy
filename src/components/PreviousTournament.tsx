@@ -71,7 +71,7 @@ function buildStatsNodes(players: PlayerStat[]): ReactNode {
     );
 }
 
-const BASE_SPEED = 40; // px per second (RAF-driven)
+const BASE_SPEED = 20; // px per second (RAF-driven)
 const ROW_SPEEDS = [BASE_SPEED * 1.00, BASE_SPEED * 0.95, BASE_SPEED * 1.05, BASE_SPEED * 0.97];
 
 /** RAF-driven seamless ticker — click toggles pause, swipe navigates */
@@ -89,6 +89,7 @@ function SeamlessTicker({
     const touchStartX = useRef<number | null>(null);
     const touchStartPos = useRef(0);
     const touchVelSamples = useRef<{ x: number; t: number }[]>([]);
+    const isDragging = useRef(false);
 
     // Start/restart the RAF loop when content changes
     useEffect(() => {
@@ -107,7 +108,7 @@ function SeamlessTicker({
                         // Apply inertia velocity if any, decaying toward zero
                         if (Math.abs(inertiaVelRef.current) > 1) {
                             posRef.current = (posRef.current + inertiaVelRef.current * dt + halfWidth) % halfWidth;
-                            inertiaVelRef.current *= 0.88; // friction
+                            inertiaVelRef.current *= 0.4; // friction (lower = stops faster)
                         } else {
                             inertiaVelRef.current = 0;
                             posRef.current = (posRef.current + speed * dt) % halfWidth;
@@ -171,13 +172,74 @@ function SeamlessTicker({
         pausedRef.current = false;
     }, []);
 
+    // Helper: finish a drag and compute inertia
+    const endDrag = useCallback((currentX: number) => {
+        if (!isDragging.current) return;
+        isDragging.current = false;
+        const samples = touchVelSamples.current;
+        if (samples.length >= 2) {
+            const newest = samples[samples.length - 1];
+            const oldest = samples[0];
+            const dtMs = newest.t - oldest.t;
+            if (dtMs > 0) {
+                inertiaVelRef.current = (oldest.x - newest.x) / (dtMs / 1000);
+            }
+        }
+        touchVelSamples.current = [];
+        touchStartX.current = null;
+        lastTsRef.current = 0;
+        pausedRef.current = false;
+    }, []);
+
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        touchStartX.current = e.clientX;
+        touchStartPos.current = posRef.current;
+        touchVelSamples.current = [{ x: e.clientX, t: performance.now() }];
+        inertiaVelRef.current = 0;
+        pausedRef.current = true;
+        isDragging.current = true;
+    }, []);
+
+    const handleMouseMove = useCallback((e: React.MouseEvent) => {
+        if (!isDragging.current || touchStartX.current === null || !trackRef.current) return;
+        const now = performance.now();
+        const cx = e.clientX;
+        touchVelSamples.current = [
+            ...touchVelSamples.current.filter(s => now - s.t < 80),
+            { x: cx, t: now },
+        ];
+        const dx = touchStartX.current - cx;
+        const halfWidth = trackRef.current.scrollWidth / 2;
+        if (halfWidth <= 0) return;
+        posRef.current = ((touchStartPos.current + dx) % halfWidth + halfWidth) % halfWidth;
+    }, []);
+
+    const handleMouseUp = useCallback((e: React.MouseEvent) => {
+        endDrag(e.clientX);
+    }, [endDrag]);
+
+    const handleMouseLeave = useCallback((e: React.MouseEvent) => {
+        endDrag(e.clientX);
+    }, [endDrag]);
+
     return (
         <div
             onClick={handleClick}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            style={{ overflow: 'hidden', width: '100%', cursor: 'pointer', touchAction: 'pan-y' }}
+            style={{
+                overflow: 'hidden', width: '100%',
+                cursor: isDragging.current ? 'grabbing' : 'grab',
+                touchAction: 'pan-y',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+            }}
         >
             <div
                 ref={trackRef}
