@@ -108,7 +108,7 @@ function SeamlessTicker({
                         // Apply inertia velocity if any, decaying toward zero
                         if (Math.abs(inertiaVelRef.current) > 1) {
                             posRef.current = (posRef.current + inertiaVelRef.current * dt + halfWidth) % halfWidth;
-                            inertiaVelRef.current *= 0.4; // friction (lower = stops faster)
+                            inertiaVelRef.current *= 0.96; // friction (0.96 = smooth iOS-style glide)
                         } else {
                             inertiaVelRef.current = 0;
                             posRef.current = (posRef.current + speed * dt) % halfWidth;
