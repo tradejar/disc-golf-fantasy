@@ -71,7 +71,7 @@ function buildStatsNodes(players: PlayerStat[]): ReactNode {
     );
 }
 
-const BASE_SPEED = 80; // px per second (RAF-driven)
+const BASE_SPEED = 40; // px per second (RAF-driven)
 const ROW_SPEEDS = [BASE_SPEED * 1.00, BASE_SPEED * 0.95, BASE_SPEED * 1.05, BASE_SPEED * 0.97];
 
 /** RAF-driven seamless ticker — click toggles pause, swipe navigates */
@@ -83,10 +83,12 @@ function SeamlessTicker({
     const pausedRef = useRef(false);   // use ref so RAF doesn't need to re-subscribe
     const lastTsRef = useRef<number>(0);
     const rafRef = useRef<number>(0);
+    const inertiaVelRef = useRef(0);   // inertia velocity in px/s (positive = forward scroll)
 
-    // Touch swipe
+    // Touch swipe — track recent velocity
     const touchStartX = useRef<number | null>(null);
     const touchStartPos = useRef(0);
+    const touchVelSamples = useRef<{ x: number; t: number }[]>([]);
 
     // Start/restart the RAF loop when content changes
     useEffect(() => {
@@ -102,7 +104,14 @@ function SeamlessTicker({
                 if (!pausedRef.current) {
                     const halfWidth = track.scrollWidth / 2;
                     if (halfWidth > 0) {
-                        posRef.current = (posRef.current + speed * dt) % halfWidth;
+                        // Apply inertia velocity if any, decaying toward zero
+                        if (Math.abs(inertiaVelRef.current) > 1) {
+                            posRef.current = (posRef.current + inertiaVelRef.current * dt + halfWidth) % halfWidth;
+                            inertiaVelRef.current *= 0.88; // friction
+                        } else {
+                            inertiaVelRef.current = 0;
+                            posRef.current = (posRef.current + speed * dt) % halfWidth;
+                        }
                     }
                 }
                 track.style.transform = `translateX(${-posRef.current}px)`;
@@ -122,13 +131,22 @@ function SeamlessTicker({
     const handleTouchStart = useCallback((e: React.TouchEvent) => {
         touchStartX.current = e.touches[0].clientX;
         touchStartPos.current = posRef.current;
+        touchVelSamples.current = [{ x: e.touches[0].clientX, t: performance.now() }];
+        inertiaVelRef.current = 0;
         pausedRef.current = true;
     }, []);
 
     const handleTouchMove = useCallback((e: React.TouchEvent) => {
         if (touchStartX.current === null || !trackRef.current) return;
         e.preventDefault();
-        const dx = touchStartX.current - e.touches[0].clientX; // left-swipe = positive
+        const now = performance.now();
+        const cx = e.touches[0].clientX;
+        // Keep only last 80ms of samples for velocity estimation
+        touchVelSamples.current = [
+            ...touchVelSamples.current.filter(s => now - s.t < 80),
+            { x: cx, t: now },
+        ];
+        const dx = touchStartX.current - cx; // left-swipe = positive
         const halfWidth = trackRef.current.scrollWidth / 2;
         if (halfWidth <= 0) return;
         posRef.current = ((touchStartPos.current + dx) % halfWidth + halfWidth) % halfWidth;
@@ -136,7 +154,20 @@ function SeamlessTicker({
 
     const handleTouchEnd = useCallback(() => {
         touchStartX.current = null;
-        lastTsRef.current = 0; // reset dt so no position jump on resume
+        lastTsRef.current = 0;
+        // Calculate release velocity from recent samples
+        const samples = touchVelSamples.current;
+        if (samples.length >= 2) {
+            const newest = samples[samples.length - 1];
+            const oldest = samples[0];
+            const dtMs = newest.t - oldest.t;
+            if (dtMs > 0) {
+                // dx in finger direction: negative finger dx = positive scroll
+                const fingerVel = (oldest.x - newest.x) / (dtMs / 1000); // px/s in scroll direction
+                inertiaVelRef.current = fingerVel;
+            }
+        }
+        touchVelSamples.current = [];
         pausedRef.current = false;
     }, []);
 
