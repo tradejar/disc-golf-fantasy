@@ -33,13 +33,20 @@ export async function POST(req: Request) {
             .eq('user_id', userId)
             .maybeSingle();
 
-        if (existingMember?.payment_status === 'paid') {
+        if (existingMember?.payment_status === 'free') {
             return NextResponse.json({ error: 'You are already a member of this league!' }, { status: 400 });
         }
 
-        // Entry fee is play-money display only — always join directly
+        // Entry fee is play-money only — always join directly.
+        // If they have a stale 'pending' row (old Stripe flow), update it to 'free'.
         if (existingMember) {
-            return NextResponse.json({ error: 'You are already a member of this league!' }, { status: 400 });
+            const { error: updateError } = await supabaseAdmin
+                .from('league_members')
+                .update({ payment_status: 'free' })
+                .eq('league_id', league.id)
+                .eq('user_id', userId);
+            if (updateError) throw new Error(`Failed to update membership: ${updateError.message}`);
+            return NextResponse.json({ success: true, league });
         }
 
         const { error: joinError } = await supabaseAdmin
