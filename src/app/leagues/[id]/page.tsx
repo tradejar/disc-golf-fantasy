@@ -214,6 +214,7 @@ function LeagueDetail() {
     const [invitePaused, setInvitePaused] = useState(false);
     const [pauseLoading, setPauseLoading] = useState(false);
     const [archiveLoading, setArchiveLoading] = useState(false);
+    const [leaveLoading, setLeaveLoading] = useState(false);
     const [hasUnreadChat, setHasUnreadChat] = useState(false);
     const [unreadCommentUsers, setUnreadCommentUsers] = useState<Set<string>>(new Set());
     const [isPremium, setIsPremium] = useState(false);
@@ -294,6 +295,26 @@ function LeagueDetail() {
             body: JSON.stringify({ archive: true }),
         });
         window.location.href = '/leagues';
+    };
+
+    const handleLeave = async () => {
+        // Determine if first event has started to warn user about entry fee
+        const now = new Date();
+        const firstLocked = tournaments.length > 0 && new Date(tournaments[0].lockDate) <= now;
+        const confirmMsg = firstLocked
+            ? 'The first event has already started. You can still leave, but your play-money entry fee stays in the pot. Continue?'
+            : `Leave this league? Your $${league?.entryFee ?? 0} play-money entry fee will be removed from the pot.`;
+        if (!confirm(confirmMsg)) return;
+        setLeaveLoading(true);
+        try {
+            const res = await fetch(`/api/leagues/${leagueId}/leave`, { method: 'POST' });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to leave');
+            window.location.href = '/leagues';
+        } catch (err: any) {
+            alert(err.message);
+            setLeaveLoading(false);
+        }
     };
 
     if (loading) return (
@@ -422,11 +443,18 @@ function LeagueDetail() {
                         payoutStructure={league?.payoutStructure ?? ''}
                         memberCount={leaderboard.length}
                     />
-                    <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'flex-end' }}>
-                        <button onClick={archiveLeague} disabled={archiveLoading}
-                            style={{ background: 'none', border: '1px solid #334155', borderRadius: '8px', color: '#64748b', cursor: 'pointer', fontSize: '0.8rem', padding: '0.35rem 0.85rem', fontWeight: 600 }}>
-                            {archiveLoading ? '…' : '📥 Archive this league'}
-                        </button>
+                    <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                        {isOwner ? (
+                            <button onClick={archiveLeague} disabled={archiveLoading}
+                                style={{ background: 'none', border: '1px solid #334155', borderRadius: '8px', color: '#64748b', cursor: 'pointer', fontSize: '0.8rem', padding: '0.35rem 0.85rem', fontWeight: 600 }}>
+                                {archiveLoading ? '…' : '📥 Archive this league'}
+                            </button>
+                        ) : (
+                            <button onClick={handleLeave} disabled={leaveLoading}
+                                style={{ background: 'none', border: '1px solid #ef4444', borderRadius: '8px', color: '#f87171', cursor: leaveLoading ? 'not-allowed' : 'pointer', fontSize: '0.8rem', padding: '0.35rem 0.85rem', fontWeight: 600, opacity: leaveLoading ? 0.6 : 1 }}>
+                                {leaveLoading ? '…' : '🚪 Leave League'}
+                            </button>
+                        )}
                     </div>
                 </div>
 
