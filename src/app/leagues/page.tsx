@@ -209,6 +209,12 @@ export default function LeaguesPage() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to join');
+            // Paid league — redirect to checkout flow
+            if (data.requiresPayment) {
+                router.push(`/leagues/${data.leagueId}/checkout`);
+                return;
+            }
+            // Free league — data.league is the full DB row
             router.push(`/leagues/${data.league.id}`);
         } catch (err: any) {
             setJoinError(err.message);

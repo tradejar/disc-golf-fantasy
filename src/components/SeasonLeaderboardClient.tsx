@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { SEASON_2026 } from '@/data/tournaments';
+import type { SeasonTournament } from '@/data/tournaments';
 import styles from './SeasonLeaderboardClient.module.css';
 
 interface TournamentEntry {
@@ -28,6 +29,8 @@ interface Props {
 
 export default function SeasonLeaderboardClient({ title, subtitle, leagueId = null }: Props) {
     const [season, setSeason] = useState<SeasonEntry[]>([]);
+    // tournaments scoped to the active league (or all SEASON_2026 for global)
+    const [tournaments, setTournaments] = useState<SeasonTournament[]>(SEASON_2026);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [expanded, setExpanded] = useState<string | null>(null);
@@ -43,13 +46,18 @@ export default function SeasonLeaderboardClient({ title, subtitle, leagueId = nu
             .then(r => r.json())
             .then(d => {
                 if (d.error) setError(d.error);
-                else setSeason(d.season || []);
+                else {
+                    setSeason(d.season || []);
+                    setTournaments(d.tournaments || SEASON_2026);
+                    // Reset filter when switching tabs
+                    setFilterTournamentId(null);
+                }
             })
             .catch(() => setError('Failed to load'))
             .finally(() => setLoading(false));
     }, [leagueId]);
 
-    const playedTournaments = SEASON_2026.filter(t => {
+    const playedTournaments = tournaments.filter(t => {
         const today = new Date().toISOString().split('T')[0];
         return t.startDate <= today;
     });
@@ -99,7 +107,7 @@ export default function SeasonLeaderboardClient({ title, subtitle, leagueId = nu
                     }}
                 >
                     <option value="">— Season Total —</option>
-                    {SEASON_2026.map(t => (
+                    {tournaments.map(t => (
                         <option key={t.id} value={t.id}>
                             {t.name.replace('2026 ', '')}
                         </option>
@@ -171,7 +179,7 @@ export default function SeasonLeaderboardClient({ title, subtitle, leagueId = nu
                     {/* Expanded breakdown */}
                     {expanded === entry.userId && (
                         <div style={{ borderTop: '1px solid #334155', padding: '0.75rem 1.25rem', background: '#0f172a' }}>
-                            {(filterTournamentId ? SEASON_2026.filter(t => t.id === filterTournamentId) : SEASON_2026).map(t => {
+                            {(filterTournamentId ? tournaments.filter(t => t.id === filterTournamentId) : tournaments).map(t => {
                                 const te = entry.tournaments.find(x => x.tournamentId === t.id);
                                 const leaderboardUrl = leagueId ? `/leaderboard/${t.id}?leagueId=${leagueId}` : `/leaderboard/${t.id}`;
                                 return (

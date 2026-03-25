@@ -25,22 +25,40 @@ export async function GET(request: Request) {
             }
         }
 
-        // Fetch all entries for all 2026 tournaments
-        const tournamentIds = SEASON_2026.map(t => t.id);
+        // Determine which tournament IDs apply — for a league, use only that league's selected events
+        let tournamentIds = SEASON_2026.map(t => t.id);
+        let leagueTournamentObjects = SEASON_2026; // returned to the client for UI scoping
+        let authorizedLeagueMembers: string[] = [];
+
+        if (leagueId) {
+            // Fetch the league row to read its selected tournament IDs
+            const { data: leagueRow } = await supabaseAdmin
+                .from('leagues')
+                .select('tournament_ids')
+                .eq('id', leagueId)
+                .single();
+
+            const leagueSelectedIds: string[] = leagueRow?.tournament_ids ?? [];
+            if (leagueSelectedIds.length > 0) {
+                tournamentIds = leagueSelectedIds;
+            }
+            leagueTournamentObjects = SEASON_2026.filter(t => tournamentIds.includes(t.id));
+
+            // Also restrict to members of that league
+            const { data: leagueMembersData } = await supabaseAdmin
+                .from('league_members')
+                .select('user_id')
+                .eq('league_id', leagueId);
+
+            authorizedLeagueMembers = leagueMembersData?.map(m => m.user_id) || [];
+        }
 
         let entriesQuery = supabaseAdmin
             .from('entries')
             .select('id, user_id, tournament_id, total_points, roster_data, created_at')
             .in('tournament_id', tournamentIds);
 
-        // If a leagueId is provided, restrict to members of that league
-        if (leagueId) {
-            const { data: leagueMembersData } = await supabaseAdmin
-                .from('league_members')
-                .select('user_id')
-                .eq('league_id', leagueId);
-
-            const authorizedLeagueMembers = leagueMembersData?.map(m => m.user_id) || [];
+        if (leagueId && authorizedLeagueMembers.length > 0) {
             entriesQuery = entriesQuery.in('user_id', authorizedLeagueMembers);
         }
 
@@ -130,7 +148,7 @@ export async function GET(request: Request) {
             .sort((a, b) => b.totalPoints - a.totalPoints)
             .map((u, index) => ({ ...u, rank: index + 1 }));
 
-        return NextResponse.json({ season, tournaments: SEASON_2026 });
+        return NextResponse.json({ season, tournaments: leagueTournamentObjects });
 
     } catch (e: unknown) {
         console.error('Season leaderboard error:', e);
