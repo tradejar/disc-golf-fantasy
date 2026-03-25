@@ -125,10 +125,6 @@ function SeamlessTicker({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tickerKey, speed]);
 
-    const handleClick = useCallback(() => {
-        pausedRef.current = !pausedRef.current;
-    }, []);
-
     const handleTouchStart = useCallback((e: React.TouchEvent) => {
         touchStartX.current = e.touches[0].clientX;
         touchStartPos.current = posRef.current;
@@ -225,7 +221,6 @@ function SeamlessTicker({
 
     return (
         <div
-            onClick={handleClick}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
