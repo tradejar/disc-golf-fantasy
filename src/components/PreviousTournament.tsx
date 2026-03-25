@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef, ReactNode } from 'react';
+import React, { useEffect, useState, useRef, ReactNode, useCallback } from 'react';
 import { SEASON_2026 } from '@/data/tournaments';
 
 interface PlayerStat {
@@ -28,16 +28,20 @@ function pct(n: number) { return `${Math.round(n)}%`; }
 function toParStr(n: number) { return n === 0 ? 'E' : n > 0 ? `+${n}` : `${n}`; }
 function hasName(p: PlayerStat) { return !p.name.startsWith('#'); }
 
-const GAP = '\u00a0\u00a0\u00a0\u00a0\u00a0'; // 5 non-breaking spaces between players
+const TOP_N = 20; // Show only top 20 finishers per division
+const GAP = '\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0'; // separator between players
 
 function buildScoreNodes(players: PlayerStat[]): ReactNode {
-    const named = players.filter(hasName);
+    const named = players.filter(hasName).slice(0, TOP_N);
     if (!named.length) return <span>Results pending…</span>;
     return (
         <>
             {named.map((p, i) => (
                 <React.Fragment key={p.pdgaNumber}>
                     {i > 0 && GAP}
+                    <span style={{ color: '#6b7280', fontSize: '0.78em', fontWeight: 700, marginRight: '3px' }}>
+                        #{i + 1}
+                    </span>
                     <strong>{p.name}</strong>
                     {' '}
                     <em>({toParStr(p.toPar)}) Egl:{p.breakdown.eagles} B:{p.breakdown.birdies} P:{p.breakdown.pars} Bg:{p.breakdown.bogeys} Dbl:{p.breakdown.doubles} Trpl+:{p.breakdown.triples}</em>
@@ -48,13 +52,16 @@ function buildScoreNodes(players: PlayerStat[]): ReactNode {
 }
 
 function buildStatsNodes(players: PlayerStat[]): ReactNode {
-    const named = players.filter(hasName);
+    const named = players.filter(hasName).slice(0, TOP_N);
     if (!named.length) return <span>Stats pending…</span>;
     return (
         <>
             {named.map((p, i) => (
                 <React.Fragment key={p.pdgaNumber}>
                     {i > 0 && GAP}
+                    <span style={{ color: '#6b7280', fontSize: '0.78em', fontWeight: 700, marginRight: '3px' }}>
+                        #{i + 1}
+                    </span>
                     <strong>{p.name}</strong>
                     {' '}
                     <em>FW:{pct(p.advanced.fairwayHits)} C1Reg:{pct(p.advanced.c1InReg)} C2Reg:{pct(p.advanced.c2InReg)} Scr:{pct(p.advanced.scramble)} C1X:{pct(p.advanced.c1xPutting)} C2:{pct(p.advanced.c2Putting)}</em>
@@ -67,11 +74,21 @@ function buildStatsNodes(players: PlayerStat[]): ReactNode {
 const BASE_SPEED = 14;
 const ROW_SPEEDS = [BASE_SPEED * 1.00, BASE_SPEED * 0.95, BASE_SPEED * 1.05, BASE_SPEED * 0.97];
 
-// tickerKey triggers re-measurement when player data changes
-function SeamlessTicker({ children, speed, tickerKey }: { children: ReactNode; speed: number; tickerKey: string }) {
+/** Seamless auto-scrolling ticker with click-to-pause and touch swipe navigation */
+function SeamlessTicker({
+    children, speed, tickerKey,
+}: { children: ReactNode; speed: number; tickerKey: string }) {
     const innerRef = useRef<HTMLSpanElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const [duration, setDuration] = useState(120);
+    const [paused, setPaused] = useState(false);
 
+    // Touch swipe state
+    const touchStartX = useRef<number | null>(null);
+    const touchStartScrollLeft = useRef<number>(0);
+    const animFrameRef = useRef<number | null>(null);
+
+    // Measure content width for scroll duration
     useEffect(() => {
         if (innerRef.current) {
             const w = innerRef.current.scrollWidth / 2;
@@ -80,12 +97,90 @@ function SeamlessTicker({ children, speed, tickerKey }: { children: ReactNode; s
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tickerKey, speed]);
 
+    // Click toggles pause
+    const handleClick = useCallback(() => {
+        setPaused(p => !p);
+    }, []);
+
+    // Touch: start
+    const handleTouchStart = useCallback((e: React.TouchEvent) => {
+        touchStartX.current = e.touches[0].clientX;
+        // Capture current CSS animation translate position
+        const span = innerRef.current;
+        if (span) {
+            const computed = getComputedStyle(span);
+            const matrix = new DOMMatrix(computed.transform);
+            touchStartScrollLeft.current = matrix.m41; // translateX value
+        }
+        setPaused(true); // pause while swiping
+    }, []);
+
+    // Touch: move — manually shift translateX
+    const handleTouchMove = useCallback((e: React.TouchEvent) => {
+        if (touchStartX.current === null || !innerRef.current) return;
+        e.preventDefault();
+        const dx = e.touches[0].clientX - touchStartX.current;
+        const span = innerRef.current;
+        const halfWidth = span.scrollWidth / 2;
+        let newX = touchStartScrollLeft.current + dx;
+        // Wrap around: keep in [-halfWidth, 0]
+        newX = ((newX % -halfWidth) - halfWidth) % -halfWidth;
+        span.style.transform = `translateX(${newX}px)`;
+        span.style.animationPlayState = 'paused';
+    }, []);
+
+    // Touch: end — resume auto-scroll from current position
+    const handleTouchEnd = useCallback(() => {
+        touchStartX.current = null;
+        // Small delay before resuming so the snap feels natural
+        if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+        animFrameRef.current = requestAnimationFrame(() => {
+            if (innerRef.current) {
+                // Sync animation offset to current visual position
+                innerRef.current.style.animationPlayState = 'running';
+                innerRef.current.style.transform = '';
+            }
+            setPaused(false);
+        });
+    }, []);
+
     return (
-        <div style={{ overflow: 'hidden', width: '100%' }}>
+        <div
+            ref={containerRef}
+            onClick={handleClick}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            style={{
+                overflow: 'hidden',
+                width: '100%',
+                cursor: paused ? 'pointer' : 'pointer',
+                position: 'relative',
+            }}
+            title={paused ? 'Click to resume' : 'Click to pause · Swipe to navigate'}
+        >
+            {/* Pause indicator */}
+            {paused && (
+                <div style={{
+                    position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                    background: 'rgba(0,0,0,0.55)', borderRadius: 4,
+                    color: 'white', fontSize: '0.6rem', fontWeight: 700,
+                    padding: '1px 5px', letterSpacing: '0.06em',
+                    pointerEvents: 'none', zIndex: 2,
+                }}>
+                    ⏸ PAUSED
+                </div>
+            )}
             <span
                 ref={innerRef}
                 className="ticker-track"
-                style={{ ['--ticker-dur' as string]: `${duration}s`, color: '#111827', fontWeight: 500, letterSpacing: '0.01em' }}
+                style={{
+                    ['--ticker-dur' as string]: `${duration}s`,
+                    color: '#111827',
+                    fontWeight: 500,
+                    letterSpacing: '0.01em',
+                    animationPlayState: paused ? 'paused' : 'running',
+                }}
             >
                 <span style={{ display: 'inline' }}>{children}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <span style={{ display: 'inline' }}>{children}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
@@ -94,7 +189,9 @@ function SeamlessTicker({ children, speed, tickerKey }: { children: ReactNode; s
     );
 }
 
-function TickerRow({ label, children, speed, tickerKey }: { label: string; children: ReactNode; speed: number; tickerKey: string }) {
+function TickerRow({
+    label, children, speed, tickerKey,
+}: { label: string; children: ReactNode; speed: number; tickerKey: string }) {
     return (
         <div style={{ borderTop: '1px solid #f0f0f0' }}>
             <div style={{
@@ -102,7 +199,7 @@ function TickerRow({ label, children, speed, tickerKey }: { label: string; child
                 letterSpacing: '0.07em', textTransform: 'uppercase',
                 padding: '4px 12px 0',
             }}>
-                {label}
+                {label} <span style={{ color: '#d1d5db', fontWeight: 400 }}>· Top {TOP_N}</span>
             </div>
             <SeamlessTicker speed={speed} tickerKey={tickerKey}>{children}</SeamlessTicker>
         </div>
@@ -129,9 +226,8 @@ export default function PreviousTournament() {
     const fpo = players.filter(p => p.division === 'FPO');
     const hasData = players.filter(hasName).length > 0;
 
-    // tickerKey changes when data arrives — triggers SeamlessTicker re-measurement
-    const mpoKey = mpo.filter(hasName).map(p => p.pdgaNumber).join(',');
-    const fpoKey = fpo.filter(hasName).map(p => p.pdgaNumber).join(',');
+    const mpoKey = mpo.filter(hasName).slice(0, TOP_N).map(p => p.pdgaNumber).join(',');
+    const fpoKey = fpo.filter(hasName).slice(0, TOP_N).map(p => p.pdgaNumber).join(',');
 
     const pendingText = loading ? 'Loading...' : 'No data available for this tournament';
 
@@ -153,6 +249,9 @@ export default function PreviousTournament() {
                 </div>
                 <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.76rem', marginTop: '3px' }}>
                     {previous.location}
+                    <span style={{ marginLeft: 8, opacity: 0.65, fontSize: '0.68rem' }}>
+                        · Click to pause · Swipe to navigate
+                    </span>
                 </div>
             </div>
 
