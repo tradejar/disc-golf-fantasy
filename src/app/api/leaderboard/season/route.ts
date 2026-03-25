@@ -29,28 +29,27 @@ export async function GET(request: Request) {
         let tournamentIds = SEASON_2026.map(t => t.id);
         let leagueTournamentObjects = SEASON_2026; // returned to the client for UI scoping
         let authorizedLeagueMembers: string[] = [];
+        let hasLeagueTournamentFilter = false;
 
         if (leagueId) {
-            // Fetch the league row to read its selected tournament IDs
-            const { data: leagueRow } = await supabaseAdmin
-                .from('leagues')
-                .select('tournament_ids')
-                .eq('id', leagueId)
-                .single();
+            // Fetch the league row to read its selected tournament IDs + members in one go
+            const [leagueResult, membersResult] = await Promise.all([
+                supabaseAdmin.from('leagues').select('tournament_ids').eq('id', leagueId).single(),
+                supabaseAdmin.from('league_members').select('user_id').eq('league_id', leagueId),
+            ]);
 
-            const leagueSelectedIds: string[] = leagueRow?.tournament_ids ?? [];
+            const leagueSelectedIds: string[] = leagueResult.data?.tournament_ids ?? [];
             if (leagueSelectedIds.length > 0) {
                 tournamentIds = leagueSelectedIds;
+                hasLeagueTournamentFilter = true;
             }
-            leagueTournamentObjects = SEASON_2026.filter(t => tournamentIds.includes(t.id));
+            // If leagueSelectedIds is empty (legacy leagues created before the fix),
+            // we still scope by member — just don't filter by tournament
+            leagueTournamentObjects = hasLeagueTournamentFilter
+                ? SEASON_2026.filter(t => tournamentIds.includes(t.id))
+                : SEASON_2026;
 
-            // Also restrict to members of that league
-            const { data: leagueMembersData } = await supabaseAdmin
-                .from('league_members')
-                .select('user_id')
-                .eq('league_id', leagueId);
-
-            authorizedLeagueMembers = leagueMembersData?.map(m => m.user_id) || [];
+            authorizedLeagueMembers = membersResult.data?.map(m => m.user_id) || [];
         }
 
         let entriesQuery = supabaseAdmin
@@ -58,6 +57,7 @@ export async function GET(request: Request) {
             .select('id, user_id, tournament_id, total_points, roster_data, created_at')
             .in('tournament_id', tournamentIds);
 
+        // Always scope to league members when leagueId is provided
         if (leagueId && authorizedLeagueMembers.length > 0) {
             entriesQuery = entriesQuery.in('user_id', authorizedLeagueMembers);
         }

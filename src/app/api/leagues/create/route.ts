@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { SEASON_2026, getLockTime } from '@/data/tournaments';
+import { SEASON_2026 } from '@/data/tournaments';
 
 // Helper to generate a random 8-character alphanumeric code
 function generateAccessCode() {
@@ -20,13 +20,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'League name is required' }, { status: 400 });
         }
 
-        // Validate tournament IDs: only accept future (not yet locked) events
-        const now = new Date();
-        const validIds: string[] = [];
-        for (const tId of (tournamentIds ?? [])) {
-            const tourn = SEASON_2026.find(t => t.id === tId);
-            if (tourn && getLockTime(tourn) > now) validIds.push(tourn.id);
-        }
+        // Accept any valid SEASON_2026 tournament ID (no lock-time restriction — entry fee is play money)
+        const validIds: string[] = (tournamentIds ?? [])
+            .filter((tId: string) => SEASON_2026.some(t => t.id === tId));
 
         // Generate a unique access code
         let accessCode = generateAccessCode();

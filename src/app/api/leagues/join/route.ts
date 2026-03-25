@@ -37,17 +37,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'You are already a member of this league!' }, { status: 400 });
         }
 
-        // 2a. Paid league → tell client to go through Stripe checkout
-        if (league.entry_fee && league.entry_fee > 0) {
-            return NextResponse.json({
-                requiresPayment: true,
-                leagueId: league.id,
-                leagueName: league.name,
-                entryFee: league.entry_fee,
-            });
-        }
-
-        // 2b. Free league → join directly
+        // Entry fee is play-money display only — always join directly
         if (existingMember) {
             return NextResponse.json({ error: 'You are already a member of this league!' }, { status: 400 });
         }

@@ -12,9 +12,9 @@ export async function PATCH(
 
     const { id: leagueId } = await params;
     const body = await req.json();
-    const { invitePaused } = body;
-    if (typeof invitePaused !== 'boolean') {
-        return NextResponse.json({ error: 'invitePaused (boolean) required' }, { status: 400 });
+    const { invitePaused, tournamentIds } = body;
+    if (invitePaused !== undefined && typeof invitePaused !== 'boolean') {
+        return NextResponse.json({ error: 'invitePaused must be a boolean' }, { status: 400 });
     }
 
     // Verify ownership
@@ -24,9 +24,16 @@ export async function PATCH(
         return NextResponse.json({ error: 'Only the league creator can change settings' }, { status: 403 });
     }
 
+    const updates: Record<string, unknown> = {};
+    if (invitePaused !== undefined) updates.invite_paused = invitePaused;
+    if (tournamentIds !== undefined && Array.isArray(tournamentIds)) updates.tournament_ids = tournamentIds;
+    if (Object.keys(updates).length === 0) {
+        return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
+    }
+
     const { error } = await supabaseAdmin
-        .from('leagues').update({ invite_paused: invitePaused }).eq('id', leagueId);
+        .from('leagues').update(updates).eq('id', leagueId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    return NextResponse.json({ invitePaused });
+    return NextResponse.json({ success: true, ...updates });
 }
