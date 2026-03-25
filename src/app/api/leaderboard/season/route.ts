@@ -71,7 +71,7 @@ export async function GET(request: Request) {
         }
 
         if (!entries || entries.length === 0) {
-            return NextResponse.json({ season: [], tournaments: SEASON_2026 });
+            return NextResponse.json({ season: [], tournaments: leagueTournamentObjects });
         }
 
         // Fetch display names
