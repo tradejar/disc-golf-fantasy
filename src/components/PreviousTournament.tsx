@@ -71,120 +71,94 @@ function buildStatsNodes(players: PlayerStat[]): ReactNode {
     );
 }
 
-const BASE_SPEED = 14;
+const BASE_SPEED = 80; // px per second (RAF-driven)
 const ROW_SPEEDS = [BASE_SPEED * 1.00, BASE_SPEED * 0.95, BASE_SPEED * 1.05, BASE_SPEED * 0.97];
 
-/** Seamless auto-scrolling ticker with click-to-pause and touch swipe navigation */
+/** RAF-driven seamless ticker — click toggles pause, swipe navigates */
 function SeamlessTicker({
     children, speed, tickerKey,
 }: { children: ReactNode; speed: number; tickerKey: string }) {
-    const innerRef = useRef<HTMLSpanElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [duration, setDuration] = useState(120);
-    const [paused, setPaused] = useState(false);
+    const trackRef = useRef<HTMLDivElement>(null);
+    const posRef = useRef(0);          // current scroll position in px
+    const pausedRef = useRef(false);   // use ref so RAF doesn't need to re-subscribe
+    const lastTsRef = useRef<number>(0);
+    const rafRef = useRef<number>(0);
 
-    // Touch swipe state
+    // Touch swipe
     const touchStartX = useRef<number | null>(null);
-    const touchStartScrollLeft = useRef<number>(0);
-    const animFrameRef = useRef<number | null>(null);
+    const touchStartPos = useRef(0);
 
-    // Measure content width for scroll duration
+    // Start/restart the RAF loop when content changes
     useEffect(() => {
-        if (innerRef.current) {
-            const w = innerRef.current.scrollWidth / 2;
-            setDuration(Math.max(60, w / speed));
+        posRef.current = 0;
+        lastTsRef.current = 0;
+
+        function loop(ts: number) {
+            const track = trackRef.current;
+            if (track) {
+                const dt = lastTsRef.current ? (ts - lastTsRef.current) / 1000 : 0;
+                lastTsRef.current = ts;
+
+                if (!pausedRef.current) {
+                    const halfWidth = track.scrollWidth / 2;
+                    if (halfWidth > 0) {
+                        posRef.current = (posRef.current + speed * dt) % halfWidth;
+                    }
+                }
+                track.style.transform = `translateX(${-posRef.current}px)`;
+            }
+            rafRef.current = requestAnimationFrame(loop);
         }
+
+        rafRef.current = requestAnimationFrame(loop);
+        return () => cancelAnimationFrame(rafRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tickerKey, speed]);
 
-    // Click toggles pause
     const handleClick = useCallback(() => {
-        setPaused(p => !p);
+        pausedRef.current = !pausedRef.current;
     }, []);
 
-    // Touch: start
     const handleTouchStart = useCallback((e: React.TouchEvent) => {
         touchStartX.current = e.touches[0].clientX;
-        // Capture current CSS animation translate position
-        const span = innerRef.current;
-        if (span) {
-            const computed = getComputedStyle(span);
-            const matrix = new DOMMatrix(computed.transform);
-            touchStartScrollLeft.current = matrix.m41; // translateX value
-        }
-        setPaused(true); // pause while swiping
+        touchStartPos.current = posRef.current;
+        pausedRef.current = true;
     }, []);
 
-    // Touch: move — manually shift translateX
     const handleTouchMove = useCallback((e: React.TouchEvent) => {
-        if (touchStartX.current === null || !innerRef.current) return;
+        if (touchStartX.current === null || !trackRef.current) return;
         e.preventDefault();
-        const dx = e.touches[0].clientX - touchStartX.current;
-        const span = innerRef.current;
-        const halfWidth = span.scrollWidth / 2;
-        let newX = touchStartScrollLeft.current + dx;
-        // Wrap around: keep in [-halfWidth, 0]
-        newX = ((newX % -halfWidth) - halfWidth) % -halfWidth;
-        span.style.transform = `translateX(${newX}px)`;
-        span.style.animationPlayState = 'paused';
+        const dx = touchStartX.current - e.touches[0].clientX; // left-swipe = positive
+        const halfWidth = trackRef.current.scrollWidth / 2;
+        if (halfWidth <= 0) return;
+        posRef.current = ((touchStartPos.current + dx) % halfWidth + halfWidth) % halfWidth;
     }, []);
 
-    // Touch: end — resume auto-scroll from current position
     const handleTouchEnd = useCallback(() => {
         touchStartX.current = null;
-        // Small delay before resuming so the snap feels natural
-        if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-        animFrameRef.current = requestAnimationFrame(() => {
-            if (innerRef.current) {
-                // Sync animation offset to current visual position
-                innerRef.current.style.animationPlayState = 'running';
-                innerRef.current.style.transform = '';
-            }
-            setPaused(false);
-        });
+        lastTsRef.current = 0; // reset dt so no position jump on resume
+        pausedRef.current = false;
     }, []);
 
     return (
         <div
-            ref={containerRef}
             onClick={handleClick}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            style={{
-                overflow: 'hidden',
-                width: '100%',
-                cursor: paused ? 'pointer' : 'pointer',
-                position: 'relative',
-            }}
-            title={paused ? 'Click to resume' : 'Click to pause · Swipe to navigate'}
+            style={{ overflow: 'hidden', width: '100%', cursor: 'pointer', touchAction: 'pan-y' }}
         >
-            {/* Pause indicator */}
-            {paused && (
-                <div style={{
-                    position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-                    background: 'rgba(0,0,0,0.55)', borderRadius: 4,
-                    color: 'white', fontSize: '0.6rem', fontWeight: 700,
-                    padding: '1px 5px', letterSpacing: '0.06em',
-                    pointerEvents: 'none', zIndex: 2,
-                }}>
-                    ⏸ PAUSED
-                </div>
-            )}
-            <span
-                ref={innerRef}
-                className="ticker-track"
-                style={{
-                    ['--ticker-dur' as string]: `${duration}s`,
-                    color: '#111827',
-                    fontWeight: 500,
-                    letterSpacing: '0.01em',
-                    animationPlayState: paused ? 'paused' : 'running',
-                }}
+            <div
+                ref={trackRef}
+                style={{ display: 'inline-block', whiteSpace: 'nowrap', willChange: 'transform' }}
             >
-                <span style={{ display: 'inline' }}>{children}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                <span style={{ display: 'inline' }}>{children}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-            </span>
+                <span style={{ display: 'inline', color: '#111827', fontWeight: 500, letterSpacing: '0.01em' }}>
+                    {children}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </span>
+                <span style={{ display: 'inline', color: '#111827', fontWeight: 500, letterSpacing: '0.01em' }}>
+                    {children}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </span>
+            </div>
         </div>
     );
 }
@@ -205,6 +179,7 @@ function TickerRow({
         </div>
     );
 }
+
 
 export default function PreviousTournament() {
     const [players, setPlayers] = useState<PlayerStat[]>([]);
@@ -249,9 +224,6 @@ export default function PreviousTournament() {
                 </div>
                 <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.76rem', marginTop: '3px' }}>
                     {previous.location}
-                    <span style={{ marginLeft: 8, opacity: 0.65, fontSize: '0.68rem' }}>
-                        · Click to pause · Swipe to navigate
-                    </span>
                 </div>
             </div>
 
