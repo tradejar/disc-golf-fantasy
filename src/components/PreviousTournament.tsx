@@ -252,8 +252,8 @@ function SeamlessTicker({
 }
 
 function TickerRow({
-    label, children, speed, tickerKey,
-}: { label: string; children: ReactNode; speed: number; tickerKey: string }) {
+    label, children, speed, tickerKey, topN,
+}: { label: string; children: ReactNode; speed: number; tickerKey: string; topN: number }) {
     return (
         <div style={{ borderTop: '1px solid #f0f0f0' }}>
             <div style={{
@@ -261,7 +261,7 @@ function TickerRow({
                 letterSpacing: '0.07em', textTransform: 'uppercase',
                 padding: '4px 12px 0',
             }}>
-                {label} <span style={{ color: '#d1d5db', fontWeight: 400 }}>· Top {TOP_N}</span>
+                {label} <span style={{ color: '#d1d5db', fontWeight: 400 }}>· Top {topN}</span>
             </div>
             <SeamlessTicker speed={speed} tickerKey={tickerKey}>{children}</SeamlessTicker>
         </div>
@@ -287,10 +287,15 @@ export default function PreviousTournament() {
     const displayName = previous.name.replace(/^2026\s*/i, '').toUpperCase();
     const mpo = players.filter(p => p.division === 'MPO');
     const fpo = players.filter(p => p.division === 'FPO');
-    const hasData = players.filter(hasName).length > 0;
+    const mpoNamed = mpo.filter(hasName);
+    const fpoNamed = fpo.filter(hasName);
+    const hasData = mpoNamed.length > 0 || fpoNamed.length > 0;
 
-    const mpoKey = mpo.filter(hasName).slice(0, TOP_N).map(p => p.pdgaNumber).join(',');
-    const fpoKey = fpo.filter(hasName).slice(0, TOP_N).map(p => p.pdgaNumber).join(',');
+    const mpoTopN = Math.min(mpoNamed.length, TOP_N);
+    const fpoTopN = Math.min(fpoNamed.length, TOP_N);
+
+    const mpoKey = mpoNamed.slice(0, TOP_N).map(p => p.pdgaNumber).join(',');
+    const fpoKey = fpoNamed.slice(0, TOP_N).map(p => p.pdgaNumber).join(',');
 
     const pendingText = loading ? 'Loading...' : 'No data available for this tournament';
 
@@ -321,16 +326,16 @@ export default function PreviousTournament() {
                 </div>
             ) : (
                 <>
-                    <TickerRow label="Scores MPO" speed={ROW_SPEEDS[0]} tickerKey={mpoKey}>
+                    <TickerRow label="Scores MPO" speed={ROW_SPEEDS[0]} tickerKey={mpoKey} topN={mpoTopN}>
                         {buildScoreNodes(mpo)}
                     </TickerRow>
-                    <TickerRow label="Scores FPO" speed={ROW_SPEEDS[1]} tickerKey={fpoKey}>
+                    <TickerRow label="Scores FPO" speed={ROW_SPEEDS[1]} tickerKey={fpoKey} topN={fpoTopN}>
                         {buildScoreNodes(fpo)}
                     </TickerRow>
-                    <TickerRow label="Stats MPO" speed={ROW_SPEEDS[2]} tickerKey={mpoKey + '-s'}>
+                    <TickerRow label="Stats MPO" speed={ROW_SPEEDS[2]} tickerKey={mpoKey + '-s'} topN={mpoTopN}>
                         {buildStatsNodes(mpo)}
                     </TickerRow>
-                    <TickerRow label="Stats FPO" speed={ROW_SPEEDS[3]} tickerKey={fpoKey + '-s'}>
+                    <TickerRow label="Stats FPO" speed={ROW_SPEEDS[3]} tickerKey={fpoKey + '-s'} topN={fpoTopN}>
                         {buildStatsNodes(fpo)}
                     </TickerRow>
                 </>
