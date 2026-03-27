@@ -102,7 +102,8 @@ export async function GET(request: Request) {
         const { data: existingEntries } = await supabaseAdmin
             .from('entries')
             .select('user_id')
-            .eq('tournament_id', tournament.id);
+            .eq('tournament_id', tournament.id)
+            .limit(10000);
 
         const draftedUserIds = new Set((existingEntries ?? []).map((e: any) => e.user_id));
         const toNotify = profiles.filter((p: any) => !draftedUserIds.has(p.id) && p.email);
@@ -120,7 +121,7 @@ export async function GET(request: Request) {
                 });
 
                 await resend.emails.send({
-                    from: 'DGPT Fantasy <onboarding@resend.dev>',
+                    from: 'DGPT Fantasy <noreply@eagly.app>',
                     to: profile.email,
                     subject: `⏰ Draft closes tomorrow — ${tournament.name.replace(/^2026\s/, '')}`,
                     html,
