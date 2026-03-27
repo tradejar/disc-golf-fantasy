@@ -3,6 +3,85 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SEASON_2026, getLockTime } from '@/data/tournaments';
 import { getPlayersWithPrices } from '@/lib/player-service';
 import { Player } from '@/data/mock-schema';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+function buildAutoDraftEmailHtml(opts: {
+    displayName?: string;
+    tournamentName: string;
+    roster: Player[];
+    budgetUsed: number;
+    effectiveBudget: number;
+    isPremium: boolean;
+    carryover: number;
+    unsubscribeUrl: string;
+}): string {
+    const { displayName, tournamentName, roster, budgetUsed, effectiveBudget, isPremium, carryover, unsubscribeUrl } = opts;
+    const name = displayName ?? 'there';
+    const shortName = tournamentName.replace(/^2026\s/, '');
+    const mpo = roster.filter(p => p.division === 'MPO');
+    const fpo = roster.filter(p => p.division === 'FPO');
+    const budgetLabel = isPremium
+        ? `$950${carryover > 0 ? ` + $${carryover} carry` : ''} = $${effectiveBudget} (Premium)`
+        : `$850 (Free — upgrade for full $950 cap)`;
+    const makeRow = (p: Player) =>
+        `<tr><td style="padding:7px 0;color:#e2e8f0;font-size:0.9rem">${p.firstName} ${p.lastName} <span style="color:#64748b;font-size:0.75rem">${p.division}</span></td><td style="padding:7px 0;text-align:right;color:#f8fafc;font-weight:600">$${p.price}</td></tr>`;
+
+    const upsellBanner = !isPremium ? `
+        <div style="background:#1e3a5f;border:1px solid #3b82f6;border-radius:8px;padding:12px 16px;margin:16px 0;font-size:0.85rem;color:#93c5fd;line-height:1.5">
+            ⭐ <strong style="color:#60a5fa">Go Premium</strong> to get the full $950 cap + carry-over budget on future auto-drafts.
+        </div>` : '';
+
+    return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body style="background:#0f172a;font-family:Inter,Helvetica,Arial,sans-serif;margin:0;padding:0">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;padding:40px 16px">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#1e293b;border-radius:16px;border:1px solid #334155;overflow:hidden">
+        <tr><td style="background:linear-gradient(135deg,#0f766e,#0369a1);padding:24px 32px;text-align:center">
+          <div style="font-size:2rem;margin-bottom:6px">🤖</div>
+          <h1 style="color:white;margin:0;font-size:1.3rem;font-weight:900;letter-spacing:-0.5px">We drafted your team</h1>
+          <p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:0.85rem">${shortName}</p>
+        </td></tr>
+        <tr><td style="padding:24px 32px">
+          <p style="color:#94a3b8;margin:0 0 4px">Hey ${name} 👋</p>
+          <p style="color:#e2e8f0;margin:0 0 16px;font-size:0.95rem;line-height:1.6">
+            You missed the draft window, so we picked a team for you. Here's who you've got:
+          </p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #334155">
+            ${[...mpo, ...fpo].map(makeRow).join('')}
+            <tr><td colspan="2" style="padding:8px 0;border-top:1px solid #334155"></td></tr>
+            <tr>
+              <td style="color:#94a3b8;font-size:0.85rem">Budget used</td>
+              <td style="text-align:right;color:#f8fafc;font-weight:700">$${budgetUsed} / $${effectiveBudget}</td>
+            </tr>
+            <tr>
+              <td style="color:#94a3b8;font-size:0.8rem;padding-bottom:8px">${budgetLabel}</td>
+              <td></td>
+            </tr>
+          </table>
+          ${upsellBanner}
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px">
+            <tr><td align="center">
+              <a href="https://eagly.app/leaderboard" style="display:inline-block;background:linear-gradient(135deg,#0f766e,#0369a1);color:white;text-decoration:none;padding:12px 28px;border-radius:10px;font-weight:700;font-size:0.95rem">View Leaderboard →</a>
+            </td></tr>
+          </table>
+          <p style="color:#475569;margin:20px 0 0;font-size:0.78rem;text-align:center;line-height:1.5">
+            You're receiving this because you missed the draft window for DGPT Fantasy.<br/>
+            <a href="${unsubscribeUrl}" style="color:#475569;text-decoration:underline">Unsubscribe</a>
+          </p>
+        </td></tr>
+        <tr><td style="padding:16px 32px;border-top:1px solid #334155;text-align:center">
+          <p style="color:#475569;margin:0;font-size:0.75rem">DGPT Fantasy &middot; <a href="https://eagly.app" style="color:#38bdf8;text-decoration:none">eagly.app</a></p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
 
 export const maxDuration = 60;
 
@@ -137,7 +216,7 @@ export async function GET(request: Request) {
             // Get all user profiles
             const { data: profiles, error: profileErr } = await supabaseAdmin
                 .from('profiles')
-                .select('id');
+                .select('id, email, display_name, email_unsubscribed');
 
             if (profileErr || !profiles) {
                 results[tournamentId].errors.push('Failed to fetch profiles');
@@ -216,6 +295,30 @@ export async function GET(request: Request) {
                     results[tournamentId].errors.push(`Insert failed for ${profile.id}: ${insertResult.error.message}`);
                 } else {
                     results[tournamentId].autoDrafted++;
+
+                    // Send auto-draft notification if user has email and hasn't unsubscribed
+                    if (profile.email && !profile.email_unsubscribed) {
+                        const budgetUsed = roster.reduce((s, p) => s + p.price, 0);
+                        try {
+                            await resend.emails.send({
+                                from: 'DGPT Fantasy <noreply@eagly.app>',
+                                to: profile.email,
+                                subject: `🤖 We auto-drafted your team — ${tournament.name.replace(/^2026\s/, '')}`,
+                                html: buildAutoDraftEmailHtml({
+                                    displayName: profile.display_name ?? undefined,
+                                    tournamentName: tournament.name,
+                                    roster,
+                                    budgetUsed,
+                                    effectiveBudget,
+                                    isPremium: isPremiumUser,
+                                    carryover,
+                                    unsubscribeUrl: `https://eagly.app/api/unsubscribe?uid=${profile.id}`,
+                                }),
+                            });
+                        } catch (emailErr) {
+                            console.error(`auto-draft email failed for ${profile.email}`, emailErr);
+                        }
+                    }
                 }
             }
         }
