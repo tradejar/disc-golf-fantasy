@@ -98,8 +98,16 @@ export default function RulesPage() {
                         <h2 style={H2_STYLE}>Draft Rules</h2>
                         <ul style={UL_STYLE}>
                             <li><strong style={{ color: '#f8fafc' }}>Next event only.</strong> You can only draft for the upcoming tournament. Past and future draft pages redirect automatically.</li>
-                            <li><strong style={{ color: '#f8fafc' }}>Registered players only.</strong> The player pool is filtered to confirmed PDGA entrants for that event.</li>
-                            <li><strong style={{ color: '#f8fafc' }}>Auto-Draft penalty.</strong> Miss the deadline and an entry is generated with a reduced <strong style={{ color: '#f8fafc' }}>$850</strong> budget — $100 less than manual drafters.</li>
+                            <li>
+                                <strong style={{ color: '#f8fafc' }}>Registered players only.</strong> The player pool is filtered to confirmed PDGA entrants for that event. This makes your life easier — but registration is not a guarantee of participation. Players can withdraw after registering. Points are only awarded for players who actually compete.
+                            </li>
+                            <li>
+                                <strong style={{ color: '#f8fafc' }}>Auto-Draft.</strong> Miss the deadline and an entry is automatically generated for you:
+                                <ul style={{ ...UL_STYLE, paddingTop: '0.4rem' }}>
+                                    <li><strong style={{ color: '#94a3b8' }}>Free users</strong> — auto-drafted with a <strong style={{ color: '#f8fafc' }}>$850 budget</strong> ($100 less than manual drafters). <span style={{ color: '#38bdf8', fontSize: '0.85em' }}>Upgrade to Premium for the full cap.</span></li>
+                                    <li><strong style={{ color: '#38bdf8' }}>Premium users</strong> — auto-drafted with the full <strong style={{ color: '#f8fafc' }}>$950 budget</strong> plus any carry-over budget banked from your previous tournament.</li>
+                                </ul>
+                            </li>
                         </ul>
                     </div>
 

@@ -6,8 +6,10 @@ import { Player } from '@/data/mock-schema';
 
 export const maxDuration = 60;
 
-// Auto-draft is premium-only. Premium users get the full standard budget + their carryover.
-const BASE_BUDGET = 950;
+// Option B: auto-draft runs for ALL users.
+// Budget is tiered: free = $850 (penalty), premium = $950 + carryover from previous tournament.
+const BUDGET_FREE = 850;
+const BUDGET_PREMIUM = 950;
 const SLOTS_MPO = 4;
 const SLOTS_FPO = 2;
 
@@ -159,10 +161,8 @@ export async function GET(request: Request) {
 
             const enteredUserIds = new Set((existingEntries || []).map(e => e.user_id));
 
-            // Only auto-draft premium users who haven't entered yet
-            const usersWithoutEntry = profiles.filter(p =>
-                !enteredUserIds.has(p.id) && premiumUserIds.has(p.id)
-            );
+            // Only auto-draft users who haven't entered yet (all tiers)
+            const usersWithoutEntry = profiles.filter(p => !enteredUserIds.has(p.id));
             results[tournamentId].alreadyEntered = enteredUserIds.size;
 
             // Batch-fetch carryover budgets from the most recent completed tournament
@@ -185,8 +185,9 @@ export async function GET(request: Request) {
             }
 
             for (const profile of usersWithoutEntry) {
-                const carryover = carryoverMap.get(profile.id) ?? 0;
-                const effectiveBudget = BASE_BUDGET + carryover;
+                const isPremiumUser = premiumUserIds.has(profile.id);
+                const carryover = isPremiumUser ? (carryoverMap.get(profile.id) ?? 0) : 0;
+                const effectiveBudget = (isPremiumUser ? BUDGET_PREMIUM : BUDGET_FREE) + carryover;
                 const roster = generateAutoDraft(eligiblePlayers, effectiveBudget);
                 if (!roster) {
                     results[tournamentId].errors.push(`Could not generate roster for user ${profile.id}`);
@@ -194,6 +195,8 @@ export async function GET(request: Request) {
                 }
 
                 const budgetRemaining = effectiveBudget - roster.reduce((s, p) => s + p.price, 0);
+                // Store tier so the UI can show an upsell message to free users
+                const autodraftTier = isPremiumUser ? 'premium' : 'free';
 
                 // Upsert: if user already has an entry for this tournament, do nothing (ignoreDuplicates).
                 // This makes the cron idempotent — safe to run every 10 minutes.
@@ -205,6 +208,7 @@ export async function GET(request: Request) {
                         roster_data: roster,
                         budget_remaining: budgetRemaining,
                         auto_drafted: true,
+                        auto_drafted_tier: autodraftTier,
                         created_at: new Date().toISOString(),
                     }, { onConflict: 'user_id, tournament_id', ignoreDuplicates: true });
 
