@@ -18,7 +18,7 @@
         },
         {
             "path": "/api/cron/auto-draft",
-            "schedule": "*/10 * * * 3,4,5,6,0"
+            "schedule": "*/10 * * * *"
         },
         {
             "path": "/api/cron/notify-draft",

@@ -6,8 +6,8 @@ import { Player } from '@/data/mock-schema';
 
 export const maxDuration = 60;
 
-// Auto-draft is premium-only. Premium users get the full standard budget.
-const BUDGET = 950;
+// Auto-draft is premium-only. Premium users get the full standard budget + their carryover.
+const BASE_BUDGET = 950;
 const SLOTS_MPO = 4;
 const SLOTS_FPO = 2;
 
@@ -16,7 +16,7 @@ const SLOTS_FPO = 2;
  * Uses a tier-spread approach: pick from different price bands so the
  * team feels realistic, not just all-elites or all-cheapest.
  */
-function generateAutoDraft(players: Player[]): Player[] | null {
+function generateAutoDraft(players: Player[], budgetCap: number): Player[] | null {
     const mpo = players.filter(p => p.division === 'MPO');
     const fpo = players.filter(p => p.division === 'FPO');
 
@@ -42,7 +42,7 @@ function generateAutoDraft(players: Player[]): Player[] | null {
         if (pickedFpo.length < SLOTS_FPO) continue;
 
         const total = [...pickedMpo, ...pickedFpo].reduce((s, p) => s + p.price, 0);
-        if (total <= BUDGET) {
+        if (total <= budgetCap) {
             return [...pickedMpo, ...pickedFpo];
         }
     }
@@ -51,7 +51,7 @@ function generateAutoDraft(players: Player[]): Player[] | null {
     const cheapMpo = mpo.sort((a, b) => a.price - b.price).slice(0, SLOTS_MPO);
     const cheapFpo = fpo.sort((a, b) => a.price - b.price).slice(0, SLOTS_FPO);
     const total = [...cheapMpo, ...cheapFpo].reduce((s, p) => s + p.price, 0);
-    return total <= BUDGET ? [...cheapMpo, ...cheapFpo] : null;
+    return total <= budgetCap ? [...cheapMpo, ...cheapFpo] : null;
 }
 
 export async function GET(request: Request) {
@@ -150,10 +150,12 @@ export async function GET(request: Request) {
             const premiumUserIds = new Set((premiumRows ?? []).map(r => r.user_id));
 
             // Get users who already have an entry for this tournament
+            // High limit prevents silent truncation at the default Supabase 1000-row cap
             const { data: existingEntries } = await supabaseAdmin
                 .from('entries')
                 .select('user_id')
-                .eq('tournament_id', tournamentId);
+                .eq('tournament_id', tournamentId)
+                .limit(10000);
 
             const enteredUserIds = new Set((existingEntries || []).map(e => e.user_id));
 
@@ -163,14 +165,35 @@ export async function GET(request: Request) {
             );
             results[tournamentId].alreadyEntered = enteredUserIds.size;
 
+            // Batch-fetch carryover budgets from the most recent completed tournament
+            // so each user's auto-draft respects their banked carry-in budget.
+            const completedTournaments = SEASON_2026
+                .filter(t => getLockTime(t) <= now && t.id !== tournamentId)
+                .sort((a, b) => getLockTime(b).getTime() - getLockTime(a).getTime());
+            const prevTournamentId = completedTournaments[0]?.id;
+
+            const carryoverMap = new Map<string, number>();
+            if (prevTournamentId && usersWithoutEntry.length > 0) {
+                const { data: prevEntries } = await supabaseAdmin
+                    .from('entries')
+                    .select('user_id, budget_remaining')
+                    .eq('tournament_id', prevTournamentId)
+                    .in('user_id', usersWithoutEntry.map(p => p.id));
+                for (const e of prevEntries || []) {
+                    carryoverMap.set(e.user_id, Math.max(0, e.budget_remaining ?? 0));
+                }
+            }
+
             for (const profile of usersWithoutEntry) {
-                const roster = generateAutoDraft(eligiblePlayers);
+                const carryover = carryoverMap.get(profile.id) ?? 0;
+                const effectiveBudget = BASE_BUDGET + carryover;
+                const roster = generateAutoDraft(eligiblePlayers, effectiveBudget);
                 if (!roster) {
                     results[tournamentId].errors.push(`Could not generate roster for user ${profile.id}`);
                     continue;
                 }
 
-                const budgetRemaining = BUDGET - roster.reduce((s, p) => s + p.price, 0);
+                const budgetRemaining = effectiveBudget - roster.reduce((s, p) => s + p.price, 0);
 
                 // Upsert: if user already has an entry for this tournament, do nothing (ignoreDuplicates).
                 // This makes the cron idempotent — safe to run every 10 minutes.

@@ -26,6 +26,7 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
     const [roster, setRoster] = useState<Player[]>([]);
     const [confirmed, setConfirmed] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const savingRef = useRef(false); // sync guard — blocks double-click before React re-renders
     const [banked, setBanked] = useState(0);
     const [entryId, setEntryId] = useState<string | null>(null);
     const [simResults, setSimResults] = useState<{ player: Player, stats: RoundStats }[] | null>(null);
@@ -189,13 +190,14 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
     };
 
     const handleConfirm = async () => {
-        if (!isValid) return;
+        if (!isValid || savingRef.current) return; // debounce: block re-entry before state updates
 
         const ok = window.confirm("Save your entry? You can keep editing until the draft locks.");
         if (!ok) return;
 
         setConfirmed(true);
         setIsSaving(true);
+        savingRef.current = true;
         setBanked(remainingBudget);
 
         // Save to Database
@@ -228,6 +230,7 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
             console.error(e);
         } finally {
             setIsSaving(false);
+            savingRef.current = false;
         }
     };
 
