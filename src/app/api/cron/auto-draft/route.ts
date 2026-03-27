@@ -172,29 +172,18 @@ export async function GET(request: Request) {
 
                 const budgetRemaining = BUDGET - roster.reduce((s, p) => s + p.price, 0);
 
-                let insertResult = await supabaseAdmin
+                // Upsert: if user already has an entry for this tournament, do nothing (ignoreDuplicates).
+                // This makes the cron idempotent — safe to run every 10 minutes.
+                const insertResult = await supabaseAdmin
                     .from('entries')
-                    .insert({
+                    .upsert({
                         user_id: profile.id,
                         tournament_id: tournamentId,
                         roster_data: roster,
                         budget_remaining: budgetRemaining,
                         auto_drafted: true,
                         created_at: new Date().toISOString(),
-                    });
-
-                // If the auto_drafted column doesn't exist yet (pending migration), retry without it
-                if (insertResult.error?.message?.includes('auto_drafted')) {
-                    insertResult = await supabaseAdmin
-                        .from('entries')
-                        .insert({
-                            user_id: profile.id,
-                            tournament_id: tournamentId,
-                            roster_data: roster,
-                            budget_remaining: budgetRemaining,
-                            created_at: new Date().toISOString(),
-                        });
-                }
+                    }, { onConflict: 'user_id, tournament_id', ignoreDuplicates: true });
 
                 if (insertResult.error) {
                     results[tournamentId].errors.push(`Insert failed for ${profile.id}: ${insertResult.error.message}`);
