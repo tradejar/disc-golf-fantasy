@@ -10,10 +10,20 @@ function buildEmailHtml(opts: {
     lockTimeDisplay: string;
     draftUrl: string;
     displayName?: string;
+    urgency: 'day' | 'soon'; // 'day' = 24h, 'soon' = 4h
+    unsubscribeUrl: string;
 }): string {
-    const { tournamentName, lockTimeDisplay, draftUrl, displayName } = opts;
+    const { tournamentName, lockTimeDisplay, draftUrl, displayName, urgency, unsubscribeUrl } = opts;
     const name = displayName ?? 'there';
     const shortName = tournamentName.replace(/^2026\s/, '');
+    const headline = urgency === 'soon' ? '⚠️ Draft closes in ~4 hours' : 'Draft closes tomorrow';
+    const headerGradient = urgency === 'soon'
+        ? 'linear-gradient(135deg,#dc2626,#ea580c)'
+        : 'linear-gradient(135deg,#3b82f6,#6366f1)';
+    const closingMsg = urgency === 'soon'
+        ? `<strong>Don't miss it</strong> — if you don't draft, we'll auto-draft a team for you (free users: $850 cap, premium: $950+).</p>`
+        : `If you've already submitted your draft, you can ignore this.</p>`;
+
     return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
@@ -21,12 +31,12 @@ function buildEmailHtml(opts: {
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;padding:40px 16px">
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#1e293b;border-radius:16px;border:1px solid #334155;overflow:hidden">
-        <tr><td style="background:linear-gradient(135deg,#3b82f6,#6366f1);padding:28px 32px;text-align:center">
+        <tr><td style="background:${headerGradient};padding:28px 32px;text-align:center">
           <div style="font-size:2rem;margin-bottom:8px">🥏</div>
-          <h1 style="color:white;margin:0;font-size:1.4rem;font-weight:900;letter-spacing:-0.5px">Draft closes soon</h1>
+          <h1 style="color:white;margin:0;font-size:1.4rem;font-weight:900;letter-spacing:-0.5px">${headline}</h1>
         </td></tr>
         <tr><td style="padding:28px 32px">
-          <p style="color:#94a3b8;margin:0 0 16px;font-size:1rem;line-height:1.6">Hey ${name} 👋</p>
+          <p style="color:#94a3b8;margin:0 0 16px;font-size:1rem">Hey ${name} 👋</p>
           <p style="color:#e2e8f0;margin:0 0 24px;font-size:1rem;line-height:1.6">
             Your <strong style="color:white">DGPT Fantasy</strong> draft for
             <strong style="color:#38bdf8">${shortName}</strong> locks at
@@ -34,19 +44,19 @@ function buildEmailHtml(opts: {
           </p>
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr><td align="center" style="padding-bottom:24px">
-              <a href="${draftUrl}" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#6366f1);color:white;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:1rem">
+              <a href="${draftUrl}" style="display:inline-block;background:${headerGradient};color:white;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:1rem">
                 Draft My Team →
               </a>
             </td></tr>
           </table>
           <p style="color:#475569;margin:0;font-size:0.8rem;line-height:1.5;text-align:center">
             You're receiving this because you have an account on DGPT Fantasy.<br/>
-            If you've already submitted your draft, you can ignore this.
-          </p>
+            ${closingMsg}
+            <a href="${unsubscribeUrl}" style="color:#475569;text-decoration:underline">Unsubscribe</a>
         </td></tr>
         <tr><td style="padding:16px 32px;border-top:1px solid #334155;text-align:center">
           <p style="color:#475569;margin:0;font-size:0.75rem">
-            DGPT Fantasy &middot; <a href="https://disc-golf-fantasy.vercel.app" style="color:#38bdf8;text-decoration:none">disc-golf-fantasy.vercel.app</a>
+            DGPT Fantasy &middot; <a href="https://eagly.app" style="color:#38bdf8;text-decoration:none">eagly.app</a>
           </p>
         </td></tr>
       </table>
@@ -65,77 +75,99 @@ export async function GET(request: Request) {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const now = new Date();
 
-    // Find tournaments locking in the next 23–25 hours
-    const windowStart = new Date(now.getTime() + 23 * 60 * 60 * 1000);
-    const windowEnd = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+    // Two notification windows:
+    // -1  = "24h" reminder  (tournament locks in 23–25h)
+    // -2  = "4h"  reminder  (tournament locks in 3.5–4.5h)
+    type Window = { label: string; sentinel: number; start: number; end: number; urgency: 'day' | 'soon' };
+    const WINDOWS: Window[] = [
+        { label: '24h',  sentinel: -1, start: 23 * 3600 * 1000,   end: 25 * 3600 * 1000,   urgency: 'day'  },
+        { label: '4h',   sentinel: -2, start: 3.5 * 3600 * 1000,  end: 4.5 * 3600 * 1000,  urgency: 'soon' },
+    ];
 
-    const upcoming = SEASON_2026.filter(t => {
-        const lock = getLockTime(t);
-        return lock >= windowStart && lock <= windowEnd;
-    });
+    const results: { tournament: string; window: string; sent: number; errors: number }[] = [];
 
-    if (upcoming.length === 0) {
-        return NextResponse.json({ ok: true, message: 'No tournaments locking in next 24h.' });
-    }
+    for (const window of WINDOWS) {
+        const windowStart = new Date(now.getTime() + window.start);
+        const windowEnd   = new Date(now.getTime() + window.end);
 
-    const results: { tournament: string; sent: number; errors: number }[] = [];
-
-    for (const tournament of upcoming) {
-        const lockTime = getLockTime(tournament);
-        const lockTimeDisplay = lockTime.toLocaleString('en-US', {
-            weekday: 'long', month: 'long', day: 'numeric',
-            hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short',
+        const upcoming = SEASON_2026.filter(t => {
+            const lock = getLockTime(t);
+            return lock >= windowStart && lock <= windowEnd;
         });
-        const draftUrl = `https://disc-golf-fantasy.vercel.app/draft/${tournament.id}`;
 
-        const { data: profiles, error: profilesErr } = await supabaseAdmin
-            .from('profiles')
-            .select('id, email, display_name')
-            .not('email', 'is', null);
+        for (const tournament of upcoming) {
+            // Check we haven't already sent this window's notification
+            const { data: alreadySent } = await supabaseAdmin
+                .from('notified_rounds')
+                .select('id')
+                .eq('tournament_id', tournament.id)
+                .eq('round_number', window.sentinel)
+                .maybeSingle();
 
-        if (profilesErr || !profiles?.length) {
-            results.push({ tournament: tournament.name, sent: 0, errors: 1 });
-            continue;
-        }
+            if (alreadySent) continue;
 
-        // Exclude users who already have an entry for this tournament
-        const { data: existingEntries } = await supabaseAdmin
-            .from('entries')
-            .select('user_id')
-            .eq('tournament_id', tournament.id)
-            .limit(10000);
+            const lockTime = getLockTime(tournament);
+            const lockTimeDisplay = lockTime.toLocaleString('en-US', {
+                weekday: 'long', month: 'long', day: 'numeric',
+                hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short',
+            });
+            const draftUrl = `https://eagly.app/draft/${tournament.id}`;
 
-        const draftedUserIds = new Set((existingEntries ?? []).map((e: any) => e.user_id));
-        const toNotify = profiles.filter((p: any) => !draftedUserIds.has(p.id) && p.email);
+            // Fetch all profiles except unsubscribed and those who already have a draft
+            const { data: profiles } = await supabaseAdmin
+                .from('profiles')
+                .select('id, email, display_name')
+                .not('email', 'is', null)
+                .neq('email_unsubscribed', true);
 
-        let sent = 0;
-        let errors = 0;
+            if (!profiles?.length) continue;
 
-        for (const profile of toNotify) {
-            try {
-                const html = buildEmailHtml({
-                    tournamentName: tournament.name,
-                    lockTimeDisplay,
-                    draftUrl,
-                    displayName: profile.display_name ?? undefined,
-                });
+            const { data: existingEntries } = await supabaseAdmin
+                .from('entries')
+                .select('user_id')
+                .eq('tournament_id', tournament.id)
+                .limit(10000);
 
-                await resend.emails.send({
-                    from: 'DGPT Fantasy <noreply@eagly.app>',
-                    to: profile.email,
-                    subject: `⏰ Draft closes tomorrow — ${tournament.name.replace(/^2026\s/, '')}`,
-                    html,
-                });
-                sent++;
-            } catch (e) {
-                console.error(`notify-draft: failed for ${profile.email}`, e);
-                errors++;
+            const draftedUserIds = new Set((existingEntries ?? []).map((e: any) => e.user_id));
+            const toNotify = profiles.filter((p: any) => !draftedUserIds.has(p.id) && p.email);
+
+            let sent = 0;
+            let errors = 0;
+
+            for (const profile of toNotify) {
+                try {
+                    await resend.emails.send({
+                        from: 'DGPT Fantasy <noreply@eagly.app>',
+                        to: profile.email,
+                        subject: window.urgency === 'soon'
+                            ? `⚠️ Draft closes in ~4 hours — ${tournament.name.replace(/^2026\s/, '')}`
+                            : `⏰ Draft closes tomorrow — ${tournament.name.replace(/^2026\s/, '')}`,
+                        html: buildEmailHtml({
+                            tournamentName: tournament.name,
+                            lockTimeDisplay,
+                            draftUrl,
+                            displayName: profile.display_name ?? undefined,
+                            urgency: window.urgency,
+                            unsubscribeUrl: `https://eagly.app/api/unsubscribe?uid=${profile.id}`,
+                        }),
+                    });
+                    sent++;
+                } catch (e) {
+                    console.error(`notify-draft(${window.label}): failed for ${profile.email}`, e);
+                    errors++;
+                }
             }
-        }
 
-        results.push({ tournament: tournament.name, sent, errors });
-        console.log(`notify-draft: ${tournament.name} → ${sent} sent, ${errors} errors`);
+            // Mark this window as sent
+            await supabaseAdmin.from('notified_rounds').insert({
+                tournament_id: tournament.id,
+                round_number: window.sentinel,
+                notified_at: now.toISOString(),
+            });
+
+            results.push({ tournament: tournament.name, window: window.label, sent, errors });
+        }
     }
 
-    return NextResponse.json({ ok: true, results });
+    return NextResponse.json({ ok: true, results: results.length ? results : [{ message: 'No tournaments in notification windows.' }] });
 }

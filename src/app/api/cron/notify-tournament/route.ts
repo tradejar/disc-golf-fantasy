@@ -14,8 +14,9 @@ function buildTournamentEmailHtml(opts: {
     roster: { name: string; totalPoints: number; division: string }[];
     leagues: { name: string; rank: number; totalMembers: number }[];
     leaderboardUrl: string;
+    unsubscribeUrl: string;
 }): string {
-    const { displayName, tournamentName, totalPoints, tournamentRank, totalEntries, roster, leagues, leaderboardUrl } = opts;
+    const { displayName, tournamentName, totalPoints, tournamentRank, totalEntries, roster, leagues, leaderboardUrl, unsubscribeUrl } = opts;
     const name = displayName ?? 'there';
     const shortName = tournamentName.replace(/^2026\s/, '');
     const rankStr = tournamentRank ? `#${tournamentRank} of ${totalEntries}` : '—';
@@ -89,7 +90,8 @@ function buildTournamentEmailHtml(opts: {
             </td></tr>
           </table>
           <p style="color:#475569;margin:20px 0 0;font-size:0.78rem;text-align:center;line-height:1.5">
-            You're receiving this because you drafted a team in DGPT Fantasy.
+            You're receiving this because you drafted a team in DGPT Fantasy.<br/>
+            <a href="${unsubscribeUrl}" style="color:#475569;text-decoration:underline">Unsubscribe</a>
           </p>
         </td></tr>
         <tr><td style="padding:16px 32px;border-top:1px solid #334155;text-align:center">
@@ -158,7 +160,8 @@ export async function GET(request: Request) {
             .from('profiles')
             .select('id, email, display_name')
             .in('id', userIds)
-            .not('email', 'is', null);
+            .not('email', 'is', null)
+            .neq('email_unsubscribed', true);
 
         const profileMap = new Map((profiles ?? []).map(p => [p.id, p]));
 
@@ -248,6 +251,7 @@ export async function GET(request: Request) {
                         roster,
                         leagues: leagueMap.get(entry.user_id) ?? [],
                         leaderboardUrl: 'https://eagly.app/leaderboard',
+                        unsubscribeUrl: `https://eagly.app/api/unsubscribe?uid=${profile.id}`,
                     }),
                 });
                 results[tId].notified++;

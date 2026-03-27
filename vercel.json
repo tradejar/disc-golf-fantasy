@@ -22,7 +22,7 @@
         },
         {
             "path": "/api/cron/notify-draft",
-            "schedule": "0 12 * * *"
+            "schedule": "0 */2 * * *"
         },
         {
             "path": "/api/cron/notify-round",

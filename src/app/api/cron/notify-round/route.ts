@@ -12,8 +12,9 @@ function buildRoundEmailHtml(opts: {
     players: { name: string; points: number; division: string }[];
     totalRoundPoints: number;
     leaderboardUrl: string;
+    unsubscribeUrl: string;
 }): string {
-    const { displayName, tournamentName, roundNumber, players, totalRoundPoints, leaderboardUrl } = opts;
+    const { displayName, tournamentName, roundNumber, players, totalRoundPoints, leaderboardUrl, unsubscribeUrl } = opts;
     const name = displayName ?? 'there';
     const shortName = tournamentName.replace(/^2026\s/, '');
     const sign = totalRoundPoints >= 0 ? '+' : '';
@@ -56,7 +57,8 @@ function buildRoundEmailHtml(opts: {
             </td></tr>
           </table>
           <p style="color:#475569;margin:20px 0 0;font-size:0.78rem;text-align:center;line-height:1.5">
-            You're receiving this because you have a drafted team in DGPT Fantasy.
+            You're receiving this because you have a drafted team in DGPT Fantasy.<br/>
+            <a href="${unsubscribeUrl}" style="color:#475569;text-decoration:underline">Unsubscribe</a>
           </p>
         </td></tr>
         <tr><td style="padding:16px 32px;border-top:1px solid #334155;text-align:center">
@@ -108,6 +110,33 @@ export async function GET(request: Request) {
         const latestRound = roundData?.[0]?.round_number;
         if (!latestRound) { results[tId].skipped = 'no round data yet'; continue; }
 
+        // Fetch all entries for this tournament (need roster_data for player check)
+        const { data: entries } = await supabaseAdmin
+            .from('entries')
+            .select('user_id, roster_data, breakdown_data')
+            .eq('tournament_id', tId)
+            .not('breakdown_data', 'is', null);
+
+        if (!entries?.length) { results[tId].skipped = 'no scored entries'; continue; }
+
+        // Wait for 100% of players actually in fantasy rosters to have scores —
+        // not all registered players (some may withdraw mid-round).
+        const allDraftedPdgaNums = [...new Set(
+            entries.flatMap(e => (e.roster_data as any[]).map((p: any) => p.pdgaNumber).filter(Boolean))
+        )];
+
+        const { count: scoredCount } = await supabaseAdmin
+            .from('player_stats')
+            .select('*', { count: 'exact', head: true })
+            .eq('tournament_id', tId)
+            .eq('round_number', latestRound)
+            .in('pdga_number', allDraftedPdgaNums);
+
+        if ((scoredCount ?? 0) < allDraftedPdgaNums.length) {
+            results[tId].skipped = `${allDraftedPdgaNums.length - (scoredCount ?? 0)} drafted players still missing round ${latestRound} score`;
+            continue;
+        }
+
         // Check if we already sent notifications for this round
         const { data: alreadySent } = await supabaseAdmin
             .from('notified_rounds')
@@ -118,42 +147,16 @@ export async function GET(request: Request) {
 
         if (alreadySent) { results[tId].skipped = `round ${latestRound} already notified`; continue; }
 
-        // Check the round looks complete — need at least 80% of registered players to have scores
-        const { count: registeredCount } = await supabaseAdmin
-            .from('tournament_registrations')
-            .select('*', { count: 'exact', head: true })
-            .eq('tournament_id', tId);
-
-        const { count: scoredCount } = await supabaseAdmin
-            .from('player_stats')
-            .select('*', { count: 'exact', head: true })
-            .eq('tournament_id', tId)
-            .eq('round_number', latestRound);
-
-        const threshold = Math.floor((registeredCount ?? 0) * 0.8);
-        if ((scoredCount ?? 0) < threshold) {
-            results[tId].skipped = `round ${latestRound} not complete yet (${scoredCount}/${registeredCount})`;
-            continue;
-        }
-
-        // Fetch all entries for this tournament
-        const { data: entries } = await supabaseAdmin
-            .from('entries')
-            .select('user_id, roster_data, breakdown_data')
-            .eq('tournament_id', tId)
-            .not('breakdown_data', 'is', null);
-
-        if (!entries?.length) { results[tId].skipped = 'no scored entries'; continue; }
-
-        // Fetch profiles
+        // Fetch profiles — exclude unsubscribed users
         const userIds = entries.map(e => e.user_id);
         const { data: profiles } = await supabaseAdmin
             .from('profiles')
-            .select('id, email, display_name')
+            .select('id, email, display_name, email_unsubscribed')
             .in('id', userIds)
-            .not('email', 'is', null);
+            .not('email', 'is', null)
+            .neq('email_unsubscribed', true);
 
-        const profileMap = new Map((profiles ?? []).map(p => [p.id, p]));
+        const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
 
         // Fetch round stats for each player in each entry
         const allPdgaNums = [...new Set(
@@ -196,6 +199,7 @@ export async function GET(request: Request) {
                         players,
                         totalRoundPoints,
                         leaderboardUrl: 'https://eagly.app/leaderboard',
+                        unsubscribeUrl: `https://eagly.app/api/unsubscribe?uid=${profile.id}`,
                     }),
                 });
                 results[tId].notified++;
