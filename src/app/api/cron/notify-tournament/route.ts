@@ -157,11 +157,10 @@ export async function GET(request: Request) {
         // Fetch profiles
         const { data: profilesRaw } = await supabaseAdmin
             .from('profiles')
-            .select('id, email, display_name, email_unsubscribed')
+            .select('id, email, display_name')
             .in('id', userIds)
             .not('email', 'is', null);
 
-        // Filter unsubscribed in JS so the query doesn't break if the column doesn't exist yet
         const profiles = (profilesRaw ?? []).filter((p: any) => !p.email_unsubscribed);
 
         const profileMap = new Map((profiles ?? []).map(p => [p.id, p]));

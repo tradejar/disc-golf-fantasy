@@ -216,7 +216,7 @@ export async function GET(request: Request) {
             // Get all user profiles
             const { data: profiles, error: profileErr } = await supabaseAdmin
                 .from('profiles')
-                .select('id, email, display_name, email_unsubscribed');
+                .select('id, email, display_name');
 
             if (profileErr || !profiles) {
                 results[tournamentId].errors.push('Failed to fetch profiles');
@@ -297,7 +297,7 @@ export async function GET(request: Request) {
                     results[tournamentId].autoDrafted++;
 
                     // Send auto-draft notification if user has email and hasn't unsubscribed
-                    if (profile.email && !profile.email_unsubscribed) {
+                    if (profile.email && !(profile as any).email_unsubscribed) {
                         const budgetUsed = roster.reduce((s, p) => s + p.price, 0);
                         try {
                             await resend.emails.send({

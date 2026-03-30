@@ -118,7 +118,7 @@ export async function GET(request: Request) {
                 .from('profiles')
                 .select('id, email, display_name')
                 .not('email', 'is', null)
-                .neq('email_unsubscribed', true);
+                .not('email', 'is', null);
 
             if (!profiles?.length) continue;
 
