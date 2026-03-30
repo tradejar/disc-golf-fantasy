@@ -30,7 +30,7 @@
         },
         {
             "path": "/api/cron/notify-tournament",
-            "schedule": "0 14 * * *"
+            "schedule": "30 8 * * 1"
         }
     ]
 }
