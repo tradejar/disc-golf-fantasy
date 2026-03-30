@@ -115,11 +115,10 @@ export async function GET(request: Request) {
 
     // Tournaments that ended (endDate + 1 day past) but ended within the last 48h
     const completedTournaments = SEASON_2026.filter(t => {
-        const endPlus = new Date(t.endDate);
-        endPlus.setUTCDate(endPlus.getUTCDate() + 1);
-        endPlus.setUTCHours(23, 59, 59, 999);
-        const endPlusPlus = new Date(endPlus.getTime() + 48 * 60 * 60 * 1000);
-        return now > endPlus && now <= endPlusPlus;
+        const end = new Date(t.endDate);
+        end.setUTCHours(23, 59, 59, 999);
+        const endPlusPlus = new Date(end.getTime() + 48 * 60 * 60 * 1000);
+        return now > end && now <= endPlusPlus;
     });
 
     if (completedTournaments.length === 0) {

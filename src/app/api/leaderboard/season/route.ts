@@ -129,10 +129,9 @@ export async function GET(request: Request) {
         const now2 = new Date();
         const completedTournamentIds = new Set(
             SEASON_2026.filter(t => {
-                const endPlus = new Date(t.endDate);
-                endPlus.setUTCDate(endPlus.getUTCDate() + 1);
-                endPlus.setUTCHours(23, 59, 59, 999);
-                return now2 > endPlus;
+                const end = new Date(t.endDate);
+                end.setUTCHours(23, 59, 59, 999);
+                return now2 > end;
             }).map(t => t.id)
         );
 
