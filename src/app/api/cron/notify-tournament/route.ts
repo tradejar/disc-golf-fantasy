@@ -284,6 +284,10 @@ export async function GET(request: Request) {
             } else {
                 results[tId].notified++;
             }
+
+            // Resend rate limit: 5 req/sec — wait 250ms between sends (4/sec)
+            await new Promise(r => setTimeout(r, 250));
+
         }
 
 
