@@ -150,7 +150,6 @@ export async function GET(request: Request) {
 
         if (!entries?.length) { results[tId].skipped = 'no entries for this tournament'; continue; }
 
-        const totalEntries = entries.length;
         const userIds = entries.map(e => e.user_id);
 
         // Fetch profiles
@@ -225,8 +224,20 @@ export async function GET(request: Request) {
             playerTotals.set(s.pdga_number, (playerTotals.get(s.pdga_number) ?? 0) + (s.fantasy_points ?? 0));
         }
 
-        // Send final email to each user
+        // Deduplicate by user_id — keep the highest-scoring entry per user.
+        // Guards against duplicate entries if the unique constraint hasn't been applied.
+        const bestEntryByUser = new Map<string, typeof entries[0]>();
         for (const entry of entries) {
+            const existing = bestEntryByUser.get(entry.user_id);
+            if (!existing || (entry.total_points ?? 0) > (existing.total_points ?? 0)) {
+                bestEntryByUser.set(entry.user_id, entry);
+            }
+        }
+        const dedupedEntries = [...bestEntryByUser.values()];
+        const totalEntries = dedupedEntries.length;
+
+        // Send final email to each unique user
+        for (const entry of dedupedEntries) {
             const profile = profileMap.get(entry.user_id);
             if (!profile?.email) continue;
 
@@ -236,29 +247,32 @@ export async function GET(request: Request) {
                 totalPoints: playerTotals.get(p.pdgaNumber) ?? 0,
             }));
 
-            try {
-                await resend.emails.send({
-                    from: 'DGPT Fantasy <noreply@eagly.app>',
-                    to: profile.email,
-                    subject: `🏆 Final results — ${tournament.name.replace(/^2026\s/, '')}`,
-                    html: buildTournamentEmailHtml({
-                        displayName: profile.display_name ?? undefined,
-                        tournamentName: tournament.name,
-                        totalPoints: entry.total_points ?? 0,
-                        tournamentRank: entry.tournament_rank,
-                        totalEntries,
-                        roster,
-                        leagues: leagueMap.get(entry.user_id) ?? [],
-                        leaderboardUrl: 'https://eagly.app/leaderboard',
-                        unsubscribeUrl: `https://eagly.app/api/unsubscribe?uid=${profile.id}`,
-                    }),
-                });
-                results[tId].notified++;
-            } catch (e) {
-                console.error(`notify-tournament: failed for ${profile.email}`, e);
+            // Resend SDK returns {data, error} — it does not throw on failure
+            const { error: sendError } = await resend.emails.send({
+                from: 'DGPT Fantasy <noreply@eagly.app>',
+                to: profile.email,
+                subject: `🏆 Final results — ${tournament.name.replace(/^2026\s/, '')}`,
+                html: buildTournamentEmailHtml({
+                    displayName: profile.display_name ?? undefined,
+                    tournamentName: tournament.name,
+                    totalPoints: entry.total_points ?? 0,
+                    tournamentRank: entry.tournament_rank,
+                    totalEntries,
+                    roster,
+                    leagues: leagueMap.get(entry.user_id) ?? [],
+                    leaderboardUrl: 'https://eagly.app/leaderboard',
+                    unsubscribeUrl: `https://eagly.app/api/unsubscribe?uid=${profile.id}`,
+                }),
+            });
+
+            if (sendError) {
+                console.error(`notify-tournament: Resend error for ${profile.email}:`, sendError);
                 results[tId].errors++;
+            } else {
+                results[tId].notified++;
             }
         }
+
 
         // Mark tournament as fully notified (round 999 = final sentinel)
         await supabaseAdmin.from('notified_rounds').insert({
