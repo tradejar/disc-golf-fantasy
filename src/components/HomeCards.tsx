@@ -8,8 +8,8 @@ const NAV_CARDS = [
     { href: '/leagues', label: 'LEAGUES', col: 1 },
     { href: '/leaderboard', label: 'LEADERBOARD', col: 2 },
     { href: '/tournaments', label: 'MY HISTORY', col: 0 },
-    { href: '/leaderboard?tab=stats', label: 'STATS', col: 1 },
-    { href: '/premium', label: 'SUBSCRIPTION', col: 2 },
+    { href: '/stats', label: 'STATS', col: 1 },
+    { href: '/rules', label: 'RULES', col: 2 },
 ];
 
 const COL_COLORS = ['#4c7ef3', '#1db8a4', '#22c55e'];
