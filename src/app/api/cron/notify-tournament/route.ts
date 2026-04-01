@@ -112,18 +112,29 @@ export async function GET(request: Request) {
 
     const resend = new Resend(process.env.RESEND_API_KEY);
     const now = new Date();
+    const { searchParams } = new URL(request.url);
+    const overrideTournamentId = searchParams.get('tournamentId');
 
-    // Tournaments that ended (endDate + 1 day past) but ended within the last 48h
-    const completedTournaments = SEASON_2026.filter(t => {
-        const end = new Date(t.endDate);
-        end.setUTCHours(23, 59, 59, 999);
-        const endPlusPlus = new Date(end.getTime() + 48 * 60 * 60 * 1000);
-        return now > end && now <= endPlusPlus;
-    });
+    // Allow manual resend for a specific tournament by passing ?tournamentId=96403
+    // This bypasses the time window so it can be used for recovery after the window closes.
+    let completedTournaments;
+    if (overrideTournamentId) {
+        const t = SEASON_2026.find(t => t.id === overrideTournamentId);
+        completedTournaments = t ? [t] : [];
+    } else {
+        // Automatic: tournaments that ended within the last 72h
+        completedTournaments = SEASON_2026.filter(t => {
+            const end = new Date(t.endDate);
+            end.setUTCHours(23, 59, 59, 999);
+            const endPlusPlus = new Date(end.getTime() + 72 * 60 * 60 * 1000);
+            return now > end && now <= endPlusPlus;
+        });
+    }
 
     if (completedTournaments.length === 0) {
         return NextResponse.json({ ok: true, message: 'No recently completed tournaments.' });
     }
+
 
     const results: Record<string, { notified: number; errors: number; skipped: string }> = {};
 
