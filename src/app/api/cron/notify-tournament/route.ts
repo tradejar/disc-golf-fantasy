@@ -136,11 +136,12 @@ export async function GET(request: Request) {
     }
 
 
-    const results: Record<string, { notified: number; errors: number; skipped: string }> = {};
+    const results: Record<string, { notified: number; errors: number; skipped: string; errorDetails: string[] }> = {};
+
 
     for (const tournament of completedTournaments) {
         const tId = tournament.id;
-        results[tId] = { notified: 0, errors: 0, skipped: '' };
+        results[tId] = { notified: 0, errors: 0, skipped: '', errorDetails: [] };
 
         // Check if we already sent final notifications for this tournament
         const { data: alreadySent } = await supabaseAdmin
@@ -279,6 +280,7 @@ export async function GET(request: Request) {
             if (sendError) {
                 console.error(`notify-tournament: Resend error for ${profile.email}:`, sendError);
                 results[tId].errors++;
+                results[tId].errorDetails.push(`${profile.email}: ${(sendError as any).message ?? JSON.stringify(sendError)}`);
             } else {
                 results[tId].notified++;
             }
