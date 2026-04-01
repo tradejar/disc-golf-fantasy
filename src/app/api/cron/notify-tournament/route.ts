@@ -141,15 +141,14 @@ export async function GET(request: Request) {
 
         if (alreadySent) { results[tId].skipped = 'already notified'; continue; }
 
-        // Fetch all scored entries
+        // Fetch all entries for this tournament — include even unscored ones (null total_points shows as 0)
         const { data: entries } = await supabaseAdmin
             .from('entries')
             .select('user_id, roster_data, total_points, tournament_rank')
             .eq('tournament_id', tId)
-            .not('total_points', 'is', null)
-            .order('total_points', { ascending: false });
+            .order('total_points', { ascending: false, nullsFirst: false });
 
-        if (!entries?.length) { results[tId].skipped = 'no scored entries'; continue; }
+        if (!entries?.length) { results[tId].skipped = 'no entries for this tournament'; continue; }
 
         const totalEntries = entries.length;
         const userIds = entries.map(e => e.user_id);
