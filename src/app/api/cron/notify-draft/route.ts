@@ -135,27 +135,29 @@ export async function GET(request: Request) {
             let errors = 0;
 
             for (const profile of toNotify) {
-                try {
-                    await resend.emails.send({
-                        from: 'DGPT Fantasy <noreply@eagly.app>',
-                        to: profile.email,
-                        subject: window.urgency === 'soon'
-                            ? `⚠️ Draft closes in ~4 hours — ${tournament.name.replace(/^2026\s/, '')}`
-                            : `⏰ Draft closes tomorrow — ${tournament.name.replace(/^2026\s/, '')}`,
-                        html: buildEmailHtml({
-                            tournamentName: tournament.name,
-                            lockTimeDisplay,
-                            draftUrl,
-                            displayName: profile.display_name ?? undefined,
-                            urgency: window.urgency,
-                            unsubscribeUrl: `https://eagly.app/api/unsubscribe?uid=${profile.id}`,
-                        }),
-                    });
-                    sent++;
-                } catch (e) {
-                    console.error(`notify-draft(${window.label}): failed for ${profile.email}`, e);
+                const { error: sendError } = await resend.emails.send({
+                    from: 'DGPT Fantasy <noreply@eagly.app>',
+                    to: profile.email,
+                    subject: window.urgency === 'soon'
+                        ? `⚠️ Draft closes in ~4 hours — ${tournament.name.replace(/^2026\s/, '')}`
+                        : `⏰ Draft closes tomorrow — ${tournament.name.replace(/^2026\s/, '')}`,
+                    html: buildEmailHtml({
+                        tournamentName: tournament.name,
+                        lockTimeDisplay,
+                        draftUrl,
+                        displayName: profile.display_name ?? undefined,
+                        urgency: window.urgency,
+                        unsubscribeUrl: `https://eagly.app/api/unsubscribe?uid=${profile.id}`,
+                    }),
+                });
+                if (sendError) {
+                    console.error(`notify-draft(${window.label}): Resend error for ${profile.email}:`, sendError);
                     errors++;
+                } else {
+                    sent++;
                 }
+                // Resend rate limit: 5 req/sec — wait 250ms between sends
+                await new Promise(r => setTimeout(r, 250));
             }
 
             // Mark this window as sent

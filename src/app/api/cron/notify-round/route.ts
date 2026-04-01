@@ -188,26 +188,29 @@ export async function GET(request: Request) {
             }));
             const totalRoundPoints = players.reduce((s, p) => s + p.points, 0);
 
-            try {
-                await resend.emails.send({
-                    from: 'DGPT Fantasy <noreply@eagly.app>',
-                    to: profile.email,
-                    subject: `🥏 Round ${latestRound} results — ${tournament.name.replace(/^2026\s/, '')}`,
-                    html: buildRoundEmailHtml({
-                        displayName: profile.display_name ?? undefined,
-                        tournamentName: tournament.name,
-                        roundNumber: latestRound,
-                        players,
-                        totalRoundPoints,
-                        leaderboardUrl: 'https://eagly.app/leaderboard',
-                        unsubscribeUrl: `https://eagly.app/api/unsubscribe?uid=${profile.id}`,
-                    }),
-                });
-                results[tId].notified++;
-            } catch (e) {
-                console.error(`notify-round: failed for ${profile.email}`, e);
+            const { error: sendError } = await resend.emails.send({
+                from: 'DGPT Fantasy <noreply@eagly.app>',
+                to: profile.email,
+                subject: `🥏 Round ${latestRound} results — ${tournament.name.replace(/^2026\s/, '')}`,
+                html: buildRoundEmailHtml({
+                    displayName: profile.display_name ?? undefined,
+                    tournamentName: tournament.name,
+                    roundNumber: latestRound,
+                    players,
+                    totalRoundPoints,
+                    leaderboardUrl: 'https://eagly.app/leaderboard',
+                    unsubscribeUrl: `https://eagly.app/api/unsubscribe?uid=${profile.id}`,
+                }),
+            });
+            if (sendError) {
+                console.error(`notify-round: Resend error for ${profile.email}:`, sendError);
                 results[tId].errors++;
+            } else {
+                results[tId].notified++;
             }
+            // Resend rate limit: 5 req/sec — wait 250ms between sends
+            await new Promise(r => setTimeout(r, 250));
+
         }
 
         // Mark round as notified to prevent re-sending
