@@ -11,11 +11,7 @@ interface Props {
 export default function PlayerRatings({ player, isPremium = false }: Props) {
     const { power, accuracy, recovery, resilience, versatility } = player;
 
-    // If player doesn't have ratings, don't break the layout but show placeholders
-    const hasRatings = power !== undefined || accuracy !== undefined || recovery !== undefined;
-    if (!hasRatings) return null;
-
-    // Non-premium users see a lock pill instead of the star grid
+    // Non-premium users always see a lock pill — encourages upgrade regardless of data availability
     if (!isPremium) {
         return (
             <Link
