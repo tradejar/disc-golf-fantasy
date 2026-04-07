@@ -115,7 +115,7 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
                 resilience: staticPlayer?.resilience,
                 versatility: staticPlayer?.versatility,
             };
-        }).sort((a, b) => b.rating - a.rating);
+        }).sort((a, b) => b.price - a.price);
     } else {
         // Fallback: cron hasn't run yet — use static list (unfiltered)
         players = getPlayersWithPrices(tournament, formMap);
