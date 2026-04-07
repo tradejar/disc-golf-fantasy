@@ -70,7 +70,7 @@ export const SEASON_2026: SeasonTournament[] = [
     },
     // ── April ─────────────────────────────────────────────────────────────────
     {
-        id: '96404', pdga_id: '96404',
+        id: '96404', pdga_id: '97336',
         name: '2026 PDGA Champions Cup',
         startDate: '2026-04-09', endDate: '2026-04-12', rounds: 4,
         location: 'Lynchburg, VA', lockHour: 13,
@@ -79,7 +79,7 @@ export const SEASON_2026: SeasonTournament[] = [
         lat: 37.41, lon: -79.14,
     },
     {
-        id: '96405', pdga_id: '96405',
+        id: '96405', pdga_id: '96404',
         name: '2026 Play it Again Sports Jonesboro Open',
         startDate: '2026-04-17', endDate: '2026-04-19', rounds: 3,
         location: 'Jonesboro, AR', lockHour: 14,
@@ -88,7 +88,7 @@ export const SEASON_2026: SeasonTournament[] = [
         lat: 35.84, lon: -90.70,
     },
     {
-        id: '96406', pdga_id: '96406',
+        id: '96406', pdga_id: '96407',
         name: 'GRIPeq 44th Kansas City Wide Open',
         startDate: '2026-04-24', endDate: '2026-04-26', rounds: 3,
         location: 'Liberty, MO', lockHour: 14,
@@ -98,6 +98,7 @@ export const SEASON_2026: SeasonTournament[] = [
     },
     // ── May ───────────────────────────────────────────────────────────────────
     {
+        // NOTE: Waco is not on the PDGA Elite Series page — pdga_id needs verification before this tournament
         id: '96407', pdga_id: '96407',
         name: '2026 Waco Annual Charity Open',
         startDate: '2026-05-01', endDate: '2026-05-03', rounds: 3,
