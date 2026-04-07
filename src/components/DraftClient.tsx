@@ -5,6 +5,7 @@ import { Player } from '@/data/mock-schema';
 import PlayerRow from './PlayerRow';
 import styles from './Draft.module.css';
 import { SCORING_RULES, RoundStats, getPlacementPoints } from '@/lib/scoring';
+import { SEASON_2026 } from '@/data/tournaments';
 
 interface DraftProps {
     players: Player[];
@@ -360,6 +361,33 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
                         <span style={{ color: '#64748b', fontSize: '0.75rem' }}>Open until first card tees off</span>
                     )}
                 </div>
+                {/* Course characteristic stars — premium only */}
+                {isPremium && (() => {
+                    const t = SEASON_2026.find(x => x.id === tournamentId);
+                    if (!t) return null;
+                    const traits: { label: string; sub: string; val?: number; color: string }[] = [
+                        { label: 'Dist', sub: 'Power', val: t.distance, color: '#f472b6' },
+                        { label: 'Tech', sub: 'Accuracy', val: t.technical, color: '#38bdf8' },
+                        { label: 'Elev', sub: 'Recovery', val: t.elevation, color: '#4ade80' },
+                        { label: 'Clim', sub: 'Resilience', val: t.climate, color: '#fb923c' },
+                        { label: 'Bias', sub: 'Versatility', val: t.bias, color: '#a78bfa' },
+                    ];
+                    return (
+                        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                            {traits.map(tr => (
+                                <div key={tr.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px' }}>
+                                    <span style={{ fontSize: '7px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>{tr.label}</span>
+                                    <div style={{ display: 'flex', gap: '1px' }}>
+                                        {Array.from({ length: 5 }).map((_, i) => (
+                                            <span key={i} style={{ fontSize: '9px', color: tr.color, opacity: tr.val !== undefined && i < tr.val ? 1 : 0.2 }}>★</span>
+                                        ))}
+                                    </div>
+                                    <span style={{ fontSize: '6px', color: '#64748b' }}>{tr.sub}</span>
+                                </div>
+                            ))}
+                        </div>
+                    );
+                })()}
             </div>
             {/* Budget dashboard — position:fixed eliminates iOS sticky scroll jitter */}
             <header
