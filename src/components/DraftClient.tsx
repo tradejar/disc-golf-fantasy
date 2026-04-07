@@ -59,18 +59,19 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
         // to prevent duplicate ghost players on re-saves.
         if (existingEntry) {
             const rawRoster = (existingEntry.roster_data as Player[]) || [];
-            const mappedRoster = rawRoster.map(saved => {
-                // Supplement with live pool data (updated rating, skills, etc.)
-                // but ALWAYS keep the saved.price — it is the locked-in purchase price.
-                // We start from `saved` so price can never be accidentally overwritten.
-                const livePlayer = players.find(p =>
-                    (saved.pdgaNumber && p.pdgaNumber === saved.pdgaNumber) ||
-                    (p.firstName === saved.firstName && p.lastName === saved.lastName)
-                );
-                return {
-                    ...saved,
-                    // Pull in updated skills & rating from live pool, but keep saved price
-                    ...(livePlayer ? {
+            const mappedRoster = rawRoster
+                .map(saved => {
+                    // Match strictly by PDGA number — name fallback was unreliable
+                    // and could cause wrong players to be substituted.
+                    const livePlayer = players.find(p =>
+                        saved.pdgaNumber && p.pdgaNumber === saved.pdgaNumber
+                    );
+                    // If the player is no longer in the current registered pool
+                    // (withdrew, or was from a wrong event), drop them from the roster.
+                    if (!livePlayer) return null;
+                    return {
+                        ...saved,
+                        // Pull in updated skills & rating from live pool, but keep saved price
                         rating: livePlayer.rating,
                         tier: livePlayer.tier,
                         power: livePlayer.power,
@@ -78,16 +79,17 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
                         recovery: livePlayer.recovery,
                         resilience: livePlayer.resilience,
                         versatility: livePlayer.versatility,
-                    } : {}),
-                    // price is ALWAYS from the saved entry — never from the live pool
-                    price: saved.price,
-                };
-            });
+                        // price is ALWAYS from the saved entry — never from the live pool
+                        price: saved.price,
+                    };
+                })
+                .filter(Boolean) as Player[];
 
             setRoster(mappedRoster);
             setEntryId(existingEntry.id);
             if (mappedRoster.length > 0) setConfirmed(true);
         }
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // intentionally empty — only run once on mount
 
