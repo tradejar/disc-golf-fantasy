@@ -139,12 +139,24 @@ export async function GET(request: Request) {
             });
         }
 
+        // Delete existing rows for this tournament first, then insert fresh.
+        // This ensures withdrawn players are removed and stale rows from wrong scrapes are cleaned up.
+        const { error: deleteError } = await supabase
+            .from('tournament_registrations')
+            .delete()
+            .eq('tournament_id', tournamentId);
+
+        if (deleteError) {
+            console.error('Delete error:', JSON.stringify(deleteError));
+            throw new Error(deleteError.message || JSON.stringify(deleteError));
+        }
+
         const { error } = await supabase
             .from('tournament_registrations')
-            .upsert(players, { onConflict: 'tournament_id,pdga_number' });
+            .insert(players);
 
         if (error) {
-            console.error('Upsert error:', JSON.stringify(error));
+            console.error('Insert error:', JSON.stringify(error));
             throw new Error(error.message || JSON.stringify(error));
         }
 
