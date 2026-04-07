@@ -40,26 +40,53 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
         .not('rating', 'is', null)   // only players with a fetched rating
         .not('first_name', 'is', null);
 
-    // ── Fetch Player Form History for Momentum Pricing ────────────────────────
+    // ── Derive Recent Form from player_stats (no separate form history table needed) ─
+    // Only include tournaments that completed BEFORE this one.
+    // Champions Cup and future tournaments are naturally excluded here —
+    // so this fix kicks in for the NEXT draft after Champions Cup settles.
+    const formMap = new Map<number, FormHistory[]>();
+    const completedIds = SEASON_2026
+        .filter(t => getLockTime(t) < now && t.id !== tournament.id)
+        .sort((a, b) => getLockTime(b).getTime() - getLockTime(a).getTime()) // most recent first
+        .map(t => t.id);
 
-    let formMap = new Map<number, FormHistory[]>();
-    try {
-        const { data: formHistory } = await supabaseAdmin
-            .from('player_form_history')
-            .select('pdga_number, finish_position, cashed')
-            .eq('season', 2026)
-            .order('completed_at', { ascending: false });
+    if (completedIds.length > 0) {
+        try {
+            const { data: statsRows } = await supabaseAdmin
+                .from('player_stats')
+                .select('pdga_number, tournament_id, round_number, placement, division')
+                .in('tournament_id', completedIds);
 
-        if (formHistory) {
-            for (const record of formHistory) {
-                if (!formMap.has(record.pdga_number)) {
-                    formMap.set(record.pdga_number, []);
+            if (statsRows && statsRows.length > 0) {
+                // Keep only the final-round row per player/tournament
+                const bestRow = new Map<string, typeof statsRows[0]>();
+                for (const row of statsRows) {
+                    const key = `${row.pdga_number}_${row.tournament_id}`;
+                    const prev = bestRow.get(key);
+                    if (!prev || row.round_number > prev.round_number) bestRow.set(key, row);
                 }
-                formMap.get(record.pdga_number)!.push(record);
+
+                // Compute division field size per tournament for cash line (top 40%)
+                const fieldSize = new Map<string, number>();
+                for (const [, row] of bestRow) {
+                    const k = `${row.tournament_id}_${row.division}`;
+                    fieldSize.set(k, (fieldSize.get(k) ?? 0) + 1);
+                }
+
+                // Build formMap ordered by tournament recency (completedIds is already newest-first)
+                for (const tid of completedIds) {
+                    for (const [, row] of bestRow) {
+                        if (row.tournament_id !== tid) continue;
+                        const cashLine = Math.ceil((fieldSize.get(`${tid}_${row.division}`) ?? 100) * 0.4);
+                        const cashed = row.placement != null && row.placement <= cashLine;
+                        if (!formMap.has(row.pdga_number)) formMap.set(row.pdga_number, []);
+                        formMap.get(row.pdga_number)!.push({ finish_position: row.placement ?? 999, cashed });
+                    }
+                }
             }
+        } catch (e) {
+            console.warn('Form history derivation failed (non-fatal):', e);
         }
-    } catch (e) {
-        console.warn("player_form_history table might not exist yet:", e);
     }
 
     let players: Player[];
