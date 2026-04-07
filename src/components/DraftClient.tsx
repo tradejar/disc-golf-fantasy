@@ -236,6 +236,35 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
         }
     };
 
+    const handleDeleteDraft = async () => {
+        if (!confirmed) return;
+        const ok = window.confirm('Delete your draft? You will start from scratch — this cannot be undone.');
+        if (!ok) return;
+
+        setIsSaving(true);
+        try {
+            const res = await fetch('/api/delete-entry', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tournamentId }),
+            });
+            if (res.ok) {
+                setRoster([]);
+                setConfirmed(false);
+                setEntryId(null);
+                setBanked(0);
+                setSimResults(null);
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Failed to delete draft.');
+            }
+        } catch {
+            alert('Network error — please try again.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     // Simulation Logic (Now fetches real data!)
     const runSimulation = async () => {
         if (!entryId) return;
@@ -395,14 +424,34 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
                         {confirmed && !simResults && (
                             <>
                                 {!clientLocked && (
-                                    <button
-                                        className={styles.confirmButton}
-                                        onClick={handleConfirm}
-                                        disabled={isSaving || !isValid}
-                                        style={{ background: '#10b981' }}
-                                    >
-                                        {isSaving ? 'Saving...' : '✓ Saved · Update'}
-                                    </button>
+                                    <>
+                                        <button
+                                            className={styles.confirmButton}
+                                            onClick={handleConfirm}
+                                            disabled={isSaving || !isValid}
+                                            style={{ background: '#10b981' }}
+                                        >
+                                            {isSaving ? 'Saving...' : '✓ Saved · Update'}
+                                        </button>
+                                        <button
+                                            onClick={handleDeleteDraft}
+                                            disabled={isSaving}
+                                            style={{
+                                                background: 'none',
+                                                border: '1px solid #ef4444',
+                                                color: '#ef4444',
+                                                borderRadius: '8px',
+                                                padding: '0.35rem 0.75rem',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 600,
+                                                cursor: isSaving ? 'not-allowed' : 'pointer',
+                                                opacity: isSaving ? 0.5 : 1,
+                                                whiteSpace: 'nowrap',
+                                            }}
+                                        >
+                                            🗑 Delete Draft
+                                        </button>
+                                    </>
                                 )}
                                 {/* Sim only shown in non-production environments */}
                                 {process.env.NEXT_PUBLIC_VERCEL_ENV !== 'production' && (
