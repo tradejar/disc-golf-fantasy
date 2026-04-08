@@ -521,6 +521,13 @@ function LeagueDetail() {
                                                                         <div style={{ minWidth: 0 }}>
                                                                             <div style={{ color: '#94a3b8', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.tournamentName.replace(/^2026\s/, '')}</div>
                                                                             {e.rank && <div style={{ color: '#64748b', fontSize: '0.72rem' }}>#{e.rank}</div>}
+                                                                            {!hasCards && row.userId !== currentUserId && (() => {
+                                                                                const t = tournaments.find(t => t.id === e.tournamentId);
+                                                                                const isPreLock = t && new Date(t.lockDate) > new Date();
+                                                                                return isPreLock ? (
+                                                                                    <div style={{ color: '#64748b', fontSize: '0.7rem', marginTop: '2px' }}>🔒 Picks hidden until tournament starts</div>
+                                                                                ) : null;
+                                                                            })()}
                                                                         </div>
                                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
                                                                             <div style={{ color: '#38bdf8', fontWeight: 700 }}>{e.points} pts</div>

@@ -47,20 +47,26 @@ export async function GET(
         memberMap.set(m.user_id, { displayName: name, totalPoints: 0, entries: [] });
     }
 
+    const now = new Date();
+
     for (const entry of entries ?? []) {
         const member = memberMap.get(entry.user_id);
         if (!member) continue;
         member.totalPoints += entry.total_points ?? 0;
         const tourn = SEASON_2026.find(t => t.id === entry.tournament_id);
+        // Hide other users' rosters until the draft locks — your own entry is always visible.
+        const isLocked = tourn ? getLockTime(tourn) <= now : true;
+        const canSeeRoster = isLocked || entry.user_id === userId;
         member.entries.push({
             tournamentId: entry.tournament_id,
             tournamentName: tourn?.name ?? entry.tournament_id,
             points: entry.total_points ?? 0,
             rank: entry.tournament_rank,
-            rosterData: entry.roster_data ?? [],
-            breakdownData: entry.breakdown_data ?? {},
+            rosterData: canSeeRoster ? (entry.roster_data ?? []) : [],
+            breakdownData: canSeeRoster ? (entry.breakdown_data ?? {}) : {},
         });
     }
+
 
     // 4. Rank and return
     const leaderboard = Array.from(memberMap.entries())
