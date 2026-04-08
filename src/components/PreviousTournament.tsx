@@ -18,6 +18,22 @@ interface PlayerStat {
     };
 }
 
+interface PerfectPick {
+    pdgaNumber: number;
+    name: string;
+    division: string;
+    price: number;
+    fantasyPoints: number;
+    placement: number | null;
+    toPar: number;
+}
+
+interface PerfectPickResult {
+    picks: PerfectPick[];
+    totalPoints: number;
+    totalCost: number;
+}
+
 function getPreviousTournament() {
     const now = new Date();
     const completed = SEASON_2026.filter(t => new Date(t.endDate + 'T23:59:59Z') < now);
@@ -71,8 +87,35 @@ function buildStatsNodes(players: PlayerStat[]): ReactNode {
     );
 }
 
+function buildPerfectPickNodes(result: PerfectPickResult): ReactNode {
+    const medals = ['🥇', '🥈', '🥉', '🏅', '🥇', '🥈'];
+    return (
+        <>
+            {result.picks.map((p, i) => (
+                <React.Fragment key={p.pdgaNumber}>
+                    {i > 0 && GAP}
+                    <span style={{ color: '#6b7280', fontSize: '0.78em', fontWeight: 700, marginRight: '3px' }}>
+                        {medals[i]} {p.division}
+                    </span>
+                    <strong>{p.name}</strong>
+                    {' '}
+                    <em>
+                        {p.fantasyPoints} pts · ${p.price}
+                        {p.placement != null ? ` · #${p.placement} finish` : ''}
+                        {` (${toParStr(p.toPar)})`}
+                    </em>
+                </React.Fragment>
+            ))}
+            {GAP}
+            <span style={{ color: '#16a34a', fontWeight: 700 }}>
+                ↳ Total {result.totalPoints} fantasy pts / ${result.totalCost} of $950 used
+            </span>
+        </>
+    );
+}
+
 const BASE_SPEED = 20; // px per second (RAF-driven)
-const ROW_SPEEDS = [BASE_SPEED * 1.00, BASE_SPEED * 0.95, BASE_SPEED * 1.05, BASE_SPEED * 0.97];
+const ROW_SPEEDS = [BASE_SPEED * 1.00, BASE_SPEED * 0.95, BASE_SPEED * 1.05, BASE_SPEED * 0.97, BASE_SPEED * 0.90];
 
 /** RAF-driven seamless ticker — click toggles pause, swipe navigates */
 function SeamlessTicker({
@@ -252,8 +295,8 @@ function SeamlessTicker({
 }
 
 function TickerRow({
-    label, children, speed, tickerKey, topN,
-}: { label: string; children: ReactNode; speed: number; tickerKey: string; topN: number }) {
+    label, children, speed, tickerKey, topN, labelSuffix,
+}: { label: string; children: ReactNode; speed: number; tickerKey: string; topN?: number; labelSuffix?: string }) {
     return (
         <div style={{ borderTop: '1px solid #f0f0f0' }}>
             <div style={{
@@ -261,7 +304,10 @@ function TickerRow({
                 letterSpacing: '0.07em', textTransform: 'uppercase',
                 padding: '4px 12px 0',
             }}>
-                {label} <span style={{ color: '#d1d5db', fontWeight: 400 }}>· Top {topN}</span>
+                {label}{' '}
+                <span style={{ color: '#d1d5db', fontWeight: 400 }}>
+                    {labelSuffix ?? (topN != null ? `· Top ${topN}` : '')}
+                </span>
             </div>
             <SeamlessTicker speed={speed} tickerKey={tickerKey}>{children}</SeamlessTicker>
         </div>
@@ -271,6 +317,7 @@ function TickerRow({
 
 export default function PreviousTournament() {
     const [players, setPlayers] = useState<PlayerStat[]>([]);
+    const [perfectPicks, setPerfectPicks] = useState<PerfectPickResult | null>(null);
     const [loading, setLoading] = useState(true);
     const previous = getPreviousTournament();
 
@@ -280,6 +327,11 @@ export default function PreviousTournament() {
             .then(r => r.json())
             .then(d => { setPlayers(d.players ?? []); setLoading(false); })
             .catch(() => setLoading(false));
+        // Fetch perfect picks in parallel
+        fetch(`/api/perfect-picks?tournamentId=${previous.id}`)
+            .then(r => r.json())
+            .then(d => { if (d.picks) setPerfectPicks(d); })
+            .catch(() => { /* non-fatal */ });
     }, [previous?.id]);
 
     if (!previous) return null;
@@ -338,6 +390,16 @@ export default function PreviousTournament() {
                     <TickerRow label="Stats FPO" speed={ROW_SPEEDS[3]} tickerKey={fpoKey + '-s'} topN={fpoTopN}>
                         {buildStatsNodes(fpo)}
                     </TickerRow>
+                    {perfectPicks && (
+                        <TickerRow
+                            label="⭐ Perfect Draft"
+                            speed={ROW_SPEEDS[4]}
+                            tickerKey={`perfect-${previous.id}`}
+                            labelSuffix="· $950 Budget · Optimal Picks"
+                        >
+                            {buildPerfectPickNodes(perfectPicks)}
+                        </TickerRow>
+                    )}
                 </>
             )}
         </section>
