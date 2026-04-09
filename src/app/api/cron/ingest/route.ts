@@ -115,7 +115,7 @@ export async function GET(request: Request) {
                 const validScores = scores.filter(p => {
                     if (!p.PDGANum || p.PDGANum <= 0) return false; // no valid PDGA number
                     const hasRoundScore = (p.RoundScore ?? 0) > 0;
-                    const hasHoleScores = (p.Scores ?? '').split(',').some((s: string) => s.trim().length > 0 && !isNaN(parseInt(s)));
+                    const hasHoleScores = (p.Scores ?? '').split(',').some((s: string) => parseInt(s) > 0);
                     return hasRoundScore || hasHoleScores; // only upsert if there is real data
                 });
 
