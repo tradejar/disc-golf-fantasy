@@ -217,6 +217,7 @@ function LeagueDetail() {
     const [leaveLoading, setLeaveLoading] = useState(false);
     const [hasUnreadChat, setHasUnreadChat] = useState(false);
     const [unreadCommentUsers, setUnreadCommentUsers] = useState<Set<string>>(new Set());
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [isPremium, setIsPremium] = useState(false);
 
     // Fetch premium status for DraftComments gating
@@ -250,7 +251,7 @@ function LeagueDetail() {
         setUnreadCommentUsers(unread);
     }, [leaderboard, activeTournamentId, leagueId]);
 
-    useEffect(() => {
+    const fetchLeaderboard = useCallback(() => {
         fetch(`/api/leagues/${leagueId}/leaderboard`)
             .then(r => r.json())
             .then(lb => {
@@ -267,9 +268,22 @@ function LeagueDetail() {
                     new Date(t.startDate) <= now && new Date(t.endDate) >= now
                 ) ?? (lb.tournaments ?? [])[0] ?? null;
                 setActiveTournamentId(active?.id ?? null);
+                setLastUpdated(new Date());
                 setLoading(false);
             }).catch(() => { setError('Failed to load league'); setLoading(false); });
     }, [leagueId]);
+
+    useEffect(() => {
+        fetchLeaderboard();
+    }, [fetchLeaderboard]);
+
+    // Re-fetch when user returns to the tab — fixes mobile stale-score issue
+    // (iOS Safari restores page from bfcache without re-mounting; visibilitychange fires instead)
+    useEffect(() => {
+        const onVisible = () => { if (document.visibilityState === 'visible') fetchLeaderboard(); };
+        document.addEventListener('visibilitychange', onVisible);
+        return () => document.removeEventListener('visibilitychange', onVisible);
+    }, [fetchLeaderboard]);
 
     const copyCode = () => {
         if (accessCode && !invitePaused) { navigator.clipboard.writeText(accessCode); setCopied(true); setTimeout(() => setCopied(false), 2000); }
@@ -464,7 +478,16 @@ function LeagueDetail() {
                     <div style={{ background: '#1e293b', borderRadius: '14px', border: '1px solid #334155', overflow: 'hidden' }}>
                         <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <h2 style={{ color: 'white', margin: 0, fontSize: '1rem', fontWeight: 700 }}>🏆 Season Standings</h2>
-                            <span style={{ color: '#64748b', fontSize: '0.85rem' }}>{leaderboard.length} members</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                {lastUpdated && (
+                                    <span style={{ color: '#475569', fontSize: '0.7rem' }}>
+                                        ↻ {Math.floor((Date.now() - lastUpdated.getTime()) / 60000) === 0
+                                            ? 'just now'
+                                            : `${Math.floor((Date.now() - lastUpdated.getTime()) / 60000)}m ago`}
+                                    </span>
+                                )}
+                                <span style={{ color: '#64748b', fontSize: '0.85rem' }}>{leaderboard.length} members</span>
+                            </div>
                         </div>
 
                         {leaderboard.length === 0 ? (
