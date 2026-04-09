@@ -224,6 +224,10 @@ export async function GET(request: Request) {
                     const holeScoreSum = playerScores.filter((s: number) => !isNaN(s) && s > 0).reduce((a: number, b: number) => a + b, 0);
                     const computedStrokes = (player.RoundScore ?? 0) > 0 ? player.RoundScore : holeScoreSum;
 
+                    // Final guard: if both strokes and fantasy_points are 0,
+                    // this row has no usable data — skip it to avoid overwriting good stored scores.
+                    if (computedStrokes === 0 && fantasyPoints === 0) return null;
+
                     return {
                         tournament_id: APP_TOURN_ID,  // use app ID (not PDGA ID) for DB consistency
                         pdga_number: player.PDGANum,
@@ -244,7 +248,7 @@ export async function GET(request: Request) {
                         c2_pct: c2Pct,
                         updated_at: new Date().toISOString()
                     };
-                });
+                }).filter(Boolean); // remove null entries (computed-zero rows)
 
                 const { error } = await supabase
                     .from('player_stats')
