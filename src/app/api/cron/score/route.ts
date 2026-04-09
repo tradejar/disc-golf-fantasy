@@ -233,7 +233,7 @@ export async function GET(request: Request) {
         for (const player of roster) {
             const pdgaNum = player.pdgaNumber as number | undefined;
             const rounds = pdgaNum ? (statsByPdga.get(pdgaNum) ?? []) : [];
-            const realRounds = rounds.filter(r => (r.strokes ?? 0) > 0);
+            const realRounds = rounds.filter(r => (r.strokes ?? 0) > 0 || (r.fantasy_points ?? 0) !== 0);
 
             if (realRounds.length > 0) {
                 let pts = 0, strokes = 0, toPar = 0, albatrosses = 0, eagles = 0, birdies = 0, pars = 0, bogeys = 0, doubles = 0, triples = 0;

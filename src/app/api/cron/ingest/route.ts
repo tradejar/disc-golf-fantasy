@@ -219,12 +219,17 @@ export async function GET(request: Request) {
                         });
                     }
 
+                    // Use PDGA's RoundScore when available; fall back to summing hole scores.
+                    // PDGA sometimes clears RoundScore during finalization while keeping Scores data.
+                    const holeScoreSum = playerScores.filter((s: number) => !isNaN(s) && s > 0).reduce((a: number, b: number) => a + b, 0);
+                    const computedStrokes = (player.RoundScore ?? 0) > 0 ? player.RoundScore : holeScoreSum;
+
                     return {
                         tournament_id: APP_TOURN_ID,  // use app ID (not PDGA ID) for DB consistency
                         pdga_number: player.PDGANum,
                         division,
                         round_number: ROUND,
-                        strokes: player.RoundScore,
+                        strokes: computedStrokes,
                         to_par: player.RoundtoPar,
                         placement: player.RunningPlace,
                         albatrosses, eagles, birdies, pars, bogeys, aces,
