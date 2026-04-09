@@ -47,15 +47,16 @@ export async function GET(request: Request) {
     const { data: allStats, error: statsError } = await supabaseAdmin
         .from('player_stats')
         .select('*')
-        .eq('tournament_id', tournament.id);
+        .eq('tournament_id', tournament.id)
+        .gt('strokes', 0); // only fetch rows with real data — immune to zero rows from any source
 
     if (statsError) {
         console.error('Score cron: failed to fetch player_stats', statsError);
         return NextResponse.json({ error: statsError.message }, { status: 500 });
     }
 
-    // Skip scoring if no real data yet (all zeros = PDGA placeholders)
-    const hasRealData = allStats?.some(s => (s.strokes ?? 0) > 0);
+    // All fetched rows have strokes > 0 by query filter; just check if any exist
+    const hasRealData = (allStats?.length ?? 0) > 0;
     if (!hasRealData && !forceScore) {
         return NextResponse.json({ message: 'No real scoring data yet', tournamentId: tournament.id });
     }
