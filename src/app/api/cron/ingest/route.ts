@@ -50,11 +50,13 @@ export async function GET(request: Request) {
         // On staging, override with a 2024 tournament ID for real historical data
         const stagingTournId = process.env.STAGING_TOURN_ID;
 
-        let TOURN_ID: string;
+        let PDGA_ID: string;   // used for PDGA live API URL
+        let APP_TOURN_ID: string;  // used for DB storage — must match tournament.id used everywhere else
         let tournamentName: string;
 
         if (stagingTournId) {
-            TOURN_ID = stagingTournId;
+            PDGA_ID = stagingTournId;
+            APP_TOURN_ID = stagingTournId;
             tournamentName = `Staging (2024 PDGA #${stagingTournId})`;
         } else {
             const tournament = getActiveTournament();
@@ -62,7 +64,8 @@ export async function GET(request: Request) {
                 console.log('No active tournament today — skipping PDGA fetch.');
                 return NextResponse.json({ success: true, message: 'No active tournament today. Skipping.' });
             }
-            TOURN_ID = tournament.pdga_id;
+            PDGA_ID = tournament.pdga_id;   // PDGA event number for API calls
+            APP_TOURN_ID = tournament.id;   // App-internal ID for DB — may differ from pdga_id
             tournamentName = tournament.name;
         }
 
@@ -72,10 +75,10 @@ export async function GET(request: Request) {
         const results = [];
 
         for (let ROUND = 1; ROUND <= MAX_ROUNDS; ROUND++) {
-            console.log(`Ingesting: ${tournamentName} (${TOURN_ID}), Round ${ROUND}`);
+            console.log(`Ingesting: ${tournamentName} (PDGA:${PDGA_ID} / App:${APP_TOURN_ID}), Round ${ROUND}`);
 
             for (const division of ['MPO', 'FPO']) {
-                const url = `https://www.pdga.com/apps/tournament/live-api/live_results_fetch_round?TournID=${TOURN_ID}&Division=${division}&Round=${ROUND}`;
+                const url = `https://www.pdga.com/apps/tournament/live-api/live_results_fetch_round?TournID=${PDGA_ID}&Division=${division}&Round=${ROUND}`;
 
                 const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
                 if (!res.ok) {
@@ -206,7 +209,7 @@ export async function GET(request: Request) {
                     }
 
                     return {
-                        tournament_id: TOURN_ID,
+                        tournament_id: APP_TOURN_ID,  // use app ID (not PDGA ID) for DB consistency
                         pdga_number: player.PDGANum,
                         division,
                         round_number: ROUND,
@@ -245,9 +248,9 @@ export async function GET(request: Request) {
         // by summing player_stats across all rounds for all players in the roster.
 
         try {
-            console.log(`Starting DB RPC rollup for tournament ${TOURN_ID}...`);
+            console.log(`Starting DB RPC rollup for tournament ${APP_TOURN_ID}...`);
             const { error: rpcError } = await supabase.rpc('rollup_tournament_scores', {
-                p_tournament_id: TOURN_ID
+                p_tournament_id: APP_TOURN_ID
             });
 
             if (rpcError) {
@@ -263,7 +266,7 @@ export async function GET(request: Request) {
         }
         // ────────────────────────────────────────────────────────────────────────
 
-        return NextResponse.json({ success: true, tournament: tournamentName, tournamentId: TOURN_ID, roundsTried: MAX_ROUNDS, results });
+        return NextResponse.json({ success: true, tournament: tournamentName, tournamentId: APP_TOURN_ID, pdgaId: PDGA_ID, roundsTried: MAX_ROUNDS, results });
 
 
     } catch (e: any) {
