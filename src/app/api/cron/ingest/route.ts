@@ -110,7 +110,14 @@ export async function GET(request: Request) {
                 const scores: PdgaScore[] = data.scores;
 
                 // Filter out players with no PDGA number (happens pre-tournament or for DNF/DNS)
-                const validScores = scores.filter(p => p.PDGANum && p.PDGANum > 0);
+                // Also skip rows where there is NO scoring data at all (RoundScore=0 AND Scores is empty/all-commas)
+                // — this prevents overwriting real partial scores with zeros when PDGA temporarily clears a round
+                const validScores = scores.filter(p => {
+                    if (!p.PDGANum || p.PDGANum <= 0) return false; // no valid PDGA number
+                    const hasRoundScore = (p.RoundScore ?? 0) > 0;
+                    const hasHoleScores = (p.Scores ?? '').split(',').some((s: string) => s.trim().length > 0 && !isNaN(parseInt(s)));
+                    return hasRoundScore || hasHoleScores; // only upsert if there is real data
+                });
 
                 if (validScores.length === 0) {
                     results.push({ division, status: 'no_valid_scores', message: 'All player PDGA numbers were null — round not started yet' });
