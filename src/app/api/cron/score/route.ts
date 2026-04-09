@@ -209,7 +209,7 @@ export async function GET(request: Request) {
     // Fetch all entries for this tournament
     const { data: entries, error: entriesError } = await supabaseAdmin
         .from('entries')
-        .select('id, user_id, roster_data')
+        .select('id, user_id, roster_data, breakdown_data')
         .eq('tournament_id', tournament.id);
 
     if (entriesError) {
@@ -308,7 +308,16 @@ export async function GET(request: Request) {
                     rounds: roundsData,
                 };
             } else {
-                breakdownData[player.id] = { totals: { strokes: 0, toPar: 0, totalPoints: 0, tournamentRank: null, placementPoints: 0, breakdown: { eagles: 0, birdies: 0, pars: 0, bogeys: 0, doubles: 0, triples: 0, aces: 0 }, advanced: null, bonuses: { bogeyFree: false, streak3: false, ace: false } }, rounds: [] };
+                // No fresh player_stats data — preserve existing breakdown to avoid erasing established scores.
+                // PDGA frequently clears live scores during finalization; we must not reset to 0 during those windows.
+                const existingBreakdown = (entry as any).breakdown_data?.[player.id];
+                const preservedPts = existingBreakdown?.totals?.totalPoints ?? 0;
+                if (preservedPts !== 0) {
+                    totalPoints += preservedPts;
+                    breakdownData[player.id] = existingBreakdown; // carry forward
+                } else {
+                    breakdownData[player.id] = { totals: { strokes: 0, toPar: 0, totalPoints: 0, tournamentRank: null, placementPoints: 0, breakdown: { albatrosses: 0, eagles: 0, birdies: 0, pars: 0, bogeys: 0, doubles: 0, triples: 0, aces: 0 }, advanced: null, bonuses: { bogeyFree: false, streak3: false, ace: false } }, rounds: [] };
+                }
             }
         }
 
