@@ -73,7 +73,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96404', pdga_id: '97336',
         name: '2026 PDGA Champions Cup',
         startDate: '2026-04-09', endDate: '2026-04-12', rounds: 4,
-        location: 'Lynchburg, VA', lockHour: 13,
+        location: 'Lynchburg, VA', lockHour: 12, // 12:00 UTC = 8:00 AM EDT — first cards tee off ~8am
         distance: 4, technical: 4, elevation: 3, climate: 3, bias: 4,
         holes: 18, par: 54, totalDistanceFt: 9200,
         lat: 37.41, lon: -79.14,
