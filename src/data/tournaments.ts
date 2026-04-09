@@ -82,7 +82,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96405', pdga_id: '96404',
         name: '2026 Play it Again Sports Jonesboro Open',
         startDate: '2026-04-17', endDate: '2026-04-19', rounds: 3,
-        location: 'Jonesboro, AR', lockHour: 14,
+        location: 'Jonesboro, AR', lockHour: 13, // 13:00 UTC = 8:00 AM CDT
         distance: 3, technical: 3, elevation: 3, climate: 4, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 8120,
         lat: 35.84, lon: -90.70,
@@ -91,7 +91,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96406', pdga_id: '96407',
         name: 'GRIPeq 44th Kansas City Wide Open',
         startDate: '2026-04-24', endDate: '2026-04-26', rounds: 3,
-        location: 'Liberty, MO', lockHour: 14,
+        location: 'Liberty, MO', lockHour: 13, // 13:00 UTC = 8:00 AM CDT
         distance: 4, technical: 3, elevation: 3, climate: 3, bias: 2,
         holes: 18, par: 60, totalDistanceFt: 9800,
         lat: 39.25, lon: -94.42,
@@ -102,7 +102,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96407', pdga_id: '96407',
         name: '2026 Waco Annual Charity Open',
         startDate: '2026-05-01', endDate: '2026-05-03', rounds: 3,
-        location: 'Waco, TX', lockHour: 14,
+        location: 'Waco, TX', lockHour: 13, // 13:00 UTC = 8:00 AM CDT
         distance: 2, technical: 4, elevation: 2, climate: 3, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 7480,
         lat: 31.55, lon: -97.15,
@@ -111,7 +111,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96408', pdga_id: '96408',
         name: '2026 Open at Austin',
         startDate: '2026-05-07', endDate: '2026-05-10', rounds: 4,
-        location: 'Austin, TX', lockHour: 14,
+        location: 'Austin, TX', lockHour: 13, // 13:00 UTC = 8:00 AM CDT
         distance: 3, technical: 4, elevation: 3, climate: 4, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 8850,
         lat: 30.27, lon: -97.74,
@@ -120,7 +120,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96409', pdga_id: '96409',
         name: '2026 OTB Open',
         startDate: '2026-05-21', endDate: '2026-05-24', rounds: 4,
-        location: 'Stockton, CA', lockHour: 16,
+        location: 'Stockton, CA', lockHour: 15, // 15:00 UTC = 8:00 AM PDT
         distance: 4, technical: 1, elevation: 1, climate: 4, bias: 2,
         holes: 18, par: 54, totalDistanceFt: 9450,
         lat: 37.96, lon: -121.29,
@@ -130,7 +130,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96410', pdga_id: '96410',
         name: '2026 DGPT Northwest Championship',
         startDate: '2026-06-04', endDate: '2026-06-07', rounds: 4,
-        location: 'Portland, OR', lockHour: 16,
+        location: 'Portland, OR', lockHour: 15, // 15:00 UTC = 8:00 AM PDT
         distance: 4, technical: 3, elevation: 2, climate: 2, bias: 4,
         holes: 18, par: 54, totalDistanceFt: 8600,
         lat: 45.52, lon: -122.68,
@@ -175,7 +175,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '97341', pdga_id: '97341',
         name: '2026 US Women\u2019s Disc Golf Championship',
         startDate: '2026-07-16', endDate: '2026-07-19', rounds: 4,
-        location: 'Salt Lake City, UT', lockHour: 15,
+        location: 'Salt Lake City, UT', lockHour: 14, // 14:00 UTC = 8:00 AM MDT
         distance: 3, technical: 3, elevation: 4, climate: 4, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 8750,
         lat: 40.76, lon: -111.89,
@@ -185,7 +185,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96414', pdga_id: '96414',
         name: '2026 Ledgestone Open',
         startDate: '2026-07-30', endDate: '2026-08-02', rounds: 4,
-        location: 'Peoria, IL', lockHour: 14,
+        location: 'Peoria, IL', lockHour: 13, // 13:00 UTC = 8:00 AM CDT
         distance: 4, technical: 4, elevation: 2, climate: 4, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 9100,
         lat: 40.69, lon: -89.59,
@@ -194,7 +194,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96415', pdga_id: '96415',
         name: '2026 Discmania Challenge',
         startDate: '2026-08-07', endDate: '2026-08-09', rounds: 3,
-        location: 'Indianola, IA', lockHour: 14,
+        location: 'Indianola, IA', lockHour: 13, // 13:00 UTC = 8:00 AM CDT
         distance: 3, technical: 3, elevation: 2, climate: 3, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 8000,
         lat: 41.36, lon: -93.56,
@@ -203,7 +203,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96416', pdga_id: '96416',
         name: '2026 Preserve Championship',
         startDate: '2026-08-14', endDate: '2026-08-16', rounds: 3,
-        location: 'Clearwater, MN', lockHour: 14,
+        location: 'Clearwater, MN', lockHour: 13, // 13:00 UTC = 8:00 AM CDT
         distance: 4, technical: 3, elevation: 1, climate: 2, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 9350,
         lat: 45.01, lon: -93.97,
@@ -212,7 +212,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '97344', pdga_id: '97344',
         name: '2026 PDGA Pro World Championships',
         startDate: '2026-08-26', endDate: '2026-08-30', rounds: 5,
-        location: 'Milford, MI', lockHour: 13,
+        location: 'Milford, MI', lockHour: 12, // 12:00 UTC = 8:00 AM EDT
         distance: 4, technical: 4, elevation: 4, climate: 2, bias: 4,
         holes: 18, par: 54, totalDistanceFt: 9800,
         lat: 42.59, lon: -83.60,
@@ -222,7 +222,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96417', pdga_id: '96417',
         name: '2026 LWS Open at Idlewild',
         startDate: '2026-09-04', endDate: '2026-09-06', rounds: 3,
-        location: 'Burlington, KY', lockHour: 13,
+        location: 'Burlington, KY', lockHour: 12, // 12:00 UTC = 8:00 AM EDT
         distance: 3, technical: 4, elevation: 3, climate: 3, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 7850,
         lat: 38.95, lon: -84.71,
@@ -231,7 +231,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96418', pdga_id: '96418',
         name: '2026 Green Mountain Championship',
         startDate: '2026-09-17', endDate: '2026-09-20', rounds: 4,
-        location: 'Jeffersonville, VT', lockHour: 13,
+        location: 'Jeffersonville, VT', lockHour: 12, // 12:00 UTC = 8:00 AM EDT
         distance: 4, technical: 4, elevation: 4, climate: 4, bias: 4,
         holes: 18, par: 54, totalDistanceFt: 9600,
         lat: 44.64, lon: -72.83,
@@ -240,7 +240,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96419', pdga_id: '96419',
         name: '2026 MVP Open x OTB',
         startDate: '2026-09-24', endDate: '2026-09-27', rounds: 4,
-        location: 'Leicester, MA', lockHour: 13,
+        location: 'Leicester, MA', lockHour: 12, // 12:00 UTC = 8:00 AM EDT
         distance: 3, technical: 4, elevation: 3, climate: 2, bias: 4,
         holes: 18, par: 54, totalDistanceFt: 8450,
         lat: 42.24, lon: -71.90,
@@ -250,7 +250,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '97346', pdga_id: '97346',
         name: '2026 US Disc Golf Championship',
         startDate: '2026-10-08', endDate: '2026-10-11', rounds: 4,
-        location: 'Rock Hill, SC', lockHour: 13,
+        location: 'Rock Hill, SC', lockHour: 12, // 12:00 UTC = 8:00 AM EDT
         distance: 4, technical: 4, elevation: 2, climate: 3, bias: 1,
         holes: 18, par: 54, totalDistanceFt: 9050,
         lat: 34.92, lon: -81.02,
@@ -259,7 +259,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96421', pdga_id: '96421',
         name: '2026 DGPT Powerball Cup',
         startDate: '2026-10-15', endDate: '2026-10-18', rounds: 4,
-        location: 'Lynchburg, VA', lockHour: 13,
+        location: 'Lynchburg, VA', lockHour: 12, // 12:00 UTC = 8:00 AM EDT
         distance: 4, technical: 3, elevation: 4, climate: 3, bias: 2,
         holes: 18, par: 54, totalDistanceFt: 9200,
         lat: 37.41, lon: -79.14,
