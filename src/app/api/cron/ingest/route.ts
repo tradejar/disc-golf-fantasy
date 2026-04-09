@@ -297,28 +297,7 @@ export async function GET(request: Request) {
             } // end for-each division
         } // end for ROUND 1-4
 
-        // ─── Rollup: player_stats → entries.total_points ───────────────────────
-        // After all rounds are tried, recompute every entry's total fantasy points
-        // by summing player_stats across all rounds for all players in the roster.
 
-        try {
-            console.log(`Starting DB RPC rollup for tournament ${APP_TOURN_ID}...`);
-            const { error: rpcError } = await supabase.rpc('rollup_tournament_scores', {
-                p_tournament_id: APP_TOURN_ID
-            });
-
-            if (rpcError) {
-                console.error(`Rollup RPC failed:`, rpcError.message);
-                results.push({ division: 'ROLLUP', status: 'error', message: rpcError.message } as any);
-            } else {
-                console.log(`Rollup RPC complete.`);
-                results.push({ division: 'ROLLUP', status: 'success' } as any);
-            }
-        } catch (rollupErr: any) {
-            console.error('Rollup error (non-fatal):', rollupErr.message);
-            results.push({ division: 'ROLLUP', status: 'error', message: rollupErr.message } as any);
-        }
-        // ────────────────────────────────────────────────────────────────────────
 
         return NextResponse.json({ success: true, tournament: tournamentName, tournamentId: APP_TOURN_ID, pdgaId: PDGA_ID, roundsTried: MAX_ROUNDS, results });
 
