@@ -209,7 +209,7 @@ export async function GET(request: Request) {
     // Fetch all entries for this tournament
     const { data: entries, error: entriesError } = await supabaseAdmin
         .from('entries')
-        .select('id, user_id, roster_data, breakdown_data')
+        .select('id, user_id, roster_data, breakdown_data, total_points')
         .eq('tournament_id', tournament.id);
 
     if (entriesError) {
@@ -322,6 +322,16 @@ export async function GET(request: Request) {
         }
 
         entryScores.push({ id: entry.id, totalPoints });
+
+        // High-water-mark guard: never write a score ≤0 for a live tournament if the entry
+        // already has an established positive score. PDGA frequently serves incomplete/zeroed
+        // data during finalization windows — we protect existing scores until official data arrives.
+        const existingTotal = (entry as any).total_points ?? 0;
+        if (totalPoints <= 0 && existingTotal > 0 && !tournamentOver) {
+            console.log(`Score cron: skipping entry ${entry.id.slice(0,8)} — new score ${totalPoints} ≤ 0 but existing ${existingTotal} > 0 (live tournament data gap)`);
+            continue; // preserve existing DB value
+        }
+
         updates.push({ id: entry.id, total_points: totalPoints, budget_remaining: 0, breakdown_data: breakdownData, tournament_rank: null });
     }
 
