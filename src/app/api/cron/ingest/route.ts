@@ -47,6 +47,16 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Deployment guard: only the authorized deployment ID may run this cron.
+    // This prevents old deployment cron registrations from writing stale data.
+    // Set AUTHORIZED_DEPLOYMENT_ID in Vercel project env vars to the current deployment's VERCEL_DEPLOYMENT_ID.
+    const authorizedId = process.env.AUTHORIZED_DEPLOYMENT_ID;
+    const currentId = process.env.VERCEL_DEPLOYMENT_ID;
+    if (authorizedId && currentId && currentId !== authorizedId) {
+        console.log(`Ingest skipped: deployment ${currentId} not authorized (authorized: ${authorizedId})`);
+        return NextResponse.json({ skipped: true, reason: 'not-authorized-deployment', currentId, authorizedId });
+    }
+
     try {
         // On staging, override with a 2024 tournament ID for real historical data
         const stagingTournId = process.env.STAGING_TOURN_ID;
@@ -248,11 +258,35 @@ export async function GET(request: Request) {
                         c2_pct: c2Pct,
                         updated_at: new Date().toISOString()
                     };
-                }).filter(Boolean); // remove null entries (computed-zero rows)
+                }).filter(Boolean) as any[]; // remove null entries (computed-zero rows)
+
+                // ── Protect existing good data ──────────────────────────────────────────
+                // PDGA CDN can serve stale RS=0 data on some edge servers even after official
+                // finalization. We fetch existing rows with strokes>0 and block any update
+                // that would overwrite a good value with zero — regardless of what PDGA served.
+                const { data: existingNzRows } = await supabase
+                    .from('player_stats')
+                    .select('pdga_number,strokes')
+                    .eq('tournament_id', APP_TOURN_ID)
+                    .eq('round_number', ROUND)
+                    .gt('strokes', 0);
+                const existingGood = new Map((existingNzRows ?? []).map(r => [r.pdga_number as number, r.strokes as number]));
+
+                const protectedData = upsertData.filter((row: any) => {
+                    const existing = existingGood.get(row.pdga_number);
+                    if (existing && existing > 0 && (row.strokes ?? 0) === 0) {
+                        return false; // never write 0 over a confirmed non-zero value
+                    }
+                    return true;
+                });
+                if (protectedData.length === 0) {
+                    results.push({ division, status: 'no_valid_scores', message: 'All data blocked by existing-value protection or zero-guard' });
+                    continue;
+                }
 
                 const { error } = await supabase
                     .from('player_stats')
-                    .upsert(upsertData, { onConflict: 'tournament_id,pdga_number,round_number' });
+                    .upsert(protectedData, { onConflict: 'tournament_id,pdga_number,round_number' });
 
                 if (error) {
                     console.error(`Supabase upsert error for ${division}:`, error);
