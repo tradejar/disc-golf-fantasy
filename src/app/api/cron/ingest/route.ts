@@ -18,6 +18,7 @@ interface PdgaScore {
     LastName: string;
     RoundScore: number;
     RoundtoPar: number;
+    HasRoundScore: number; // 1 = round officially finalized, 0 = live/in-progress
     Scores: string;
     RunningPlace: number;
 }
@@ -109,14 +110,17 @@ export async function GET(request: Request) {
                 const holes: PdgaHole[] = data.holes || [];
                 const scores: PdgaScore[] = data.scores;
 
-                // Filter out players with no PDGA number (happens pre-tournament or for DNF/DNS)
-                // Also skip rows where there is NO scoring data at all (RoundScore=0 AND Scores is empty/all-commas)
-                // — this prevents overwriting real partial scores with zeros when PDGA temporarily clears a round
+                // Only upsert players who have REAL per-hole scoring data or an officially finalized round.
+                // We intentionally IGNORE players with only RoundScore>0 and empty Scores — this is PDGA's
+                // finalization transition state where they clear per-hole data before posting official results.
+                // Upserting in that window overwrites good fantasy_points with 0 (computed from empty Scores).
                 const validScores = scores.filter(p => {
                     if (!p.PDGANum || p.PDGANum <= 0) return false; // no valid PDGA number
-                    const hasRoundScore = (p.RoundScore ?? 0) > 0;
-                    const hasHoleScores = (p.Scores ?? '').split(',').some((s: string) => parseInt(s) > 0);
-                    return hasRoundScore || hasHoleScores; // only upsert if there is real data
+                    const isFinalized = p.HasRoundScore === 1; // PDGA officially confirmed round complete
+                    const hasHoleScores = (p.Scores ?? '').split(',').some((s: string) => parseInt(s) > 0); // real per-hole data
+                    return hasHoleScores || isFinalized;
+                    // NOTE: we do NOT include (RoundScore > 0 alone) — that passes during PDGA finalization
+                    //       when Scores is temporarily cleared, causing fp=0 to overwrite good data.
                 });
 
                 if (validScores.length === 0) {
