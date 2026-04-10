@@ -217,7 +217,6 @@ function LeagueDetail() {
     const [leaveLoading, setLeaveLoading] = useState(false);
     const [hasUnreadChat, setHasUnreadChat] = useState(false);
     const [unreadCommentUsers, setUnreadCommentUsers] = useState<Set<string>>(new Set());
-    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [isPremium, setIsPremium] = useState(false);
 
     // Fetch premium status for DraftComments gating
@@ -251,7 +250,7 @@ function LeagueDetail() {
         setUnreadCommentUsers(unread);
     }, [leaderboard, activeTournamentId, leagueId]);
 
-    const fetchLeaderboard = useCallback(() => {
+    useEffect(() => {
         fetch(`/api/leagues/${leagueId}/leaderboard`)
             .then(r => r.json())
             .then(lb => {
@@ -268,22 +267,9 @@ function LeagueDetail() {
                     new Date(t.startDate) <= now && new Date(t.endDate) >= now
                 ) ?? (lb.tournaments ?? [])[0] ?? null;
                 setActiveTournamentId(active?.id ?? null);
-                setLastUpdated(new Date());
                 setLoading(false);
             }).catch(() => { setError('Failed to load league'); setLoading(false); });
     }, [leagueId]);
-
-    useEffect(() => {
-        fetchLeaderboard();
-    }, [fetchLeaderboard]);
-
-    // Re-fetch when user returns to the tab — fixes mobile stale-score issue
-    // (iOS Safari restores page from bfcache without re-mounting; visibilitychange fires instead)
-    useEffect(() => {
-        const onVisible = () => { if (document.visibilityState === 'visible') fetchLeaderboard(); };
-        document.addEventListener('visibilitychange', onVisible);
-        return () => document.removeEventListener('visibilitychange', onVisible);
-    }, [fetchLeaderboard]);
 
     const copyCode = () => {
         if (accessCode && !invitePaused) { navigator.clipboard.writeText(accessCode); setCopied(true); setTimeout(() => setCopied(false), 2000); }
@@ -478,16 +464,7 @@ function LeagueDetail() {
                     <div style={{ background: '#1e293b', borderRadius: '14px', border: '1px solid #334155', overflow: 'hidden' }}>
                         <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <h2 style={{ color: 'white', margin: 0, fontSize: '1rem', fontWeight: 700 }}>🏆 Season Standings</h2>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                                {lastUpdated && (
-                                    <span style={{ color: '#475569', fontSize: '0.7rem' }}>
-                                        ↻ {Math.floor((Date.now() - lastUpdated.getTime()) / 60000) === 0
-                                            ? 'just now'
-                                            : `${Math.floor((Date.now() - lastUpdated.getTime()) / 60000)}m ago`}
-                                    </span>
-                                )}
-                                <span style={{ color: '#64748b', fontSize: '0.85rem' }}>{leaderboard.length} members</span>
-                            </div>
+                            <span style={{ color: '#64748b', fontSize: '0.85rem' }}>{leaderboard.length} members</span>
                         </div>
 
                         {leaderboard.length === 0 ? (
@@ -583,18 +560,49 @@ function LeagueDetail() {
                                                                                                     </span>
                                                                                                 </div>
                                                                                             </div>
-                                                                                            {/* Hole score breakdown */}
-                                                                                            {breakdown && (
-                                                                                                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', fontSize: '0.75rem' }}>
-                                                                                                    {(breakdown.albatrosses || 0) > 0 && <span style={{ color: '#fbbf24', fontWeight: 700 }}>Alb: {breakdown.albatrosses}</span>}
-                                                                                                    {(breakdown.eagles || 0) > 0 && <span style={{ color: '#f59e0b' }}>Egl: {breakdown.eagles}</span>}
-                                                                                                    <span style={{ color: '#4ade80' }}>B: {breakdown.birdies || 0}</span>
-                                                                                                    <span style={{ color: '#64748b' }}>P: {breakdown.pars || 0}</span>
-                                                                                                    <span style={{ color: '#f97316' }}>Bg: {breakdown.bogeys || 0}</span>
-                                                                                                    {(breakdown.doubles || 0) > 0 && <span style={{ color: '#ef4444' }}>Dbl: {breakdown.doubles}</span>}
-                                                                                                    {(breakdown.triples || 0) > 0 && <span style={{ color: '#dc2626', fontWeight: 700 }}>Tri+: {breakdown.triples}</span>}
-                                                                                                    {totals?.placementPoints > 0 && <span style={{ color: '#a78bfa', fontWeight: 700 }}>+{totals.placementPoints} place</span>}
-                                                                                                    {totals?.difficultyBonusPct > 0 && <span style={{ color: '#34d399' }}>+{totals.difficultyBonusPct}% course</span>}
+                                                                                            {/* Per-round cards */}
+                                                                                            {rounds.length > 0 && (
+                                                                                                <div style={{ display: 'flex', gap: '0.4rem', flexDirection: 'column', marginTop: '0.4rem' }}>
+                                                                                                    {rounds.map((r: any) => (
+                                                                                                        <div key={r.roundNumber} style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '0.5rem 0.65rem' }}>
+                                                                                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>Round {r.roundNumber}</div>
+                                                                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.3rem' }}>
+                                                                                                                <span style={{ color: '#e2e8f0', fontSize: '0.85rem' }}>
+                                                                                                                    {r.strokes} <span style={{ color: r.toPar < 0 ? '#4ade80' : r.toPar > 0 ? '#f87171' : '#94a3b8', fontSize: '0.75rem' }}>({r.toPar > 0 ? '+' : ''}{r.toPar})</span>
+                                                                                                                </span>
+                                                                                                                <span style={{ color: r.totalPoints > 0 ? '#38bdf8' : r.totalPoints < 0 ? '#ef4444' : '#94a3b8', fontWeight: 700, fontSize: '0.85rem' }}>{r.totalPoints > 0 ? '+' : ''}{r.totalPoints}</span>
+                                                                                                            </div>
+                                                                                                            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', fontSize: '0.72rem', color: '#94a3b8' }}>
+                                                                                                                {(r.breakdown?.albatrosses || 0) > 0 && <span style={{ color: '#fbbf24' }}>Alb: {r.breakdown.albatrosses}</span>}
+                                                                                                                <span>Egl: {r.breakdown?.eagles || 0}</span>
+                                                                                                                <span>B: {r.breakdown?.birdies || 0}</span>
+                                                                                                                <span>P: {r.breakdown?.pars || 0}</span>
+                                                                                                                <span style={{ color: (r.breakdown?.bogeys || 0) > 0 ? '#f97316' : '#94a3b8' }}>Bg: {r.breakdown?.bogeys || 0}</span>
+                                                                                                                {(r.breakdown?.doubles || 0) > 0 && <span style={{ color: '#ef4444' }}>Dbl: {r.breakdown.doubles}</span>}
+                                                                                                                {(r.breakdown?.triples || 0) > 0 && <span style={{ color: '#dc2626', fontWeight: 700 }}>Tri+: {r.breakdown.triples}</span>}
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    ))}
+                                                                                                    {rounds.length > 1 && totals && (
+                                                                                                        <div style={{ background: '#0f1f3d', border: '1px solid #3b82f6', borderRadius: '8px', padding: '0.5rem 0.65rem' }}>
+                                                                                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>Tournament Total</div>
+                                                                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.3rem' }}>
+                                                                                                                <span style={{ color: '#e2e8f0', fontSize: '0.85rem' }}>{totals.strokes} strokes</span>
+                                                                                                                <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.85rem' }}>{totals.totalPoints > 0 ? '+' : ''}{totals.totalPoints} pts</span>
+                                                                                                            </div>
+                                                                                                            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', fontSize: '0.72rem', color: '#94a3b8' }}>
+                                                                                                                {(totals.breakdown?.albatrosses || 0) > 0 && <span style={{ color: '#fbbf24' }}>Alb: {totals.breakdown.albatrosses}</span>}
+                                                                                                                <span>Egl: {totals.breakdown?.eagles || 0}</span>
+                                                                                                                <span>B: {totals.breakdown?.birdies || 0}</span>
+                                                                                                                <span>P: {totals.breakdown?.pars || 0}</span>
+                                                                                                                <span>Bg: {totals.breakdown?.bogeys || 0}</span>
+                                                                                                                {(totals.breakdown?.doubles || 0) > 0 && <span style={{ color: '#ef4444' }}>Dbl: {totals.breakdown.doubles}</span>}
+                                                                                                                {(totals.breakdown?.triples || 0) > 0 && <span style={{ color: '#dc2626', fontWeight: 700 }}>Tri+: {totals.breakdown.triples}</span>}
+                                                                                                                {(totals.placementPoints || 0) > 0 && <span style={{ color: '#a78bfa', fontWeight: 700 }}>+{totals.placementPoints} place</span>}
+                                                                                                                {(totals.difficultyBonusPct || 0) > 0 && <span style={{ color: '#34d399' }}>+{totals.difficultyBonusPct}% course</span>}
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    )}
                                                                                                 </div>
                                                                                             )}
                                                                                             {!rawStats && <div style={{ color: '#475569', fontSize: '0.78rem' }}>No scoring data yet</div>}

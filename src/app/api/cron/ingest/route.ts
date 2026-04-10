@@ -134,7 +134,7 @@ export async function GET(request: Request) {
                 });
 
                 if (validScores.length === 0) {
-                    results.push({ division, status: 'no_valid_scores', message: 'All player PDGA numbers were null — round not started yet' });
+                    results.push({ division, status: 'no_valid_scores', message: 'No hole scores or finalized rounds yet — round in progress or not started' });
                     continue;
                 }
 

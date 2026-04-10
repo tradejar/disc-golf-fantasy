@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { SEASON_2026 } from '@/data/tournaments';
+import { SEASON_2026, getLockTime } from '@/data/tournaments';
 
 interface WeatherData {
     temp: number;
@@ -18,9 +18,32 @@ function getUpcomingTournament() {
 
 const NAV_HEIGHT = 56; // must match NavBar.tsx
 
+function useCountdown(targetDate: Date) {
+    const [msLeft, setMsLeft] = useState(() => targetDate.getTime() - Date.now());
+    useEffect(() => {
+        const id = setInterval(() => setMsLeft(targetDate.getTime() - Date.now()), 1000);
+        return () => clearInterval(id);
+    }, [targetDate]);
+    return msLeft;
+}
+
+function formatCountdown(ms: number) {
+    if (ms <= 0) return 'LIVE NOW';
+    const s = Math.floor(ms / 1000);
+    const days = Math.floor(s / 86400);
+    const hrs = Math.floor((s % 86400) / 3600);
+    const mins = Math.floor((s % 3600) / 60);
+    const secs = s % 60;
+    if (days > 0) return `${days}d ${hrs}h ${mins}m`;
+    return `${hrs}h ${mins}m ${secs}s`;
+}
+
 export default function TopScrollBar() {
     const [weather, setWeather] = useState<WeatherData | null>(null);
     const upcoming = getUpcomingTournament();
+    const lockTime = getLockTime(upcoming);
+    const msToLock = useCountdown(lockTime);
+    const countdownStr = msToLock > 0 ? formatCountdown(msToLock) : 'LIVE NOW';
 
     // Fetch current weather + event-day forecast
     useEffect(() => {
@@ -59,7 +82,7 @@ export default function TopScrollBar() {
         : '';
 
     const sep = '          ';
-    const tickerText = `NEXT STOP: ${upcoming.name.replace(/^2026\s*/i, '')}  ·  ${upcoming.location}  ·  ${parStr}  ·  ${distStr}  ·  ${prognosisStr}${champStr}`;
+    const tickerText = `NEXT STOP: ${upcoming.name.replace(/^2026\s*/i, '')}  ·  ${upcoming.location}  ·  DRAFTS IN: ${countdownStr}  ·  ${parStr}  ·  ${distStr}  ·  ${prognosisStr}${champStr}`;
     const content = [tickerText, tickerText, tickerText, tickerText].join(sep);
 
     const GREEN = '#4ade80';
@@ -91,16 +114,19 @@ export default function TopScrollBar() {
                     padding: '0 1rem',
                 }}
             >
-                {content.split(/(NEXT STOP:|PREV CHAMP:|PROGNOSIS:)/g).map((part, i) => {
+                {content.split(/(NEXT STOP:|PREV CHAMP:|PROGNOSIS:|DRAFTS IN:)/g).map((part, i) => {
                     if (part === 'NEXT STOP:' || part === 'PREV CHAMP:') {
                         return <span key={i} style={{ color: GREEN, marginRight: '2px' }}>{part}</span>;
                     }
                     if (part === 'PROGNOSIS:') {
                         return <span key={i} style={{ color: AMBER, marginRight: '2px' }}>{part}</span>;
                     }
-                    return part.split(/(\d+°F|\d+mph)/g).map((chunk, j) => {
-                        if (/\d+°F/.test(chunk)) return <span key={`${i}-${j}`} style={{ color: BLUE }}>{chunk}</span>;
-                        if (/\d+mph/.test(chunk)) return <span key={`${i}-${j}`} style={{ color: BLUE }}>{chunk}</span>;
+                    if (part === 'DRAFTS IN:') {
+                        return <span key={i} style={{ color: '#f472b6', marginRight: '2px' }}>{part}</span>;
+                    }
+                    return part.split(/(\d+°F|\d+mph|\d+d \d+h \d+m|\d+h \d+m \d+s|LIVE NOW)/g).map((chunk, j) => {
+                        if (/\d+°F/.test(chunk) || /\d+mph/.test(chunk)) return <span key={`${i}-${j}`} style={{ color: BLUE }}>{chunk}</span>;
+                        if (/\d+[dhms]/.test(chunk) || chunk === 'LIVE NOW') return <span key={`${i}-${j}`} style={{ color: '#f472b6', fontWeight: 900 }}>{chunk}</span>;
                         return <span key={`${i}-${j}`}>{chunk}</span>;
                     });
                 })}

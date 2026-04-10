@@ -28,14 +28,18 @@ export default async function SeasonPage() {
 
     const now = new Date();
 
-    const enrichedSchedule = SEASON_2026.map((tourney) => {
+    // Find the index of the very next open (not yet locked) tournament
+    const nextOpenIdx = SEASON_2026.findIndex(t => getLockTime(t) > now);
+
+    const enrichedSchedule = SEASON_2026.map((tourney, idx) => {
         const entry = entries.find(e => e.tournament_id === tourney.id);
         const lockTime = getLockTime(tourney);
         const isDraftLocked = now >= lockTime;
 
-        let status: 'open' | 'locked-no-entry' | 'locked-with-entry';
+        let status: 'open' | 'locked-no-entry' | 'locked-with-entry' | 'future-locked';
         if (!isDraftLocked) {
-            status = 'open';
+            // Only the very NEXT tournament is draftable; later ones are future-locked
+            status = idx === nextOpenIdx ? 'open' : 'future-locked';
         } else if (entry) {
             status = 'locked-with-entry';
         } else {
@@ -70,7 +74,8 @@ export default async function SeasonPage() {
                             className={styles.timelineCard}
                             style={{
                                 border: tourney.status === 'open' ? '2px solid #3b82f6' : '1px solid #334155',
-                                opacity: tourney.status === 'locked-no-entry' ? 0.7 : 1
+                                opacity: (tourney.status === 'locked-no-entry' || tourney.status === 'future-locked') ? 0.45 : 1,
+                                filter: tourney.status === 'future-locked' ? 'grayscale(0.4)' : undefined,
                             }}
                         >
                             <div className={styles.cardContent}>
@@ -108,6 +113,9 @@ export default async function SeasonPage() {
                                             </div>
                                         )}
                                     </>
+                                )}
+                                {tourney.status === 'future-locked' && (
+                                    <div style={{ color: '#475569', fontSize: '0.82rem' }}>🔒 Not open yet</div>
                                 )}
                             </div>
 
