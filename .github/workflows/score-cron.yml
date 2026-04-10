@@ -1,0 +1,29 @@
+name: Score Ingest & Update
+
+on:
+  schedule:
+    # Every 5 minutes on tournament days (Thu=4, Fri=5, Sat=6, Sun=0 UTC)
+    - cron: '1,6,11,16,21,26,31,36,41,46,51,56 * * * 4,5,6,0'
+  workflow_dispatch: # allow manual trigger from GitHub UI
+
+jobs:
+  ingest-and-score:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger ingest (PDGA → player_stats)
+        run: |
+          echo "Calling ingest at $(date -u)"
+          curl -sf --max-time 60 "https://disc-golf-fantasy-ui.vercel.app/api/cron/ingest" \
+            -H "User-Agent: GH-Actions-Cron/1.0" | head -c 500
+          echo ""
+
+      - name: Wait for ingest to settle
+        run: sleep 30
+
+      - name: Trigger score (player_stats → entries.total_points)
+        run: |
+          echo "Calling score at $(date -u)"
+          curl -sf --max-time 60 "https://disc-golf-fantasy-ui.vercel.app/api/cron/score" \
+            -H "User-Agent: GH-Actions-Cron/1.0" | head -c 300
+          echo ""
