@@ -184,6 +184,17 @@ function generateAutoDraft(players: Player[], budgetCap: number): Player[] | nul
     return total <= budgetCap ? spendMaximizer([...cheapMpo, ...cheapFpo], budgetCap, mpo, fpo) : null;
 }
 
+// ── Permanently blocked user IDs ────────────────────────────────────────────
+// These are known secondary accounts for real users who already have an entry
+// under their primary account. Blocking them prevents the auto-draft from
+// creating duplicate leaderboard entries.
+// To add more: find the user_id via the profiles table and append here.
+const BLOCKED_AUTO_DRAFT_USER_IDS = new Set([
+    'user_3C0HwyNv8fasm4RV4yKa3q4ZJjs', // Vlad Alexandru Corut (Apple login — real account: Ba Roz / vladcorut@gmail.com)
+    'user_39zXeIKgchOBKdu7VOKG0S02cRs', // Sabrina (Apple login — real account: Sabrina Cioc / andreeageorgiana.b27@gmail.com)
+    'user_3BQlVIYZcZ1862YSJmr0f5MHwNF', // Eli Lester (eliplester@gmail.com — real account: eli@trvln.com)
+]);
+
 export async function GET(request: Request) {
     try {
         const authHeader = request.headers.get('authorization');
@@ -309,8 +320,13 @@ export async function GET(request: Request) {
                 return !!firstName && alreadyEnteredNames.has(firstName);
             };
 
-            // Only auto-draft users who haven't entered yet (all tiers)
-            const usersWithoutEntry = profiles.filter(p => !enteredUserIds.has(p.id) && !isAppleRelayDuplicate(p));
+            // Only auto-draft users who haven't entered yet and aren't a known duplicate account
+            const usersWithoutEntry = profiles.filter(p =>
+                !enteredUserIds.has(p.id) &&
+                !BLOCKED_AUTO_DRAFT_USER_IDS.has(p.id) &&
+                !isAppleRelayDuplicate(p)
+            );
+
             results[tournamentId].alreadyEntered = enteredUserIds.size;
 
 
