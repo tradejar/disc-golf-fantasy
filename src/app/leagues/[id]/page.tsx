@@ -104,6 +104,23 @@ const RESPONSIVE_CSS = `
     50% { opacity: 0.4; transform: scale(0.7); }
 }
 .pulse-badge { animation: pulse-badge 1.6s ease-in-out infinite; }
+@keyframes liveCardFlash {
+    0%   { border-color: inherit; box-shadow: none; background: inherit; }
+    18%  { border-color: #38bdf8; box-shadow: 0 0 0 2px #38bdf8, 0 0 28px rgba(56,189,248,0.65); background: rgba(56,189,248,0.10); }
+    55%  { border-color: #22d3ee; box-shadow: 0 0 0 1px #22d3ee, 0 0 12px rgba(34,211,238,0.30); background: rgba(34,211,238,0.05); }
+    100% { border-color: inherit; box-shadow: none; background: inherit; }
+}
+.live-card-updated { animation: liveCardFlash 1.4s ease-out forwards; }
+@keyframes liveScorePop {
+    0%   { transform: scale(1);    color: inherit; text-shadow: none; }
+    12%  { transform: scale(1.65); color: #ffffff; text-shadow: 0 0 20px #38bdf8, 0 0 40px #0ea5e9, 0 0 60px #0284c7; }
+    40%  { transform: scale(1.35); color: #38bdf8;  text-shadow: 0 0 14px #38bdf8, 0 0 28px #0ea5e9; }
+    70%  { transform: scale(1.10); color: #22d3ee;  text-shadow: 0 0 8px #22d3ee; }
+    100% { transform: scale(1);    color: inherit; text-shadow: none; }
+}
+.live-score-updated { display: inline-block; animation: liveScorePop 1.05s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+@keyframes livePulseDot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.4; transform:scale(.85); } }
+.live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#22c55e; margin-left:6px; vertical-align:middle; animation:livePulseDot 2s ease-in-out infinite; }
 `;
 
 /* ─── Draft Comment Thread ─────────────────────────────────────── */
@@ -218,6 +235,10 @@ function LeagueDetail() {
     const [hasUnreadChat, setHasUnreadChat] = useState(false);
     const [unreadCommentUsers, setUnreadCommentUsers] = useState<Set<string>>(new Set());
     const [isPremium, setIsPremium] = useState(false);
+    // Live update state
+    const [updatedUserIds, setUpdatedUserIds] = useState<Set<string>>(new Set());
+    const prevActivePointsRef = useRef<Map<string, number>>(new Map());
+    const activeTournamentIdRef = useRef<string | null>(null);
 
     // Fetch premium status for DraftComments gating
     useEffect(() => {
@@ -250,26 +271,62 @@ function LeagueDetail() {
         setUnreadCommentUsers(unread);
     }, [leaderboard, activeTournamentId, leagueId]);
 
-    useEffect(() => {
-        fetch(`/api/leagues/${leagueId}/leaderboard`)
-            .then(r => r.json())
-            .then(lb => {
-                if (lb.error) { setError(lb.error); setLoading(false); return; }
-                setLeaderboard(lb.leaderboard ?? []);
-                setTournaments(lb.tournaments ?? []);
-                setAccessCode(lb.accessCode ?? '');
-                setLeague({ name: lb.leagueName, entryFee: lb.entryFee, payoutStructure: lb.payoutStructure });
-                setCurrentUserId(lb.currentUserId ?? '');
-                setIsOwner(lb.isOwner ?? false);
-                setInvitePaused(lb.invitePaused ?? false);
-                const now = new Date();
-                const active = (lb.tournaments ?? []).find((t: Tournament) =>
-                    new Date(t.startDate) <= now && new Date(t.endDate) >= now
-                ) ?? (lb.tournaments ?? [])[0] ?? null;
-                setActiveTournamentId(active?.id ?? null);
-                setLoading(false);
-            }).catch(() => { setError('Failed to load league'); setLoading(false); });
+    const fetchLeague = useCallback(async (isInitial: boolean) => {
+        try {
+            const lb = await fetch(`/api/leagues/${leagueId}/leaderboard`).then(r => r.json());
+            if (lb.error) { if (isInitial) { setError(lb.error); setLoading(false); } return; }
+            const now = new Date();
+            const active = (lb.tournaments ?? []).find((t: Tournament) =>
+                new Date(t.startDate) <= now && new Date(t.endDate) >= now
+            ) ?? (lb.tournaments ?? [])[0] ?? null;
+            const activeId = active?.id ?? null;
+
+            if (!isInitial) {
+                // Detect active-tournament point changes
+                const changed = new Set<string>();
+                for (const row of (lb.leaderboard ?? [])) {
+                    const entry = row.entries?.find((e: any) => e.tournamentId === activeTournamentIdRef.current);
+                    if (!entry) continue;
+                    const prev = prevActivePointsRef.current.get(row.userId);
+                    if (prev !== undefined && prev !== entry.points) changed.add(row.userId);
+                }
+                if (changed.size > 0) {
+                    setUpdatedUserIds(changed);
+                    setTimeout(() => setUpdatedUserIds(new Set()), 1400);
+                }
+            }
+
+            // Seed / update ref for next comparison
+            const newMap = new Map<string, number>();
+            for (const row of (lb.leaderboard ?? [])) {
+                const entry = row.entries?.find((e: any) => e.tournamentId === (activeId ?? activeTournamentIdRef.current));
+                if (entry) newMap.set(row.userId, entry.points);
+            }
+            prevActivePointsRef.current = newMap;
+
+            setLeaderboard(lb.leaderboard ?? []);
+            setTournaments(lb.tournaments ?? []);
+            setAccessCode(lb.accessCode ?? '');
+            setLeague({ name: lb.leagueName, entryFee: lb.entryFee, payoutStructure: lb.payoutStructure });
+            setCurrentUserId(lb.currentUserId ?? '');
+            setIsOwner(lb.isOwner ?? false);
+            setInvitePaused(lb.invitePaused ?? false);
+            setActiveTournamentId(activeId);
+            activeTournamentIdRef.current = activeId;
+            if (isInitial) setLoading(false);
+        } catch { if (isInitial) { setError('Failed to load league'); setLoading(false); } }
     }, [leagueId]);
+
+    // Initial load
+    useEffect(() => { fetchLeague(true); }, [fetchLeague]);
+
+    // 45s polling — same cadence as score cron
+    useEffect(() => {
+        const id = setInterval(() => fetchLeague(false), 45_000);
+        const onVis = () => { if (!document.hidden) fetchLeague(false); };
+        document.addEventListener('visibilitychange', onVis);
+        return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVis); };
+    }, [fetchLeague]);
 
     const copyCode = () => {
         if (accessCode && !invitePaused) { navigator.clipboard.writeText(accessCode); setCopied(true); setTimeout(() => setCopied(false), 2000); }
@@ -463,7 +520,7 @@ function LeagueDetail() {
                     {/* Left: Leaderboard */}
                     <div style={{ background: '#1e293b', borderRadius: '14px', border: '1px solid #334155', overflow: 'hidden' }}>
                         <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h2 style={{ color: 'white', margin: 0, fontSize: '1rem', fontWeight: 700 }}>🏆 Season Standings</h2>
+                            <h2 style={{ color: 'white', margin: 0, fontSize: '1rem', fontWeight: 700 }}>🏆 Season Standings{activeTournamentId && <span className="live-dot" title="Live scores update every ~45s" />}</h2>
                             <span style={{ color: '#64748b', fontSize: '0.85rem' }}>{leaderboard.length} members</span>
                         </div>
 
@@ -516,6 +573,7 @@ function LeagueDetail() {
                                                                     {/* Tournament score row — clickable if has roster data */}
                                                                     <div
                                                                         onClick={() => hasCards && setExpandedEntry(isEntryExpanded ? null : entryKey)}
+                                                                        className={updatedUserIds.has(row.userId) && e.tournamentId === activeTournamentId ? 'live-card-updated' : ''}
                                                                         style={{ display: 'flex', justifyContent: 'space-between', padding: '0.45rem 0.7rem', borderRadius: isEntryExpanded ? '6px 6px 0 0' : '6px', background: '#1e293b', gap: '0.5rem', cursor: hasCards ? 'pointer' : 'default', transition: 'background 0.1s' }}
                                                                     >
                                                                         <div style={{ minWidth: 0 }}>
@@ -530,7 +588,11 @@ function LeagueDetail() {
                                                                             })()}
                                                                         </div>
                                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-                                                                            <div style={{ color: '#38bdf8', fontWeight: 700 }}>{e.points} pts</div>
+                                                                            <div
+                                                                                className={updatedUserIds.has(row.userId) && e.tournamentId === activeTournamentId ? 'live-score-updated' : ''}
+                                                                                key={`${row.userId}-${e.tournamentId}-${e.points}`}
+                                                                                style={{ color: '#38bdf8', fontWeight: 700 }}
+                                                                            >{e.points} pts</div>
                                                                             {hasCards && <span style={{ color: '#475569', fontSize: '0.7rem' }}>{isEntryExpanded ? '▲' : '▼'}</span>}
                                                                         </div>
                                                                     </div>
