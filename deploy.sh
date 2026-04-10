@@ -7,8 +7,6 @@ set -e
 
 DOMAINS=(
     "disc-golf-fantasy-ui.vercel.app"
-    "disc-golf-fantasy.vercel.app"
-    "disc-golf-fantasy-tradejars-projects.vercel.app"
 )
 
 echo "🚀 Deploying..."
