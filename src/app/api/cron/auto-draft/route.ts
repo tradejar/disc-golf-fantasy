@@ -289,9 +289,30 @@ export async function GET(request: Request) {
 
             const enteredUserIds = new Set((existingEntries || []).map(e => e.user_id));
 
+            // ── Apple private relay duplicate guard ───────────────────────────────
+            // "Sign in with Apple" creates a new Clerk user_id every time someone
+            // uses it, even if they already have an account via email/Google.
+            // These secondary accounts get auto-drafted as if they were new users,
+            // creating duplicate leaderboard entries for the same real person.
+            // Guard: if a user's email is an Apple private relay address AND there's
+            // already an entered user whose display_name starts with the same first
+            // name, skip auto-drafting them — they already have an entry.
+            const alreadyEnteredNames = new Set(
+                profiles
+                    .filter(p => enteredUserIds.has(p.id) && p.display_name)
+                    .map(p => (p.display_name as string).trim().toLowerCase().split(' ')[0])
+            );
+
+            const isAppleRelayDuplicate = (profile: { id: string; email?: string; display_name?: string }) => {
+                if (!profile.email?.includes('privaterelay.appleid.com')) return false;
+                const firstName = (profile.display_name ?? '').trim().toLowerCase().split(' ')[0];
+                return !!firstName && alreadyEnteredNames.has(firstName);
+            };
+
             // Only auto-draft users who haven't entered yet (all tiers)
-            const usersWithoutEntry = profiles.filter(p => !enteredUserIds.has(p.id));
+            const usersWithoutEntry = profiles.filter(p => !enteredUserIds.has(p.id) && !isAppleRelayDuplicate(p));
             results[tournamentId].alreadyEntered = enteredUserIds.size;
+
 
             // Batch-fetch carryover budgets from the most recent completed tournament
             // so each user's auto-draft respects their banked carry-in budget.
