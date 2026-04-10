@@ -89,9 +89,19 @@ export async function GET(request: Request) {
             console.log(`Ingesting: ${tournamentName} (PDGA:${PDGA_ID} / App:${APP_TOURN_ID}), Round ${ROUND}`);
 
             for (const division of ['MPO', 'FPO']) {
+                // Cache-bust: append a timestamp so PDGA's CDN never serves a stale cached response.
+                // Without this, Vercel's fixed egress IPs receive the same cached payload repeatedly.
                 const url = `https://www.pdga.com/apps/tournament/live-api/live_results_fetch_round?TournID=${PDGA_ID}&Division=${division}&Round=${ROUND}`;
-
-                const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+                const cacheBust = Date.now();
+                const bustUrl = `${url}&_cb=${cacheBust}`;
+                const res = await fetch(bustUrl, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0',
+                        'Cache-Control': 'no-cache, no-store',
+                        'Pragma': 'no-cache',
+                    },
+                    cache: 'no-store',
+                });
                 if (!res.ok) {
                     console.error(`PDGA Fetch failed for ${division}: ${res.status}`);
                     results.push({ division, status: 'error', message: `HTTP ${res.status}` });
@@ -110,8 +120,11 @@ export async function GET(request: Request) {
                 let advancedStatsData: any[] = [];
 
                 if (liveRoundId) {
-                    const statsUrl = `https://www.pdga.com/api/v1/feat/stats/round-stats/${liveRoundId}`;
-                    const statsRes = await fetch(statsUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+                    const statsUrl = `https://www.pdga.com/api/v1/feat/stats/round-stats/${liveRoundId}?_cb=${cacheBust}`;
+                    const statsRes = await fetch(statsUrl, {
+                        headers: { 'User-Agent': 'Mozilla/5.0', 'Cache-Control': 'no-cache, no-store', 'Pragma': 'no-cache' },
+                        cache: 'no-store',
+                    });
                     if (statsRes.ok) {
                         advancedStatsData = (await statsRes.json()) as any[];
                     }
