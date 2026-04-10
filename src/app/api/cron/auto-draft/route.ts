@@ -93,46 +93,95 @@ const SLOTS_MPO = 4;
 const SLOTS_FPO = 2;
 
 /**
- * Picks a random valid roster (4 MPO + 2 FPO) within the budget.
- * Uses a tier-spread approach: pick from different price bands so the
- * team feels realistic, not just all-elites or all-cheapest.
+ * Spend maximizer: after building a valid roster, repeatedly try to upgrade
+ * cheaper players to more expensive ones until budget is nearly exhausted.
+ * Upgrade order is randomized so users don't all get the same upgrades.
+ */
+function spendMaximizer(roster: Player[], budgetCap: number, mpo: Player[], fpo: Player[]): Player[] {
+    const shuffle = <T>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
+    let improved = true;
+    while (improved) {
+        improved = false;
+        const spent = roster.reduce((s, p) => s + p.price, 0);
+        const remaining = budgetCap - spent;
+        if (remaining < 5) break;
+
+        for (const player of shuffle([...roster])) {
+            const pool = player.division === 'MPO' ? mpo : fpo;
+            const rosterIds = new Set(roster.map(p => p.id));
+            // Candidates: not already rostered, more expensive, fits in remaining budget
+            const upgrades = pool
+                .filter(p => !rosterIds.has(p.id) && p.price > player.price && p.price <= player.price + remaining)
+                .sort((a, b) => b.price - a.price)
+                .slice(0, 4); // top 4 options only → pick one randomly for variety
+            if (upgrades.length === 0) continue;
+            roster[roster.indexOf(player)] = shuffle(upgrades)[0];
+            improved = true;
+            break; // restart with updated roster
+        }
+    }
+    return roster;
+}
+
+/**
+ * Smart auto-draft: quality-pool + jitter approach.
+ *
+ * MPO (4 slots):
+ *   - Mandatory 1 elite pick  (top 20 by price, proxy for rating)
+ *   - Mandatory 1 mid pick    (next 30)
+ *   - 2 flex picks randomly from the elite+mid combined pool
+ *   → guarantees quality while giving every user a unique roster
+ *
+ * FPO (2 slots):
+ *   - Random 2 from top-20 FPO players
+ *
+ * Spend Maximizer:
+ *   - After selection, iteratively swap cheap players for pricier ones
+ *     until budget is within $20 of cap. Upgrade order is randomised.
  */
 function generateAutoDraft(players: Player[], budgetCap: number): Player[] | null {
-    const mpo = players.filter(p => p.division === 'MPO');
-    const fpo = players.filter(p => p.division === 'FPO');
-
-    // Shuffle helper
     const shuffle = <T>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
 
-    // Try up to 50 random attempts; the tier-spread maximises budget fit
-    for (let attempt = 0; attempt < 50; attempt++) {
-        // Price tiers for MPO
-        const mpoT1 = shuffle(mpo.filter(p => p.price >= 180));
-        const mpoT2 = shuffle(mpo.filter(p => p.price >= 160 && p.price < 180));
-        const mpoT3 = shuffle(mpo.filter(p => p.price >= 130 && p.price < 160));
-        const mpoT4 = shuffle(mpo.filter(p => p.price < 130));
+    // Sort by price DESC (price is derived from PDGA rating, so best proxy for quality)
+    const mpo = [...players.filter(p => p.division === 'MPO')].sort((a, b) => b.price - a.price);
+    const fpo = [...players.filter(p => p.division === 'FPO')].sort((a, b) => b.price - a.price);
 
-        // Pick 1 from T1, 1 from T2, 1 from T3, 1 from any (spreads budget)
-        const mpoPool = [...mpoT1.slice(0, 3), ...mpoT2.slice(0, 3), ...mpoT3.slice(0, 3), ...mpoT4.slice(0, 3)];
-        const pickedMpo = shuffle(mpoPool).slice(0, SLOTS_MPO);
-        if (pickedMpo.length < SLOTS_MPO) continue;
+    if (mpo.length < SLOTS_MPO || fpo.length < SLOTS_FPO) return null;
 
-        // Price tiers for FPO
-        const fpoAll = shuffle(fpo);
-        const pickedFpo = fpoAll.slice(0, SLOTS_FPO);
+    // Quality pools
+    const mpoElite = mpo.slice(0, 20);          // top 20 MPO
+    const mpoMid   = mpo.slice(20, 50);          // next 30 MPO
+    const fpoPool  = fpo.slice(0, Math.min(20, fpo.length)); // top 20 FPO
+
+    // Try up to 40 attempts (different random samples each time)
+    for (let attempt = 0; attempt < 40; attempt++) {
+        // Mandate 1 elite + 1 mid to ensure quality floor
+        const elite = shuffle(mpoElite)[0];
+        const mid   = shuffle(mpoMid)[0];
+
+        // 2 flex picks from the combined elite+mid pool (excluding mandatories)
+        const flexPool = shuffle([...mpoElite, ...mpoMid]).filter(
+            p => p.id !== elite.id && p.id !== mid.id
+        );
+        if (flexPool.length < 2) continue;
+        const flex = flexPool.slice(0, 2);
+
+        const pickedMpo = [elite, mid, ...flex];
+        const pickedFpo = shuffle(fpoPool).slice(0, SLOTS_FPO);
         if (pickedFpo.length < SLOTS_FPO) continue;
 
         const total = [...pickedMpo, ...pickedFpo].reduce((s, p) => s + p.price, 0);
         if (total <= budgetCap) {
-            return [...pickedMpo, ...pickedFpo];
+            // Spend maximizer: push spending close to budget cap
+            return spendMaximizer([...pickedMpo, ...pickedFpo], budgetCap, mpo, fpo);
         }
     }
 
     // Fallback: cheapest valid combo
-    const cheapMpo = mpo.sort((a, b) => a.price - b.price).slice(0, SLOTS_MPO);
-    const cheapFpo = fpo.sort((a, b) => a.price - b.price).slice(0, SLOTS_FPO);
+    const cheapMpo = [...mpo].sort((a, b) => a.price - b.price).slice(0, SLOTS_MPO);
+    const cheapFpo = [...fpo].sort((a, b) => a.price - b.price).slice(0, SLOTS_FPO);
     const total = [...cheapMpo, ...cheapFpo].reduce((s, p) => s + p.price, 0);
-    return total <= budgetCap ? [...cheapMpo, ...cheapFpo] : null;
+    return total <= budgetCap ? spendMaximizer([...cheapMpo, ...cheapFpo], budgetCap, mpo, fpo) : null;
 }
 
 export async function GET(request: Request) {
