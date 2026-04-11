@@ -24,3 +24,4 @@ jobs:
           echo "Calling score at $(date -u)"
           curl -sf --max-time 60 "https://disc-golf-fantasy-ui.vercel.app/api/cron/score" | head -c 300
           echo ""
+# updated Sat Apr 11 15:32:12 UTC 2026
