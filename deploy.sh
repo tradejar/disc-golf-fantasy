@@ -24,6 +24,12 @@ for DOMAIN in "${DOMAINS[@]}"; do
 done
 
 echo ""
+echo "📦 Syncing master → main (keeps GitHub Actions workflow up to date)..."
+eval "$(ssh-agent -s)" > /dev/null 2>&1
+ssh-add ~/.ssh/id_ed25519 > /dev/null 2>&1
+git push origin master:main 2>&1 | tail -1
+
+echo ""
 echo "🧹 Pruning old deployments..."
 npx vercel ls 2>&1 \
     | grep "disc-golf-fantasy-[a-z0-9]*-tradejars" \
