@@ -80,13 +80,41 @@ export async function GET(request: Request) {
             tournamentName = tournament.name;
         }
 
-        // Try all rounds 1–4. Rounds not yet started return 404 and are skipped.
-        // Rounds in progress are re-upserted each run so live scores stay current.
-        const MAX_ROUNDS = 5; // Pro Worlds has 5 rounds
+        // Fetch event meta to discover actual PDGA round IDs.
+        // Some events (e.g. Champions Cup) use non-sequential internal IDs:
+        // sequential rounds are 1..N but the finals/championship round may be 12, 20, etc.
+        // We build a list of (pdgaRoundId → appRoundNumber) pairs and iterate those.
         const results = [];
+        let roundSchedule: Array<{ pdgaRound: number; appRound: number }> = [];
+        try {
+            const eventCb = Date.now();
+            const eventRes = await fetch(
+                `https://www.pdga.com/apps/tournament/live-api/live_results_fetch_event?TournID=${PDGA_ID}&_cb=${eventCb}`,
+                { headers: { 'User-Agent': 'Mozilla/5.0', 'Cache-Control': 'no-cache' }, cache: 'no-store' }
+            );
+            if (eventRes.ok) {
+                const eventData = await eventRes.json();
+                const finalRound: number = eventData.data?.FinalRound ?? 0;
+                const MAX_SEQUENTIAL = 5; // Pro Worlds has 5 sequential rounds
+                let appRound = 1;
+                for (let r = 1; r <= MAX_SEQUENTIAL; r++) {
+                    if (finalRound > MAX_SEQUENTIAL && r === finalRound) continue; // skip, added below
+                    roundSchedule.push({ pdgaRound: r, appRound: appRound++ });
+                }
+                // If finals round ID is beyond sequential range, append it as the last round
+                if (finalRound > MAX_SEQUENTIAL) {
+                    roundSchedule.push({ pdgaRound: finalRound, appRound: appRound });
+                }
+            }
+        } catch (_) { /* fall through to default */ }
 
-        for (let ROUND = 1; ROUND <= MAX_ROUNDS; ROUND++) {
-            console.log(`Ingesting: ${tournamentName} (PDGA:${PDGA_ID} / App:${APP_TOURN_ID}), Round ${ROUND}`);
+        // Fallback: try sequential rounds 1–5 if event fetch failed
+        if (roundSchedule.length === 0) {
+            roundSchedule = Array.from({ length: 5 }, (_, i) => ({ pdgaRound: i + 1, appRound: i + 1 }));
+        }
+
+        for (const { pdgaRound: ROUND, appRound: APP_ROUND } of roundSchedule) {
+            console.log(`Ingesting: ${tournamentName} (PDGA:${PDGA_ID} / App:${APP_TOURN_ID}), PDGA Round ${ROUND} → App Round ${APP_ROUND}`);
 
             for (const division of ['MPO', 'FPO']) {
                 // Cache-bust: append a timestamp so PDGA's CDN never serves a stale cached response.
@@ -255,7 +283,7 @@ export async function GET(request: Request) {
                         tournament_id: APP_TOURN_ID,  // use app ID (not PDGA ID) for DB consistency
                         pdga_number: player.PDGANum,
                         division,
-                        round_number: ROUND,
+                        round_number: APP_ROUND,
                         strokes: computedStrokes,
                         to_par: player.RoundtoPar,
                         placement: player.RunningPlace,
@@ -281,7 +309,7 @@ export async function GET(request: Request) {
                     .from('player_stats')
                     .select('pdga_number,strokes')
                     .eq('tournament_id', APP_TOURN_ID)
-                    .eq('round_number', ROUND)
+                    .eq('round_number', APP_ROUND)
                     .gt('strokes', 0);
                 const existingGood = new Map((existingNzRows ?? []).map(r => [r.pdga_number as number, r.strokes as number]));
 
@@ -305,14 +333,14 @@ export async function GET(request: Request) {
                     console.error(`Supabase upsert error for ${division}:`, error);
                     results.push({ division, status: 'error', message: error.message });
                 } else {
-                    results.push({ division, status: 'success', tournament: tournamentName, round: ROUND, upserted: upsertData.length });
+                    results.push({ division, status: 'success', tournament: tournamentName, round: APP_ROUND, pdgaRound: ROUND, upserted: upsertData.length });
                 }
             } // end for-each division
         } // end for ROUND 1-4
 
 
 
-        return NextResponse.json({ success: true, tournament: tournamentName, tournamentId: APP_TOURN_ID, pdgaId: PDGA_ID, roundsTried: MAX_ROUNDS, results });
+        return NextResponse.json({ success: true, tournament: tournamentName, tournamentId: APP_TOURN_ID, pdgaId: PDGA_ID, roundsTried: roundSchedule.length, results });
 
 
     } catch (e: any) {
