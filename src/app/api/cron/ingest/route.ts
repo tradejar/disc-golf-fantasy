@@ -64,6 +64,7 @@ export async function GET(request: Request) {
         let PDGA_ID: string;   // used for PDGA live API URL
         let APP_TOURN_ID: string;  // used for DB storage — must match tournament.id used everywhere else
         let tournamentName: string;
+        let tournamentRounds = 5; // default; overridden below when the real tournament is known
 
         if (stagingTournId) {
             PDGA_ID = stagingTournId;
@@ -78,6 +79,7 @@ export async function GET(request: Request) {
             PDGA_ID = tournament.pdga_id;   // PDGA event number for API calls
             APP_TOURN_ID = tournament.id;   // App-internal ID for DB — may differ from pdga_id
             tournamentName = tournament.name;
+            tournamentRounds = (tournament as any).rounds ?? 5;
         }
 
         // Fetch event meta to discover actual PDGA round IDs.
@@ -95,15 +97,15 @@ export async function GET(request: Request) {
             if (eventRes.ok) {
                 const eventData = await eventRes.json();
                 const finalRound: number = eventData.data?.FinalRound ?? 0;
-                const MAX_SEQUENTIAL = 5; // Pro Worlds has 5 sequential rounds
+                const totalAppRounds = tournamentRounds;
+                const hasNonSeqFinals = finalRound > 0 && finalRound > totalAppRounds;
+                const seqCount = hasNonSeqFinals ? totalAppRounds - 1 : totalAppRounds;
                 let appRound = 1;
-                for (let r = 1; r <= MAX_SEQUENTIAL; r++) {
-                    if (finalRound > MAX_SEQUENTIAL && r === finalRound) continue; // skip, added below
+                for (let r = 1; r <= seqCount; r++) {
                     roundSchedule.push({ pdgaRound: r, appRound: appRound++ });
                 }
-                // If finals round ID is beyond sequential range, append it as the last round
-                if (finalRound > MAX_SEQUENTIAL) {
-                    roundSchedule.push({ pdgaRound: finalRound, appRound: appRound });
+                if (hasNonSeqFinals) {
+                    roundSchedule.push({ pdgaRound: finalRound, appRound: totalAppRounds });
                 }
             }
         } catch (_) { /* fall through to default */ }
