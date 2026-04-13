@@ -91,8 +91,14 @@ export async function GET(request: Request) {
             const r1Count = allStats!.filter(s => s.round_number === 1 && s.division === div && holesPlayed(s) >= 18).length;
             const finalCount = finalRoundStats.filter(s => holesPlayed(s) >= 18).length;
 
-            // Step 1: has \u226595% of the field finished all 18 holes?
-            const fieldComplete = r1Count > 0 && finalCount >= Math.floor(r1Count * 0.95);
+            // Step 1: has ≥95% of the final round field finished?
+            // Use the finals field size (not R1) — for finals-format events (e.g. top-9 chase card)
+            // only a subset of the R1 field plays the final round.
+            // A player counts as "complete" if they have hole stats (≥18 holes) OR PDGA has
+            // set their placement (HasRoundScore=1 equivalent → placement > 0).
+            const finalsFieldSize = finalRoundStats.length;
+            const finalCountWithPlacement = finalRoundStats.filter(s => holesPlayed(s) >= 18 || (s.placement ?? 0) > 0).length;
+            const fieldComplete = finalsFieldSize > 0 && finalCountWithPlacement >= Math.floor(finalsFieldSize * 0.95);
 
             // Step 2: are there 2+ players tied for 1st? (sudden death in progress)
             // PDGA sets RunningPlace=1 for all leaders tied after regulation.
