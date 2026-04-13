@@ -79,7 +79,7 @@ export const SEASON_2026: SeasonTournament[] = [
         lat: 37.41, lon: -79.14,
     },
     {
-        id: '96405', pdga_id: '96404',
+        id: '96405', pdga_id: '96405',
         name: '2026 Play it Again Sports Jonesboro Open',
         startDate: '2026-04-17', endDate: '2026-04-19', rounds: 3,
         location: 'Jonesboro, AR', lockHour: 13, // 13:00 UTC = 8:00 AM CDT
@@ -88,8 +88,9 @@ export const SEASON_2026: SeasonTournament[] = [
         lat: 35.84, lon: -90.70,
     },
     {
+        // ✅ pdga_id 96407 confirmed = GRIPeq Kansas City Wide Open (verified via PDGA event API)
         id: '96406', pdga_id: '96407',
-        name: 'GRIPeq 44th Kansas City Wide Open',
+        name: 'GRIPeq 44th Kansas City Wide Open presented by Nexus Disc Golf',
         startDate: '2026-04-24', endDate: '2026-04-26', rounds: 3,
         location: 'Liberty, MO', lockHour: 13, // 13:00 UTC = 8:00 AM CDT
         distance: 4, technical: 3, elevation: 3, climate: 3, bias: 2,
@@ -98,8 +99,9 @@ export const SEASON_2026: SeasonTournament[] = [
     },
     // ── May ───────────────────────────────────────────────────────────────────
     {
-        // NOTE: Waco is not on the PDGA Elite Series page — pdga_id needs verification before this tournament
-        id: '96407', pdga_id: '96407',
+        // ⚠️ TODO: pdga_id NEEDS VERIFICATION before 2026-05-01.
+        // '96407' is wrong — that's Kansas City's ID. Find the real Waco 2026 PDGA event ID.
+        id: '96407', pdga_id: 'VERIFY_BEFORE_MAY_1',
         name: '2026 Waco Annual Charity Open',
         startDate: '2026-05-01', endDate: '2026-05-03', rounds: 3,
         location: 'Waco, TX', lockHour: 13, // 13:00 UTC = 8:00 AM CDT

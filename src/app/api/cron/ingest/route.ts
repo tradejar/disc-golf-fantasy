@@ -47,15 +47,6 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Deployment guard: only the authorized deployment ID may run this cron.
-    // This prevents old deployment cron registrations from writing stale data.
-    // Set AUTHORIZED_DEPLOYMENT_ID in Vercel project env vars to the current deployment's VERCEL_DEPLOYMENT_ID.
-    const authorizedId = process.env.AUTHORIZED_DEPLOYMENT_ID;
-    const currentId = process.env.VERCEL_DEPLOYMENT_ID;
-    if (authorizedId && currentId && currentId !== authorizedId) {
-        console.log(`Ingest skipped: deployment ${currentId} not authorized (authorized: ${authorizedId})`);
-        return NextResponse.json({ skipped: true, reason: 'not-authorized-deployment', currentId, authorizedId });
-    }
 
     try {
         // On staging, override with a 2024 tournament ID for real historical data

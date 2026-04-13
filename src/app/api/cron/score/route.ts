@@ -66,7 +66,7 @@ export async function GET(request: Request) {
         ? Math.max(...allStats.map((s: any) => s.round_number ?? 0))
         : 0;
     // For override/force mode: treat the tournament as over if all expected rounds have data
-    const tournamentOver = maxRound >= tournament.rounds || (overrideTournamentId !== null && maxRound >= 3);
+    const tournamentOver = maxRound >= tournament.rounds || (overrideTournamentId !== null && maxRound >= tournament.rounds);
 
     // Per-division completion: apply placement bonuses only when BOTH conditions
     // are true for a division:
@@ -104,7 +104,7 @@ export async function GET(request: Request) {
             // PDGA sets RunningPlace=1 for all leaders tied after regulation.
             // We wait until exactly 1 player holds placement=1.
             const tiedForFirst = fieldComplete
-                ? finalRoundStats.filter(s => holesPlayed(s) >= 18 && (s.placement ?? 0) === 1).length
+                ? finalRoundStats.filter(s => (holesPlayed(s) >= 18 || (s.placement ?? 0) > 0) && (s.placement ?? 0) === 1).length
                 : 0;
             const inSuddenDeath = fieldComplete && tiedForFirst > 1;
 
