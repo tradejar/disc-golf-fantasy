@@ -276,14 +276,14 @@ export async function GET(request: Request) {
             // Get all user profiles
             const { data: profiles, error: profileErr } = await supabaseAdmin
                 .from('profiles')
-                .select('id, email, display_name');
+                .select('id, email, display_name, email_unsubscribed');
 
             if (profileErr || !profiles) {
                 results[tournamentId].errors.push('Failed to fetch profiles');
                 continue;
             }
 
-            // Get premium users — auto-draft is premium-only
+            // Get premium users — determines budget tier (all users are auto-drafted; premium get higher cap)
             const { data: premiumRows } = await supabaseAdmin
                 .from('user_premium')
                 .select('user_id')
@@ -324,7 +324,8 @@ export async function GET(request: Request) {
             const usersWithoutEntry = profiles.filter(p =>
                 !enteredUserIds.has(p.id) &&
                 !BLOCKED_AUTO_DRAFT_USER_IDS.has(p.id) &&
-                !isAppleRelayDuplicate(p)
+                !isAppleRelayDuplicate(p) &&
+                !(p as any).email_unsubscribed
             );
 
             results[tournamentId].alreadyEntered = enteredUserIds.size;

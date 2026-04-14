@@ -116,8 +116,7 @@ export async function GET(request: Request) {
             // Fetch all profiles except unsubscribed and those who already have a draft
             const { data: profiles } = await supabaseAdmin
                 .from('profiles')
-                .select('id, email, display_name')
-                .not('email', 'is', null)
+                .select('id, email, display_name, email_unsubscribed')
                 .not('email', 'is', null);
 
             if (!profiles?.length) continue;
@@ -129,7 +128,9 @@ export async function GET(request: Request) {
                 .limit(10000);
 
             const draftedUserIds = new Set((existingEntries ?? []).map((e: any) => e.user_id));
-            const toNotify = profiles.filter((p: any) => !draftedUserIds.has(p.id) && p.email);
+            const toNotify = profiles.filter((p: any) =>
+                !draftedUserIds.has(p.id) && p.email && !(p as any).email_unsubscribed
+            );
 
             let sent = 0;
             let errors = 0;

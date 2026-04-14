@@ -311,7 +311,7 @@ export async function GET(request: Request) {
 
 
                 breakdownData[player.id] = {
-                    totals: { strokes, toPar, totalPoints: pts, tournamentRank: placement, placementPoints: placementPts, difficultyBonusPct: divBonus, breakdown: { albatrosses, eagles, birdies, pars, bogeys, doubles, triples, aces: totalAces }, advanced: validRounds > 0 ? { c1xPutting: +(c1xSum / validRounds).toFixed(2), c2Putting: +(c2Sum / validRounds).toFixed(2), fairwayHits: +(fairwaySum / validRounds).toFixed(2), c1InReg: +(c1RegSum / validRounds).toFixed(2), c2InReg: +(c2RegSum / validRounds).toFixed(2), scramble: +(scrambleSum / validRounds).toFixed(2) } : null, bonuses: { bogeyFree: false, streak3: false, ace: totalAces > 0 } },
+                    totals: { strokes, toPar, totalPoints: pts, tournamentRank: placement, placementPoints: placementPts, difficultyBonusPct: divBonus, breakdown: { albatrosses, eagles, birdies, pars, bogeys, doubles, triples, aces: totalAces }, advanced: validRounds > 0 ? { c1xPutting: +(c1xSum / validRounds).toFixed(2), c2Putting: +(c2Sum / validRounds).toFixed(2), fairwayHits: +(fairwaySum / validRounds).toFixed(2), c1InReg: +(c1RegSum / validRounds).toFixed(2), c2InReg: +(c2RegSum / validRounds).toFixed(2), scramble: +(scrambleSum / validRounds).toFixed(2) } : null, bonuses: { bogeyFree: bogeys === 0 && doubles === 0 && triples === 0 && strokes > 0, streak3: false, ace: totalAces > 0 } },
                     rounds: roundsData,
                 };
             } else {

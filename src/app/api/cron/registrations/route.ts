@@ -139,25 +139,26 @@ export async function GET(request: Request) {
             });
         }
 
-        // Delete existing rows for this tournament first, then insert fresh.
-        // This ensures withdrawn players are removed and stale rows from wrong scrapes are cleaned up.
-        const { error: deleteError } = await supabase
-            .from('tournament_registrations')
-            .delete()
-            .eq('tournament_id', tournamentId);
-
-        if (deleteError) {
-            console.error('Delete error:', JSON.stringify(deleteError));
-            throw new Error(deleteError.message || JSON.stringify(deleteError));
-        }
-
+        // Upsert replaces the separate delete+insert, which had a race window where
+        // the table was empty between the two operations if insert failed.
         const { error } = await supabase
             .from('tournament_registrations')
-            .insert(players);
+            .upsert(players, { onConflict: 'tournament_id,pdga_number' });
 
         if (error) {
-            console.error('Insert error:', JSON.stringify(error));
+            console.error('Upsert error:', JSON.stringify(error));
             throw new Error(error.message || JSON.stringify(error));
+        }
+
+        // Remove stale registrations (withdrawn players) — any row for this tournament
+        // not in the fresh scrape. Do this as a separate step AFTER successful upsert.
+        const freshPdgaNums = players.map(p => p.pdga_number);
+        if (freshPdgaNums.length > 0) {
+            await supabase
+                .from('tournament_registrations')
+                .delete()
+                .eq('tournament_id', tournamentId)
+                .not('pdga_number', 'in', `(${freshPdgaNums.join(',')})`);
         }
 
         console.log(`Upserted ${players.length} players successfully`);

@@ -104,6 +104,7 @@ export async function GET(request: Request) {
             .from('player_stats')
             .select('round_number')
             .eq('tournament_id', tId)
+            .gt('strokes', 0)  // only real data rows
             .order('round_number', { ascending: false })
             .limit(1);
 
@@ -132,8 +133,11 @@ export async function GET(request: Request) {
             .eq('round_number', latestRound)
             .in('pdga_number', allDraftedPdgaNums);
 
-        if ((scoredCount ?? 0) < allDraftedPdgaNums.length) {
-            results[tId].skipped = `${allDraftedPdgaNums.length - (scoredCount ?? 0)} drafted players still missing round ${latestRound} score`;
+        // Use 90% threshold (not 100%) to handle finals-format events where only a subset
+        // of the field plays the final round (e.g. top-9 chase card in Champions Cup).
+        const requiredCount = Math.floor(allDraftedPdgaNums.length * 0.9);
+        if ((scoredCount ?? 0) < requiredCount) {
+            results[tId].skipped = `${allDraftedPdgaNums.length - (scoredCount ?? 0)} drafted players still missing round ${latestRound} score (need ${requiredCount})`;
             continue;
         }
 
@@ -151,7 +155,7 @@ export async function GET(request: Request) {
         const userIds = entries.map(e => e.user_id);
         const { data: profilesRaw } = await supabaseAdmin
             .from('profiles')
-            .select('id, email, display_name')
+            .select('id, email, display_name, email_unsubscribed')
             .in('id', userIds)
             .not('email', 'is', null);
 

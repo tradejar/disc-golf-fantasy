@@ -167,7 +167,7 @@ export async function GET(request: Request) {
         // Fetch profiles
         const { data: profilesRaw } = await supabaseAdmin
             .from('profiles')
-            .select('id, email, display_name')
+            .select('id, email, display_name, email_unsubscribed')
             .in('id', userIds)
             .not('email', 'is', null);
 

@@ -13,13 +13,6 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        console.log("DEBUG: Full Clerk user payload:", {
-            id: user.id,
-            imageUrl: user.imageUrl,
-            hasImage: user.hasImage,
-            firstName: user.firstName,
-            email: user.emailAddresses[0]?.emailAddress
-        });
 
         // 2. Parse Body
         const body = await req.json();
@@ -118,6 +111,19 @@ export async function POST(req: Request) {
             // Insert or Update entry (Roster changes)
             // Utilizes the new unique constraint on (user_id, tournament_id) 
             // to perform an atomic upsert, eliminating race conditions from double-clicks.
+            // Server-side budget calculation — do not trust client-sent budgetRemaining.
+            // Compute from roster prices + canonical cap for the user's tier.
+            const { data: premiumRow } = await supabaseAdmin
+                .from('user_premium')
+                .select('user_id')
+                .eq('user_id', userId)
+                .eq('active', true)
+                .maybeSingle();
+            const isPremium = !!premiumRow;
+            const budgetCap = isPremium ? 950 : 850;
+            const spent = (roster as any[]).reduce((s: number, p: any) => s + (Number(p.price) || 0), 0);
+            const calculatedBudgetRemaining = Math.max(0, budgetCap - spent);
+
             const { data, error: upsertError } = await supabaseAdmin
                 .from('entries')
                 .upsert(
@@ -125,7 +131,7 @@ export async function POST(req: Request) {
                         user_id: userId,
                         tournament_id: tournamentId,
                         roster_data: roster,
-                        budget_remaining: Math.max(0, budgetRemaining),
+                        budget_remaining: calculatedBudgetRemaining,
                         total_points: null,
                         tournament_rank: null,
                         breakdown_data: null

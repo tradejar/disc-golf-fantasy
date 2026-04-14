@@ -40,7 +40,7 @@ export async function GET(request: Request) {
 
         let entriesQuery = supabaseAdmin
             .from('entries')
-            .select('id, user_id, roster_data, breakdown_data, total_points, tournament_rank, created_at, budget_remaining')
+            .select('id, user_id, roster_data, breakdown_data, total_points, tournament_rank, created_at, budget_remaining, auto_drafted')
             .filter('tournament_id', 'eq', tournamentId);
 
         if (authorizedLeagueMembers) {
@@ -53,20 +53,7 @@ export async function GET(request: Request) {
         if (error) {
             console.error('Leaderboard query error:', error);
             return NextResponse.json({ error: error.message }, { status: 500 });
-        }
-
-        // Try to fetch auto_drafted separately — gracefully handles case where
-        // column hasn't been added to the DB yet (migration may be pending).
-        let autoDraftedMap = new Map<string, boolean>();
-        try {
-            const { data: adRows } = await supabaseAdmin
-                .from('entries')
-                .select('id, auto_drafted')
-                .filter('tournament_id', 'eq', tournamentId);
-            if (adRows) {
-                autoDraftedMap = new Map(adRows.map(r => [r.id, r.auto_drafted ?? false]));
-            }
-        } catch { /* column doesn't exist yet — all entries default to false */ }
+        }        
 
         if (!entries || entries.length === 0) {
             return NextResponse.json({
@@ -107,7 +94,7 @@ export async function GET(request: Request) {
                 roster,
                 breakdownData: (isStarted || isOwn) ? (entry.breakdown_data ?? null) : null,
                 picksHidden: !isStarted && !isOwn,
-                autoDrafted: autoDraftedMap.get(entry.id) ?? false,
+                autoDrafted: (entry as any).auto_drafted ?? false,
                 createdAt: entry.created_at,
             };
         });

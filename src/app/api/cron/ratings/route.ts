@@ -24,8 +24,29 @@ function calculatePrice(rating: number, division: 'MPO' | 'FPO'): number {
  */
 async function buildRatingsMapFromTournament(tournId: string): Promise<Map<number, number>> {
     const map = new Map<number, number>();
+
+    // Discover the correct round schedule — some events (e.g. Champions Cup) use
+    // non-sequential finals round IDs (e.g. Round 12 for the finals, not Round 4).
+    let roundsToTry: number[] = [4, 3, 2, 1]; // default fallback
+    try {
+        const eventRes = await fetch(
+            `https://www.pdga.com/apps/tournament/live-api/live_results_fetch_event?TournID=${tournId}`,
+            { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(10000) }
+        );
+        if (eventRes.ok) {
+            const eventData = await eventRes.json();
+            const finalRound: number = eventData.data?.FinalRound ?? 0;
+            const totalAppRounds: number = eventData.data?.MaxRound ?? 4;
+            if (finalRound > 0 && finalRound > totalAppRounds) {
+                // Non-sequential finals: try finals round first, then sequential rounds descending
+                const seqRounds = Array.from({ length: totalAppRounds - 1 }, (_, i) => totalAppRounds - 1 - i);
+                roundsToTry = [finalRound, ...seqRounds];
+            }
+        }
+    } catch { /* fall through to default */ }
+
     for (const division of ['MPO', 'FPO']) {
-        for (let round = 4; round >= 1; round--) {
+        for (const round of roundsToTry) {
             try {
                 const url = `https://www.pdga.com/apps/tournament/live-api/live_results_fetch_round?TournID=${tournId}&Division=${division}&Round=${round}`;
                 const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(15000) });
