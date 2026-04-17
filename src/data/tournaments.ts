@@ -83,7 +83,7 @@ export const SEASON_2026: SeasonTournament[] = [
         id: '96405', pdga_id: '96404',
         name: '2026 Play it Again Sports Jonesboro Open',
         startDate: '2026-04-17', endDate: '2026-04-19', rounds: 3,
-        location: 'Jonesboro, AR', lockHour: 13, // 13:00 UTC = 8:00 AM CDT
+        location: 'Jonesboro, AR', lockHour: 12, // 12:00 UTC = 7:00 AM CDT (FPO first card ~12:36 UTC)
         distance: 3, technical: 3, elevation: 3, climate: 4, bias: 3,
         holes: 18, par: 54, totalDistanceFt: 8120,
         lat: 35.84, lon: -90.70,
