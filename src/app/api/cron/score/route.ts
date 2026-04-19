@@ -94,17 +94,20 @@ export async function GET(request: Request) {
             // Step 1: has ≥95% of the final round field finished?
             // Use the finals field size (not R1) — for finals-format events (e.g. top-9 chase card)
             // only a subset of the R1 field plays the final round.
-            // A player counts as "complete" if they have hole stats (≥18 holes) OR PDGA has
-            // set their placement (HasRoundScore=1 equivalent → placement > 0).
+            // A player counts as "complete" only when they have full hole stats (≥18 holes).
+            // NOTE: we deliberately do NOT use (placement > 0) as a fallback here.
+            // PDGA sets RunningPlace > 0 as soon as a player tees off hole 1 — treating it as
+            // "finished" caused placement bonuses to fire the moment the whole field teed off,
+            // even when nobody had completed the round.
             const finalsFieldSize = finalRoundStats.length;
-            const finalCountWithPlacement = finalRoundStats.filter(s => holesPlayed(s) >= 18 || (s.placement ?? 0) > 0).length;
+            const finalCountWithPlacement = finalRoundStats.filter(s => holesPlayed(s) >= 18).length;
             const fieldComplete = finalsFieldSize > 0 && finalCountWithPlacement >= Math.floor(finalsFieldSize * 0.95);
 
             // Step 2: are there 2+ players tied for 1st? (sudden death in progress)
             // PDGA sets RunningPlace=1 for all leaders tied after regulation.
             // We wait until exactly 1 player holds placement=1.
             const tiedForFirst = fieldComplete
-                ? finalRoundStats.filter(s => (holesPlayed(s) >= 18 || (s.placement ?? 0) > 0) && (s.placement ?? 0) === 1).length
+                ? finalRoundStats.filter(s => holesPlayed(s) >= 18 && (s.placement ?? 0) === 1).length
                 : 0;
             const inSuddenDeath = fieldComplete && tiedForFirst > 1;
 
