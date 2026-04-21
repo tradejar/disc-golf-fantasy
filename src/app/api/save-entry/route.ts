@@ -113,16 +113,32 @@ export async function POST(req: Request) {
             // to perform an atomic upsert, eliminating race conditions from double-clicks.
             // Server-side budget calculation — do not trust client-sent budgetRemaining.
             // Compute from roster prices + canonical cap for the user's tier.
-            const { data: premiumRow } = await supabaseAdmin
-                .from('user_premium')
-                .select('user_id')
-                .eq('user_id', userId)
-                .eq('active', true)
-                .maybeSingle();
-            const isPremium = !!premiumRow;
-            const budgetCap = isPremium ? 950 : 850;
+            // Manual drafts use $950 for all users — $850 is only the auto-draft penalty cap.
+            // Carryover from the previous tournament applies to all users.
+            const budgetCap = 950;
+
+            // ── Carryover ──────────────────────────────────────────────────
+            // Fetch leftover budget from the most recently completed tournament.
+            let carryover = 0;
+            {
+                const now = new Date();
+                const completed = SEASON_2026
+                    .filter(t => getLockTime(t) <= now && t.id !== tournamentId)
+                    .sort((a, b) => getLockTime(b).getTime() - getLockTime(a).getTime());
+                if (completed.length > 0) {
+                    const { data: prevEntry } = await supabaseAdmin
+                        .from('entries')
+                        .select('budget_remaining')
+                        .eq('user_id', userId)
+                        .eq('tournament_id', completed[0].id)
+                        .maybeSingle();
+                    if (prevEntry) carryover = Math.max(0, prevEntry.budget_remaining ?? 0);
+                }
+            }
+
+            const effectiveCap = budgetCap + carryover;
             const spent = (roster as any[]).reduce((s: number, p: any) => s + (Number(p.price) || 0), 0);
-            const calculatedBudgetRemaining = Math.max(0, budgetCap - spent);
+            const calculatedBudgetRemaining = Math.max(0, effectiveCap - spent);
 
             const { data, error: upsertError } = await supabaseAdmin
                 .from('entries')
