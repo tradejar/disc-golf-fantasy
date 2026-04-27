@@ -100,9 +100,8 @@ export const SEASON_2026: SeasonTournament[] = [
     },
     // ── May ───────────────────────────────────────────────────────────────────
     {
-        // ⚠️ TODO: pdga_id NEEDS VERIFICATION before 2026-05-01.
-        // '96407' is wrong — that's Kansas City's ID. Find the real Waco 2026 PDGA event ID.
-        id: '96407', pdga_id: 'VERIFY_BEFORE_MAY_1',
+        // ✅ pdga_id 102001 confirmed = DGPT JomezPro Innova presents WACO (verified via PDGA event page)
+        id: '96407', pdga_id: '102001',
         name: '2026 Waco Annual Charity Open',
         startDate: '2026-05-01', endDate: '2026-05-03', rounds: 3,
         location: 'Waco, TX', lockHour: 13, // 13:00 UTC = 8:00 AM CDT
