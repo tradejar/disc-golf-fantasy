@@ -13,7 +13,7 @@ jobs:
       - name: Trigger ingest
         run: |
           echo "Calling ingest at $(date -u)"
-          curl -sf --max-time 60 "https://disc-golf-fantasy-ui.vercel.app/api/cron/ingest" | head -c 500
+          curl -sf --max-time 60 -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" "https://disc-golf-fantasy-ui.vercel.app/api/cron/ingest" | head -c 500
           echo ""
 
       - name: Wait 30s
@@ -22,6 +22,6 @@ jobs:
       - name: Trigger score
         run: |
           echo "Calling score at $(date -u)"
-          curl -sf --max-time 60 "https://disc-golf-fantasy-ui.vercel.app/api/cron/score" | head -c 300
+          curl -sf --max-time 60 -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" "https://disc-golf-fantasy-ui.vercel.app/api/cron/score" | head -c 300
           echo ""
 # updated Sat Apr 11 15:32:12 UTC 2026

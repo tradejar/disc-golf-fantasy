@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# local secret-staging files — never commit
+.cron-secret-NEW.txt
+
 # vercel
 .vercel
 
