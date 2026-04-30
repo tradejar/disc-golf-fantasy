@@ -35,6 +35,7 @@ npx vercel ls 2>&1 \
     | grep "disc-golf-fantasy-[a-z0-9]*-tradejars" \
     | grep -v "$LATEST" \
     | grep -o 'disc-golf-fantasy-[a-z0-9]*-tradejars-projects.vercel.app' \
+    | awk '!seen[$0]++' \
     | while read url; do
         echo "  Removing $url..."
         npx vercel rm "$url" --yes 2>&1 | tail -1
