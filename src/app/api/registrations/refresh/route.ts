@@ -74,34 +74,25 @@ export async function POST() {
     }
 
     // ── Claim the slot BEFORE running the sync ────────────────────────────
-    // CAS-style claim: only update if last_refresh is NULL (first ever) or
-    // older than the cooldown window. Two concurrent clicks both pass the
-    // pre-check above, but only one will satisfy this predicate.
+    // The pre-check above (now < nextAllowedAt) handles the cooldown case.
+    // For the rare race where two clicks pass that check simultaneously,
+    // we accept a tiny double-fire — the cost is one extra PDGA fetch,
+    // and syncRegistrations is idempotent (upserts).
     const claimAt = new Date().toISOString();
-    const cutoff = new Date(now - COOLDOWN_MS).toISOString();
-    const { data: claimed, error: claimErr } = await supabase
+    const { error: claimErr } = await supabase
         .from('app_state')
         .update({
             last_registrations_refresh_at: claimAt,
             last_registrations_refresh_by: userId,
         })
-        .eq('id', 1)
-        .or(`last_registrations_refresh_at.is.null,last_registrations_refresh_at.lte.${cutoff}`)
-        .select('id');
+        .eq('id', 1);
 
     if (claimErr) {
         console.error('Cooldown claim failed:', claimErr);
-        return NextResponse.json({ error: 'Internal error' }, { status: 500 });
-    }
-
-    if (!claimed || claimed.length === 0) {
-        // Someone else won the race between our pre-check and our update.
         return NextResponse.json({
-            error: 'cooldown',
-            message: 'Another refresh just started. Try again shortly.',
-            next_allowed_at: new Date(claimAt).toISOString(),
-            seconds_remaining: Math.ceil(COOLDOWN_MS / 1000),
-        }, { status: 429 });
+            error: 'Internal error',
+            message: `Cooldown claim failed: ${claimErr.message}`,
+        }, { status: 500 });
     }
 
     // ── Run the actual sync ───────────────────────────────────────────────
