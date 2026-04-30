@@ -1,0 +1,24 @@
+name: Registrations Sync
+
+# Pulls the active tournament's player field from PDGA twice daily.
+# Replaces the Vercel cron (which proved unreliable for ingest+score in Apr 2026).
+on:
+  schedule:
+    # 06:00 UTC and 18:00 UTC daily — covers both EU/US working hours
+    # so withdrawals show up the same day they happen.
+    - cron: '0 6,18 * * *'
+  workflow_dispatch:
+
+jobs:
+  refresh-registrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger registrations sync
+        run: |
+          echo "Calling registrations cron at $(date -u)"
+          curl -sf --max-time 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://disc-golf-fantasy-ui.vercel.app/api/cron/registrations" \
+            | head -c 800
+          echo ""

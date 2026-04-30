@@ -14,7 +14,7 @@
         },
         {
             "path": "/api/cron/registrations",
-            "schedule": "0 6 * * *"
+            "schedule": "0 */6 * * *"
         },
         {
             "path": "/api/cron/auto-draft",

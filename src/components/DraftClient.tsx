@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Player } from '@/data/mock-schema';
 import PlayerRow from './PlayerRow';
+import RefreshRegistrationsButton from './RefreshRegistrationsButton';
 import styles from './Draft.module.css';
 import { SCORING_RULES, RoundStats, getPlacementPoints } from '@/lib/scoring';
 import { SEASON_2026 } from '@/data/tournaments';
@@ -585,13 +586,16 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
                                             FPO
                                         </button>
                                     </div>
-                                    <input
-                                        type="text"
-                                        placeholder="Search players..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className={styles.searchInput}
-                                    />
+                                    <div className={styles.searchGroup}>
+                                        <input
+                                            type="text"
+                                            placeholder="Search players..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className={styles.searchInput}
+                                        />
+                                        {!isLocked && <RefreshRegistrationsButton />}
+                                    </div>
                                 </div>
                                 {/* listHeader column labels */}
                                 <div className={styles.listHeader}>
