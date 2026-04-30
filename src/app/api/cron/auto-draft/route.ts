@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SEASON_2026, getLockTime } from '@/data/tournaments';
-import { getPlayersWithPrices } from '@/lib/player-service';
+import { getRegisteredPlayersForTournament } from '@/lib/player-service';
 import { Player } from '@/data/mock-schema';
 import { Resend } from 'resend';
 
@@ -204,7 +204,6 @@ export async function GET(request: Request) {
         }
 
         const now = new Date();
-        const players = getPlayersWithPrices();
 
         // ?force=<tournamentId> bypasses the 24h time window — for testing/simulation only
         const { searchParams } = new URL(request.url);
@@ -258,20 +257,17 @@ export async function GET(request: Request) {
             const tournamentId = tournament.id;
             results[tournamentId] = { autoDrafted: 0, alreadyEntered: 0, errors: [] };
 
-            // Fetch registered players for this tournament
-            // Filter the global player pool to only include confirmed registrants.
-            // Fall back to full player list if registrations haven't been scraped yet.
-            const { data: registrations } = await supabaseAdmin
-                .from('tournament_registrations')
-                .select('pdga_number')
-                .eq('tournament_id', tournamentId);
+            // Build draftable pool from PDGA registrations, priced via the same
+            // dynamic-price path as /draft/[id]. ALL_PLAYERS contributes course-fit
+            // stats only — registrants without a sidecar entry still get priced.
+            const eligiblePlayers = await getRegisteredPlayersForTournament(tournament, now);
 
-            const registeredPdgaNums = new Set((registrations || []).map(r => r.pdga_number));
-            const eligiblePlayers = registeredPdgaNums.size > 0
-                ? players.filter(p => p.pdgaNumber && registeredPdgaNums.has(p.pdgaNumber))
-                : players;
+            if (eligiblePlayers.length === 0) {
+                results[tournamentId].errors.push('No registrations — skipping auto-draft');
+                continue;
+            }
 
-            console.log(`Auto-draft: ${eligiblePlayers.length} eligible players for ${tournamentId} (${registeredPdgaNums.size} registered)`);
+            console.log(`Auto-draft: ${eligiblePlayers.length} eligible players for ${tournamentId}`);
 
             // Get all user profiles
             const { data: profiles, error: profileErr } = await supabaseAdmin

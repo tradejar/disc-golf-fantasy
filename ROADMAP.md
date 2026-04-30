@@ -46,17 +46,20 @@ button, 3h registrations cron cadence, refresh-button cooldown fix).
   probes from past debugging. Archive everything not referenced by a current
   workflow into `scripts/archive/`, leave only actively-used utilities at the
   top level.
-- **Dynamic vs base pricing parity.** Draft page renders dynamic prices
-  (course-fit + recent-form adjusted); auto-draft uses base prices only
-  (`getPlayersWithPrices()` called with no args at
-  `src/app/api/cron/auto-draft/route.ts:207`). This means a user's auto-drafted
-  roster can have prices that don't match what they'd have seen on the page.
-  Decide on a canonical pricing path; align both call sites.
-- **Tracked-pool coverage.** Across recent fields, ~50–60% of registered MPO
-  and ~70–75% of registered FPO are in `ALL_PLAYERS`. The rest are invisible to
-  fantasy (pricing, draft, auto-draft). Decide whether to expand the static
-  pool, switch to an algorithmic floor (any registrant with rating ≥ N), or
-  accept the design.
+- **Migrate `draft/[id]/page.tsx` to use the shared
+  `player-service.ts:getRegisteredPlayersForTournament` helper.** Auto-draft
+  was migrated to the helper pre-Waco; the page still has its own ~85 LOC of
+  inline pool-construction logic (`src/app/draft/[id]/page.tsx:36-122`).
+  Replacing that block with a single helper call eliminates the duplication
+  introduced by the pre-Waco fix. Pure refactor, zero behavior change.
+- **`ALL_PLAYERS` course-fit coverage.** Both the draft page and auto-draft
+  now price every registrant via rating + form modifiers, but the **course-fit
+  ±%** modifier is gated on per-player stats (`power/accuracy/recovery/
+  resilience/versatility`) which only exist in `src/data/mock-players.ts`.
+  Across recent Waco-sized fields, only ~50–60% of MPO and ~70–75% of FPO
+  registrants have those stats; the rest get base + form pricing only.
+  Backfill stats for the missing ~30–50% of the field, switch to an
+  algorithmic stat floor, or accept the modifier gap as a design choice.
 - **`.env.local.example`** — none exists today; new contributors have to
   reverse-engineer required vars from `src/lib/*` imports. Generate one.
 - **deploy.sh: HTTPS-auth `master:main` push fails inside the script.** Line 30
