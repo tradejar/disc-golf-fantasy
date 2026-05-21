@@ -49,8 +49,10 @@ export async function GET(request: Request) {
 
 
     try {
-        // On staging, override with a 2024 tournament ID for real historical data
-        const stagingTournId = process.env.STAGING_TOURN_ID;
+        // On staging, override with a 2024 tournament ID for real historical data.
+        // Trim defensively — a trailing newline from `vercel env add` Enter-key paste
+        // once poisoned tournament_id with a literal `\n`, ingesting the wrong event.
+        const stagingTournId = process.env.STAGING_TOURN_ID?.trim();
 
         let PDGA_ID: string;   // used for PDGA live API URL
         let APP_TOURN_ID: string;  // used for DB storage — must match tournament.id used everywhere else

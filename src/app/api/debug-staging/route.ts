@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET() {
-    const stagingTournId = process.env.STAGING_TOURN_ID;
+    const stagingTournId = process.env.STAGING_TOURN_ID?.trim();
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
     let statsCount = 0;
