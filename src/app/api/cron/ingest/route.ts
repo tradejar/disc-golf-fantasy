@@ -49,6 +49,12 @@ export async function GET(request: Request) {
 
 
     try {
+        // Manual backfill override: ?tournamentId=96409 re-ingests any past event from
+        // PDGA live (e.g. to re-pull final scores or run playoff reconciliation after a
+        // fix). Looks up the real tournament so pdga_id and rounds are correct — unlike
+        // STAGING_TOURN_ID, which can't know the round count. Takes precedence over both.
+        const overrideTournamentId = new URL(request.url).searchParams.get('tournamentId');
+
         // On staging, override with a 2024 tournament ID for real historical data.
         // Trim defensively — a trailing newline from `vercel env add` Enter-key paste
         // once poisoned tournament_id with a literal `\n`, ingesting the wrong event.
@@ -59,7 +65,16 @@ export async function GET(request: Request) {
         let tournamentName: string;
         let tournamentRounds = 5; // default; overridden below when the real tournament is known
 
-        if (stagingTournId) {
+        if (overrideTournamentId) {
+            const tournament = SEASON_2026.find(t => t.id === overrideTournamentId || t.pdga_id === overrideTournamentId);
+            if (!tournament) {
+                return NextResponse.json({ error: `Tournament ${overrideTournamentId} not found` }, { status: 404 });
+            }
+            PDGA_ID = tournament.pdga_id;
+            APP_TOURN_ID = tournament.id;
+            tournamentName = `${tournament.name} (manual backfill)`;
+            tournamentRounds = (tournament as any).rounds ?? 5;
+        } else if (stagingTournId) {
             PDGA_ID = stagingTournId;
             APP_TOURN_ID = stagingTournId;
             tournamentName = `Staging (2024 PDGA #${stagingTournId})`;
@@ -81,6 +96,9 @@ export async function GET(request: Request) {
         // We build a list of (pdgaRoundId → appRoundNumber) pairs and iterate those.
         const results = [];
         let roundSchedule: Array<{ pdgaRound: number; appRound: number }> = [];
+        // Captured from event meta for post-round playoff reconciliation (see below).
+        let finalRoundId = 0;          // PDGA's FinalRound id (the last regulation round)
+        let highestCompletedRound = 0; // > finalRoundId when a sudden-death playoff round exists
         try {
             const eventCb = Date.now();
             const eventRes = await fetch(
@@ -90,6 +108,8 @@ export async function GET(request: Request) {
             if (eventRes.ok) {
                 const eventData = await eventRes.json();
                 const finalRound: number = eventData.data?.FinalRound ?? 0;
+                finalRoundId = finalRound;
+                highestCompletedRound = eventData.data?.HighestCompletedRound ?? 0;
                 const totalAppRounds = tournamentRounds;
                 const hasNonSeqFinals = finalRound > 0 && finalRound > totalAppRounds;
                 const seqCount = hasNonSeqFinals ? totalAppRounds - 1 : totalAppRounds;
@@ -333,7 +353,78 @@ export async function GET(request: Request) {
             } // end for-each division
         } // end for ROUND 1-4
 
+        // ── Playoff / sudden-death reconciliation ──────────────────────────────────
+        // When regulation ends in a tie for a podium spot, PDGA stages a playoff and
+        // records it as a SEPARATE round (e.g. round 13) — and it does NOT promptly
+        // update RunningPlace in the final regulation round. The tied players finished
+        // regulation level, so the round endpoint keeps them all at the same shared
+        // placement for hours/days until results go official. Our round schedule never
+        // pulls that playoff round, so the tied leaders stay frozen at the shared
+        // placement in player_stats. The score cron then sees 2+ players at placement=1,
+        // treats it as an unresolved sudden death, and never releases placement bonuses.
+        // (This is exactly what happened at the 2026 OTB Open: Gannon vs Calvin tied,
+        //  went to a playoff, and the field's placement bonuses never fired.)
+        //
+        // Fix: when a playoff round exists (HighestCompletedRound > FinalRound), read it
+        // and break the tie. Players are ordered by their playoff finish and reassigned
+        // sequential placements starting from the placement they shared in regulation
+        // (e.g. two tied for 1st → winner stays 1, loser becomes 2). Only players who
+        // actually appear in the playoff round are touched, so legitimate shared ties
+        // (e.g. a real tie for 3rd that wasn't played off) are left untouched.
+        const finalAppRound = tournamentRounds;
+        if (finalRoundId > 0 && highestCompletedRound > finalRoundId) {
+            for (const division of ['MPO', 'FPO']) {
+                // Aggregate every playoff round above the final regulation round.
+                const playoffOrder = new Map<number, number>(); // pdgaNum → playoff finishing place
+                for (let pr = finalRoundId + 1; pr <= highestCompletedRound; pr++) {
+                    const purl = `https://www.pdga.com/apps/tournament/live-api/live_results_fetch_round?TournID=${PDGA_ID}&Division=${division}&Round=${pr}&_cb=${Date.now()}`;
+                    try {
+                        const pres = await fetch(purl, { headers: { 'User-Agent': 'Mozilla/5.0', 'Cache-Control': 'no-cache, no-store', 'Pragma': 'no-cache' }, cache: 'no-store' });
+                        if (!pres.ok) continue;
+                        const pscores: PdgaScore[] = (await pres.json())?.data?.scores ?? [];
+                        for (const s of pscores) {
+                            if (s.PDGANum > 0 && (s.RunningPlace ?? 0) > 0) playoffOrder.set(s.PDGANum, s.RunningPlace);
+                        }
+                    } catch { /* skip unreachable playoff round */ }
+                }
+                if (playoffOrder.size === 0) continue;
 
+                // Load the stored final-round placements for the playoff participants.
+                const { data: finalRows } = await supabase
+                    .from('player_stats')
+                    .select('pdga_number,placement')
+                    .eq('tournament_id', APP_TOURN_ID)
+                    .eq('round_number', finalAppRound)
+                    .eq('division', division)
+                    .in('pdga_number', [...playoffOrder.keys()]);
+                if (!finalRows || finalRows.length === 0) continue;
+
+                // Base = the best (lowest) placement the tied group shared in regulation.
+                // Reassign sequentially in playoff-finish order: winner keeps base, the
+                // next gets base+1, etc. Idempotent — re-running yields the same result.
+                const base = Math.min(...finalRows.map(r => (r.placement as number) ?? 999));
+                const ordered = finalRows
+                    .filter(r => playoffOrder.has(r.pdga_number as number))
+                    .sort((a, b) => playoffOrder.get(a.pdga_number as number)! - playoffOrder.get(b.pdga_number as number)!);
+
+                const resolved: Array<{ pdga_number: number; placement: number }> = [];
+                for (let i = 0; i < ordered.length; i++) {
+                    const pdgaNumber = ordered[i].pdga_number as number;
+                    const placement = base + i;
+                    resolved.push({ pdga_number: pdgaNumber, placement });
+                    if (ordered[i].placement === placement) continue; // already correct — skip write
+                    await supabase
+                        .from('player_stats')
+                        .update({ placement, updated_at: new Date().toISOString() })
+                        .eq('tournament_id', APP_TOURN_ID)
+                        .eq('round_number', finalAppRound)
+                        .eq('division', division)
+                        .eq('pdga_number', pdgaNumber);
+                }
+                console.log(`Playoff reconciled [${division}]: base=${base}`, resolved);
+                results.push({ division, status: 'playoff_resolved', round: finalAppRound, resolved });
+            }
+        }
 
         return NextResponse.json({ success: true, tournament: tournamentName, tournamentId: APP_TOURN_ID, pdgaId: PDGA_ID, roundsTried: roundSchedule.length, results });
 
