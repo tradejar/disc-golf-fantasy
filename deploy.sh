@@ -1,7 +1,10 @@
 #!/bin/bash
-# deploy.sh — Deploy to Vercel, alias all domains, then prune all old deployments.
+# deploy.sh — Deploy to Vercel, alias domains, promote to production, prune old deployments.
 # Run: bash deploy.sh
-# This prevents stale cron accumulation (each Vercel deployment runs its own crons).
+# Vercel schedules cron jobs ONLY from the project's current production deployment.
+# `vercel --prod` + custom-alias-only does not set that target, so the promote step
+# below is REQUIRED — without it, crons keep pointing at the previous prod deployment
+# and stop entirely once the prune step deletes it (ingest/score never run).
 
 set -e
 
@@ -22,6 +25,10 @@ echo "🌐 Aliasing domains..."
 for DOMAIN in "${DOMAINS[@]}"; do
     npx vercel alias "$LATEST" "$DOMAIN" 2>&1 | tail -1
 done
+
+echo ""
+echo "⏰ Promoting to production (registers cron jobs — see header note)..."
+npx vercel promote "$LATEST" --yes 2>&1 | tail -1
 
 echo ""
 echo "📦 Syncing master → main (keeps GitHub Actions workflow up to date)..."
