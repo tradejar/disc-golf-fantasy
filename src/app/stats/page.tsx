@@ -23,21 +23,42 @@ for (const p of MOCK_FPO_PLAYERS) {
         ROSTER_MAP.set(p.pdgaNumber, { name: `${p.firstName} ${p.lastName}`, division: 'FPO', rating: p.rating ?? 0 });
 }
 
-async function fetchPdgaNames(pdgaId: string, division: 'MPO' | 'FPO'): Promise<Map<number, string>> {
-    const url = `https://www.pdga.com/apps/tournament/live-api/live_results_fetch_round?TournID=${pdgaId}&Division=${division}&Round=1`;
-    try {
-        const res = await fetch(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0' },
-            next: { revalidate: 300 },
-        });
-        if (!res.ok) return new Map();
-        const raw = await res.json() as { data?: { scores?: { PDGANum: number; FirstName: string; LastName: string }[] } };
-        const names = new Map<number, string>();
-        for (const s of raw.data?.scores ?? []) {
-            if (s.PDGANum) names.set(s.PDGANum, `${s.FirstName} ${s.LastName}`.trim());
-        }
-        return names;
-    } catch { return new Map(); }
+// Supabase (PostgREST) caps every query at 1,000 rows regardless of .limit().
+// A full season of player_stats is ~500 rows per tournament — thousands total —
+// so we MUST paginate with .range() or the page silently truncates: players
+// missing, rounds missing, whole tournaments thinned out.
+const PAGE_SIZE = 1000;
+
+async function fetchAllPages<T>(buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>): Promise<T[]> {
+    const all: T[] = [];
+    for (let from = 0; ; from += PAGE_SIZE) {
+        const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1);
+        if (error) throw error;
+        all.push(...(data ?? []));
+        if (!data || data.length < PAGE_SIZE) break;
+    }
+    return all;
+}
+
+// Player names + ratings from tournament_registrations (one DB round-trip per
+// page) — replaces the former per-render PDGA fetches (2 per tournament), which
+// PDGA rate-limited (429) causing names to degrade to "Player #1234".
+async function fetchRegistrationInfo(tournamentIds: string[]): Promise<Map<number, { name: string; rating: number | null }>> {
+    const rows = await fetchAllPages<{ pdga_number: number; player_name: string | null; rating: number | null }>((from, to) =>
+        supabaseAdmin
+            .from('tournament_registrations')
+            .select('pdga_number, player_name, rating')
+            .in('tournament_id', tournamentIds)
+            .order('tournament_id', { ascending: true })
+            .order('pdga_number', { ascending: true })
+            .range(from, to)
+    );
+    const map = new Map<number, { name: string; rating: number | null }>();
+    for (const r of rows) {
+        // ascending tournament order → later (more recent) rows overwrite older ones
+        if (r.player_name) map.set(r.pdga_number, { name: r.player_name, rating: r.rating });
+    }
+    return map;
 }
 
 async function fetchStatsData(): Promise<TournamentStats[]> {
@@ -56,31 +77,24 @@ async function fetchStatsData(): Promise<TournamentStats[]> {
         placement: number | null;
     }
 
-    const [statsResult, ...nameResults] = await Promise.all([
-        supabaseAdmin
-            .from('player_stats')
-            .select('tournament_id, pdga_number, division, round_number, to_par, strokes, ' +
-                    'albatrosses, eagles, birdies, pars, bogeys, double_bogeys, triple_bogeys, aces, ' +
-                    'fairway_pct, c1_in_reg_pct, c2_in_reg_pct, scramble_pct, c1x_pct, c2_pct, placement')
-            .in('tournament_id', played.map(t => t.id))
-            .gt('strokes', 0),
-        ...played.flatMap(t => [
-            fetchPdgaNames(t.pdga_id, 'MPO'),
-            fetchPdgaNames(t.pdga_id, 'FPO'),
-        ]),
+    const playedIds = played.map(t => t.id);
+    const [rows, regInfo] = await Promise.all([
+        fetchAllPages<RawRow>((from, to) =>
+            supabaseAdmin
+                .from('player_stats')
+                .select('tournament_id, pdga_number, division, round_number, to_par, strokes, ' +
+                        'albatrosses, eagles, birdies, pars, bogeys, double_bogeys, triple_bogeys, aces, ' +
+                        'fairway_pct, c1_in_reg_pct, c2_in_reg_pct, scramble_pct, c1x_pct, c2_pct, placement')
+                .in('tournament_id', playedIds)
+                .gt('strokes', 0)
+                // stable sort order is required for correct .range() pagination
+                .order('tournament_id', { ascending: true })
+                .order('pdga_number', { ascending: true })
+                .order('round_number', { ascending: true })
+                .range(from, to) as unknown as PromiseLike<{ data: RawRow[] | null; error: unknown }>
+        ),
+        fetchRegistrationInfo(playedIds),
     ]);
-
-    if (statsResult.error) throw statsResult.error;
-    const rows = (statsResult.data ?? []) as unknown as RawRow[];
-
-    const pdgaNamesByTournament = new Map<string, Map<number, string>>();
-    played.forEach((t, i) => {
-        const combined = new Map<number, string>([
-            ...(nameResults[i * 2] as Map<number, string>),
-            ...(nameResults[i * 2 + 1] as Map<number, string>),
-        ]);
-        pdgaNamesByTournament.set(t.id, combined);
-    });
 
     const byTournament = new Map<string, Map<number, RawRow[]>>();
     for (const t of played) byTournament.set(t.id, new Map());
@@ -95,13 +109,13 @@ async function fetchStatsData(): Promise<TournamentStats[]> {
 
     for (const t of played) {
         const tMap = byTournament.get(t.id)!;
-        const pdgaNames = pdgaNamesByTournament.get(t.id)!;
         const playerStats: PlayerStat[] = [];
 
         for (const [pdgaNum, pRows] of tMap) {
             if (!pRows.length) continue;
             const roster = ROSTER_MAP.get(pdgaNum);
-            const name = roster?.name ?? pdgaNames.get(pdgaNum) ?? `Player #${pdgaNum}`;
+            const reg = regInfo.get(pdgaNum);
+            const name = reg?.name ?? roster?.name ?? `Player #${pdgaNum}`;
             const division: 'MPO' | 'FPO' =
                 roster?.division ?? (pRows[0].division === 'FPO' ? 'FPO' : 'MPO');
 
@@ -159,7 +173,7 @@ async function fetchStatsData(): Promise<TournamentStats[]> {
                 pdgaNumber: String(pdgaNum),
                 name,
                 division,
-                rating: roster?.rating ?? 0,
+                rating: reg?.rating ?? roster?.rating ?? 0,
                 toPar,
                 breakdown: { eagles, birdies, pars, bogeys, doubles, triples },
                 advanced: {
