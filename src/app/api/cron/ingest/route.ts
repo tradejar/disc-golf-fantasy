@@ -66,7 +66,11 @@ export async function GET(request: Request) {
         let tournamentRounds = 5; // default; overridden below when the real tournament is known
 
         if (overrideTournamentId) {
-            const tournament = SEASON_2026.find(t => t.id === overrideTournamentId || t.pdga_id === overrideTournamentId);
+            // Exact app-id match takes priority: ids and pdga_ids overlap across
+            // tournaments (e.g. app 96406 has pdga_id 96407, which is also app
+            // 96407's id) — a single OR would resolve to whichever comes first.
+            const tournament = SEASON_2026.find(t => t.id === overrideTournamentId)
+                ?? SEASON_2026.find(t => t.pdga_id === overrideTournamentId);
             if (!tournament) {
                 return NextResponse.json({ error: `Tournament ${overrideTournamentId} not found` }, { status: 404 });
             }
