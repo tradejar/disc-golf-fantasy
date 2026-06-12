@@ -9,6 +9,7 @@ export interface Player {
     price: number; // Calculated based on rating/tier
     tier: 'S' | 'A' | 'B' | 'C' | 'D'; // Optional tiering
     pdgaNumber?: number; // Optional until all players have it
+    country?: string; // ISO alpha-2 nationality (PDGA Nationality ?? Country), e.g. 'US', 'FI'
     power?: number;
     accuracy?: number;
     recovery?: number;

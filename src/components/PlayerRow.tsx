@@ -2,6 +2,7 @@
 import styles from './PlayerRow.module.css';
 import { Player } from '@/data/mock-schema';
 import PlayerRatings from './PlayerRatings';
+import NationalityFlag from './NationalityFlag';
 
 interface PlayerRowProps {
     player: Player;
@@ -27,6 +28,7 @@ export default function PlayerRow({ player, onDraft, disabled, isSelected, isReg
             <div className={styles.mobileInfo}>
                 <span className={styles.name}>
                     {player.firstName} {player.lastName}
+                    <NationalityFlag country={player.country} />
                     {isRegistered === true && (
                         <span style={{ marginLeft: '6px', fontSize: '0.65em', padding: '2px 4px', backgroundColor: '#dcfce7', color: '#166534', borderRadius: '4px', display: 'inline-block', verticalAlign: 'middle' }}>
                             ✅ Registered

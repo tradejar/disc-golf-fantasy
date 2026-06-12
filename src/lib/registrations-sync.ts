@@ -45,8 +45,16 @@ function makeRow(tournamentId: string, pdgaNum: number, name: string, division: 
 // Fetches the actual playing field from the Round 1 live feed.
 // This is the authoritative source — only players with an assigned tee time
 // appear here, so withdrawals and no-shows are automatically excluded.
-async function fetchViaLiveRoundApi(pdgaId: string, tournamentId: string): Promise<RegistrationRow[]> {
+// Also harvests each player's nationality (PDGA `Nationality` falls back to
+// `Country`, both ISO alpha-2) — the feed carries it for free, and we persist
+// it in player_countries so flags survive across events (the HTML fallback
+// below has no country data).
+async function fetchViaLiveRoundApi(
+    pdgaId: string,
+    tournamentId: string
+): Promise<{ rows: RegistrationRow[]; countries: Map<number, string> }> {
     const rows: RegistrationRow[] = [];
+    const countries = new Map<number, string>();
     const cb = Date.now();
 
     for (const division of ['MPO', 'FPO'] as const) {
@@ -56,7 +64,7 @@ async function fetchViaLiveRoundApi(pdgaId: string, tournamentId: string): Promi
             cache: 'no-store',
         });
         if (!res.ok) continue;
-        const raw = await res.json() as { data?: { scores?: Array<{ PDGANum?: number; FirstName?: string; LastName?: string; Rating?: number | null }> } };
+        const raw = await res.json() as { data?: { scores?: Array<{ PDGANum?: number; FirstName?: string; LastName?: string; Rating?: number | null; Country?: string | null; Nationality?: string | null }> } };
         const scores = raw?.data?.scores ?? [];
 
         for (const s of scores) {
@@ -64,10 +72,12 @@ async function fetchViaLiveRoundApi(pdgaId: string, tournamentId: string): Promi
             const name = `${s.FirstName ?? ''} ${s.LastName ?? ''}`.trim();
             if (!name) continue;
             rows.push(makeRow(tournamentId, s.PDGANum, name, division, s.Rating ?? null));
+            const code = (s.Nationality ?? s.Country ?? '').trim().toUpperCase();
+            if (code.length === 2) countries.set(s.PDGANum, code);
         }
     }
 
-    return rows;
+    return { rows, countries };
 }
 
 // ── Strategy 2: PDGA Event Page HTML (fallback) ───────────────────────────────
@@ -131,11 +141,14 @@ export async function syncRegistrations(): Promise<SyncResult> {
     console.log(`Registrations sync: tournament ${tournamentId} (PDGA event ${pdgaEventId})`);
 
     let players: RegistrationRow[] = [];
+    let countries = new Map<number, string>();
     let source: SyncResult['source'] = 'live_round_api';
 
     try {
-        players = await fetchViaLiveRoundApi(pdgaEventId, tournamentId);
-        console.log(`Live-round API: ${players.length} players`);
+        const api = await fetchViaLiveRoundApi(pdgaEventId, tournamentId);
+        players = api.rows;
+        countries = api.countries;
+        console.log(`Live-round API: ${players.length} players (${countries.size} with country)`);
     } catch (e) {
         console.warn('Live-round API failed:', (e as Error).message);
     }
@@ -192,6 +205,19 @@ export async function syncRegistrations(): Promise<SyncResult> {
             .delete()
             .eq('tournament_id', tournamentId)
             .not('pdga_number', 'in', `(${[...freshNums].join(',')})`);
+    }
+
+    // Persist nationality codes (pdga_number → ISO alpha-2) for flag display.
+    // Accumulates across events so players keep their flag even when the next
+    // event's data comes from the HTML fallback (which has no country field).
+    if (countries.size > 0) {
+        const countryRows = [...countries].map(([pdga_number, country]) => ({
+            pdga_number, country, updated_at: new Date().toISOString(),
+        }));
+        const { error: countryErr } = await supabase
+            .from('player_countries')
+            .upsert(countryRows, { onConflict: 'pdga_number' });
+        if (countryErr) console.warn('player_countries upsert failed (non-fatal):', countryErr.message);
     }
 
     const mpo = players.filter(p => p.division === 'MPO').length;

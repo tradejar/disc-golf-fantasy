@@ -89,6 +89,23 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
         }
     }
 
+    // Nationality codes for flag display (pdga_number → ISO alpha-2),
+    // accumulated from PDGA live data by the registrations cron.
+    const countryMap = new Map<number, string>();
+    if (registrations && registrations.length > 0) {
+        try {
+            const { data: countryRows } = await supabaseAdmin
+                .from('player_countries')
+                .select('pdga_number, country')
+                .in('pdga_number', registrations.map(r => r.pdga_number));
+            for (const row of countryRows ?? []) {
+                if (row.country) countryMap.set(row.pdga_number as number, row.country as string);
+            }
+        } catch (e) {
+            console.warn('player_countries fetch failed (non-fatal):', e);
+        }
+    }
+
     let players: Player[];
 
     if (registrations && registrations.length > 0) {
@@ -102,6 +119,7 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
                 rating: r.rating as number,
                 division: r.division as 'MPO' | 'FPO',
                 pdgaNumber: r.pdga_number as number,
+                country: countryMap.get(r.pdga_number as number),
                 price: calculateDynamicPrice(
                     calculatePrice(r.rating as number, r.division as 'MPO' | 'FPO'),
                     staticPlayer || {},
