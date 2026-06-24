@@ -83,12 +83,32 @@ export default function RulesPage() {
                                 <strong style={{ color: '#f8fafc' }}>Dynamic Pricing Engine:</strong>
                                 <ul style={{ ...UL_STYLE, paddingTop: '0.4rem' }}>
                                     <li><strong style={{ color: '#38bdf8' }}>Ratings Affinity:</strong> Player prices fluctuate organically based on two key factors:</li>
-                                    <li><strong style={{ color: '#38bdf8' }}>Course Fit:</strong> Player ratings are compared against the course's specific difficulty ratings (±1% per star variance). <br /> <strong style={{ color: '#f8fafc' }}>!!! Exception:</strong> A 5/5 distance player on a 5/5 distance course gains a strict +5% premium.</li>
+                                    <li><strong style={{ color: '#38bdf8' }}>Course Fit:</strong> Each course is rated on two demands — <strong style={{ color: '#f8fafc' }}>Distance</strong> and <strong style={{ color: '#f8fafc' }}>Technical</strong> — derived from real tour scoring data. A player&apos;s price shifts by how well their ability matches what the course asks for: distance-heavy courses reward big arms, technical courses reward accuracy, and a skill barely moves the price on a course that doesn&apos;t demand it.</li>
                                     <li><strong style={{ color: '#38bdf8' }}>Recent Form:</strong> We track the last 5 tournaments of the current season. Players earn a +3% to +1% bonus for recent podium finishes, but suffer a compounding -3% discount every time they miss the cash line.</li>
                                 </ul>
                             </li>
                             <li>Draft locks at first tee time of the tournament</li>
                         </ul>
+                    </div>
+
+                    {DIVIDER}
+
+                    {/* Player ability ratings */}
+                    <div style={SECTION_STYLE}>
+                        <h2 style={H2_STYLE}>Player Ability Ratings <span style={{ color: '#fbbf24', fontSize: '0.7em' }}>Premium</span></h2>
+                        <p style={{ color: '#cbd5e1', lineHeight: 1.6, marginTop: '0.5rem' }}>
+                            Every tracked player is graded <strong style={{ color: '#f8fafc' }}>0–100</strong> across five skills, based on their real performance on the 2026 tour. A higher number means they rank near the top of the field in that area. Ratings update through the season as players perform, and anyone without enough tracked rounds yet shows a &ldquo;—&rdquo;.
+                        </p>
+                        <ul style={UL_STYLE}>
+                            <li><strong style={{ color: '#38bdf8' }}>Power</strong> — distance off the tee and the ability to attack long holes.</li>
+                            <li><strong style={{ color: '#38bdf8' }}>Accuracy</strong> — hitting fairways and landing in good scoring positions.</li>
+                            <li><strong style={{ color: '#38bdf8' }}>Recovery</strong> — scrambling to save par after a wayward shot.</li>
+                            <li><strong style={{ color: '#38bdf8' }}>Putting</strong> — converting putts from close range and from distance.</li>
+                            <li><strong style={{ color: '#38bdf8' }}>Consistency</strong> — being well-rounded across the board and avoiding big mistakes.</li>
+                        </ul>
+                        <p style={{ color: '#94a3b8', lineHeight: 1.6, marginTop: '0.5rem', fontSize: '0.92em' }}>
+                            Use these to spot a player&apos;s strengths and weaknesses, and to judge how they&apos;ll match up to a given course before you draft.
+                        </p>
                     </div>
 
                     {DIVIDER}
@@ -175,16 +195,16 @@ export default function RulesPage() {
                     <div style={SECTION_STYLE}>
                         <h2 style={H2_STYLE}>⛰ Course Difficulty Bonus</h2>
                         <p style={{ ...BODY_STYLE, marginBottom: '1rem' }}>
-                            Not all courses are created equal — and your fantasy score shouldn't pretend they are.
+                            Not all courses are created equal — and your fantasy score shouldn&apos;t pretend they are.
                             We calculate a bonus for every tournament based on how hard that course actually played
                             compared to a <strong style={{ color: '#f8fafc' }}>normal DGPT event</strong>.
                         </p>
                         <p style={{ ...BODY_STYLE, marginBottom: '1rem' }}>
                             <strong style={{ color: '#f8fafc' }}>Think of it like running:</strong> if you normally
-                            finish a 10km race in 50 minutes but today's course has a mountain in it and you finish in
+                            finish a 10km race in 50 minutes but today&apos;s course has a mountain in it and you finish in
                             54.5 minutes, that course was about <strong style={{ color: '#38bdf8' }}>~9% harder</strong> than
                             normal — and you earn a 9% bonus on your points for tackling it.
-                            "Normal" means the{' '}
+                            &ldquo;Normal&rdquo; means the{' '}
                             <strong style={{ color: '#f8fafc' }}>2025 DGPT season average</strong> — a baseline
                             built from the full 2025 DGPT season.
                         </p>
@@ -194,7 +214,7 @@ export default function RulesPage() {
                         <ol style={{ ...UL_STYLE, marginBottom: '1rem', listStyleType: 'decimal', paddingLeft: '1.5rem' }}>
                             <li style={{ marginBottom: '0.6rem' }}>
                                 <strong style={{ color: '#f8fafc' }}>Fetch PDGA round ratings.</strong>{' '}
-                                Once the final round is complete, we pull each player's round-by-round PDGA rating from the live scoring API.
+                                Once the final round is complete, we pull each player&apos;s round-by-round PDGA rating from the live scoring API.
                             </li>
                             <li style={{ marginBottom: '0.6rem' }}>
                                 <strong style={{ color: '#f8fafc' }}>Take the top-20 finishers</strong> (by total strokes) and average their round ratings across all completed rounds.
@@ -209,7 +229,7 @@ export default function RulesPage() {
                             </li>
                             <li>
                                 <strong style={{ color: '#f8fafc' }}>Apply to your points.</strong>{' '}
-                                That bonus % is added to every user's scoring fantasy points for players in that division, making performances on harder courses fairly comparable to easier ones.
+                                That bonus % is added to every user&apos;s scoring fantasy points for players in that division, making performances on harder courses fairly comparable to easier ones.
                             </li>
                         </ol>
                         <p style={{ ...BODY_STYLE, marginBottom: '0.75rem', fontSize: '0.85rem' }}>

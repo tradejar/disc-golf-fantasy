@@ -3,6 +3,49 @@ import { calculatePrice, calculateDynamicPrice, FormHistory } from '@/lib/pricin
 import { Player } from '@/data/mock-schema';
 import { SeasonTournament, SEASON_2026, getLockTime } from '@/data/tournaments';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { deriveStars, StatRowLite, Abilities } from '@/lib/derive-stars';
+import { deriveCourseRating, CourseRatingRow } from '@/lib/derive-course';
+import { statKeyForPlayer } from '@/lib/name-utils';
+
+/**
+ * Fetches the StatMando-derived inputs the pricing model needs for a tournament:
+ * per-player 0-100 ability ratings (keyed `${normName}|${division}`) and the
+ * course's derived Distance/Technical (matched to its most recent playing).
+ * Shared by every pricing path so prices stay consistent.
+ */
+export interface DerivedPricingContext {
+    starMap: Map<string, Abilities>;
+    course: { distance?: number; technical?: number };
+}
+
+export async function getDerivedPricingContext(
+    tournament: SeasonTournament,
+    divisions: ('MPO' | 'FPO')[]
+): Promise<DerivedPricingContext> {
+    let starMap = new Map<string, Abilities>();
+    const course: { distance?: number; technical?: number } = {};
+    try {
+        const { data: statRows } = await supabaseAdmin
+            .from('statmando_stats')
+            .select('norm_name, division, category, stats, events, rounds')
+            .in('division', divisions);
+        if (statRows && statRows.length > 0) starMap = deriveStars(statRows as StatRowLite[]);
+    } catch (e) {
+        console.warn('Derived abilities fetch failed (non-fatal):', e);
+    }
+    try {
+        const { data: courseRows } = await supabaseAdmin
+            .from('statmando_course_ratings')
+            .select('pdga_event_id, season, event_name, round_length_ft, distance_rating, technical_rating');
+        if (courseRows && courseRows.length > 0) {
+            const cd = deriveCourseRating(courseRows as CourseRatingRow[], tournament.name);
+            if (cd) { course.distance = cd.distance; course.technical = cd.technical; }
+        }
+    } catch (e) {
+        console.warn('Derived course fetch failed (non-fatal):', e);
+    }
+    return { starMap, course };
+}
 
 export function getPlayersWithPrices(
     course?: Partial<SeasonTournament>,
@@ -86,8 +129,18 @@ export async function getRegisteredPlayersForTournament(
         }
     }
 
+    // Derived pricing inputs (0-100 abilities + course Distance/Technical).
+    const divisions = [...new Set(registrations.map(r => r.division as 'MPO' | 'FPO'))];
+    const { starMap, course: derivedCourse } = await getDerivedPricingContext(tournament, divisions);
+    const effectiveCourse: SeasonTournament = {
+        ...tournament,
+        distance: derivedCourse.distance ?? tournament.distance,
+        technical: derivedCourse.technical ?? tournament.technical,
+    };
+
     return registrations.map(r => {
         const staticPlayer = ALL_PLAYERS.find(p => p.pdgaNumber === r.pdga_number);
+        const abilities = starMap.get(`${statKeyForPlayer(r.first_name as string, r.last_name as string)}|${r.division}`);
         return {
             id: String(r.pdga_number),
             firstName: r.first_name as string,
@@ -97,11 +150,12 @@ export async function getRegisteredPlayersForTournament(
             pdgaNumber: r.pdga_number as number,
             price: calculateDynamicPrice(
                 calculatePrice(r.rating as number, r.division as 'MPO' | 'FPO'),
-                staticPlayer || {},
-                tournament,
+                { ...(staticPlayer || {}), abilities },
+                effectiveCourse,
                 formMap.get(r.pdga_number as number) || []
             ),
             tier: 'A' as const,
+            abilities,
             power: staticPlayer?.power,
             accuracy: staticPlayer?.accuracy,
             recovery: staticPlayer?.recovery,

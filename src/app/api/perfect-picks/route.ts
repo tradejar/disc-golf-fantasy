@@ -3,6 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SEASON_2026, getLockTime } from '@/data/tournaments';
 import { ALL_PLAYERS } from '@/data/mock-players';
 import { calculatePrice, calculateDynamicPrice } from '@/lib/pricing';
+import { getDerivedPricingContext } from '@/lib/player-service';
+import { statKeyForPlayer } from '@/lib/name-utils';
 
 export const revalidate = 3600; // cache 1 hour — results don't change once a tournament ends
 
@@ -76,15 +78,24 @@ export async function GET(request: Request) {
         }
     }
 
-    // 3. Build candidate pool with draft-time prices
+    // 3. Build candidate pool with draft-time prices (derived abilities + course).
+    const ppDivisions = [...new Set((regs ?? []).map(r => r.division as 'MPO' | 'FPO'))];
+    const { starMap: ppStars, course: ppCourse } = await getDerivedPricingContext(tournament, ppDivisions);
+    const ppEffectiveCourse = {
+        ...tournament,
+        distance: ppCourse.distance ?? tournament.distance,
+        technical: ppCourse.technical ?? tournament.technical,
+    };
+
     const candidates: Candidate[] = [];
     for (const reg of regs) {
         const stats = statsMap.get(reg.pdga_number);
         if (!stats) continue; // player didn't score (DNS/DNF)
 
         const staticPlayer = ALL_PLAYERS.find(p => p.pdgaNumber === reg.pdga_number);
+        const abilities = ppStars.get(`${statKeyForPlayer(reg.first_name as string, reg.last_name as string)}|${reg.division}`);
         const basePrice = calculatePrice(reg.rating as number, reg.division as 'MPO' | 'FPO');
-        const price = calculateDynamicPrice(basePrice, staticPlayer ?? {}, tournament, []);
+        const price = calculateDynamicPrice(basePrice, { ...(staticPlayer ?? {}), abilities }, ppEffectiveCourse, []);
 
         candidates.push({
             pdgaNumber: reg.pdga_number as number,

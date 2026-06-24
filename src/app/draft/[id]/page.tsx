@@ -9,7 +9,7 @@ import { calculatePrice, calculateDynamicPrice, FormHistory } from '@/lib/pricin
 import { Player } from '@/data/mock-schema';
 import { statKeyForPlayer } from '@/lib/name-utils';
 import { StatmandoStats, StatCategory } from '@/data/statmando-types';
-import { deriveStars, StatRowLite } from '@/lib/derive-stars';
+import { deriveStars, StatRowLite, Abilities } from '@/lib/derive-stars';
 import { deriveCourseRating, CourseRatingRow, DerivedCourse } from '@/lib/derive-course';
 
 // Must always render fresh — isLocked is time-sensitive and must never be cached
@@ -110,52 +110,21 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
         }
     }
 
-    let players: Player[];
+    // ── StatMando-derived inputs (abilities + course Distance/Technical) ───────
+    // Fetched ONCE, then used both for pricing and the premium stats dropdown.
+    // Computed before pricing so the course-fit modifier can use real abilities.
+    const divisions = registrations && registrations.length > 0
+        ? [...new Set(registrations.map(r => r.division as 'MPO' | 'FPO'))]
+        : (['MPO', 'FPO'] as ('MPO' | 'FPO')[]);
 
-    if (registrations && registrations.length > 0) {
-        // Dynamic pool from DB — the source of truth
-        players = registrations.map(r => {
-            const staticPlayer = ALL_PLAYERS.find(p => p.pdgaNumber === r.pdga_number);
-            return {
-                id: String(r.pdga_number),
-                firstName: r.first_name as string,
-                lastName: r.last_name as string,
-                rating: r.rating as number,
-                division: r.division as 'MPO' | 'FPO',
-                pdgaNumber: r.pdga_number as number,
-                country: countryMap.get(r.pdga_number as number),
-                price: calculateDynamicPrice(
-                    calculatePrice(r.rating as number, r.division as 'MPO' | 'FPO'),
-                    staticPlayer || {},
-                    tournament,
-                    formMap.get(r.pdga_number as number) || []
-                ),
-                tier: 'A' as const,
-                power: staticPlayer?.power,
-                accuracy: staticPlayer?.accuracy,
-                recovery: staticPlayer?.recovery,
-                resilience: staticPlayer?.resilience,
-                versatility: staticPlayer?.versatility,
-            };
-        }).sort((a, b) => b.price - a.price);
-    } else {
-        // Fallback: cron hasn't run yet — use static list (unfiltered)
-        players = getPlayersWithPrices(tournament, formMap);
-    }
-
-    // ── Attach StatMando season stats (premium dropdown on the draft page) ────
-    // Scraped daily by /api/cron/stats into statmando_stats, keyed by a
-    // normalized name. We match on the same normalization (statKeyForPlayer)
-    // so PDGA-side names line up with StatMando's listings.
+    const statMap = new Map<string, StatmandoStats>();
+    let starMap = new Map<string, Abilities>();
     try {
-        const divisions = [...new Set(players.map(p => p.division))];
         const { data: statRows } = await supabaseAdmin
             .from('statmando_stats')
             .select('norm_name, division, category, stats, events, rounds, source_updated')
             .in('division', divisions);
-
         if (statRows && statRows.length > 0) {
-            const statMap = new Map<string, StatmandoStats>();
             for (const row of statRows) {
                 const key = `${row.norm_name}|${row.division}`;
                 const entry = statMap.get(key) ?? {};
@@ -167,27 +136,14 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
                 };
                 statMap.set(key, entry);
             }
-
-            // Derive 1-5 ability stars (Power/Accuracy/Recovery/Putting/Consistency)
-            // from the same stat rows, percentiled within each division.
-            const starMap = deriveStars(statRows as StatRowLite[]);
-
-            players = players.map(p => {
-                const key = `${statKeyForPlayer(p.firstName, p.lastName)}|${p.division}`;
-                const stats = statMap.get(key);
-                const abilities = starMap.get(key);
-                if (!stats && !abilities) return p;
-                return { ...p, ...(stats ? { statmando: stats } : {}), ...(abilities ? { abilities } : {}) };
-            });
+            starMap = deriveStars(statRows as StatRowLite[]);
         }
     } catch (e) {
-        console.warn('StatMando stats attach failed (non-fatal):', e);
+        console.warn('StatMando stats fetch failed (non-fatal):', e);
     }
 
-    // ── Derived course Distance/Technical (StatMando tour-holes) ──────────────
-    // Match this tournament to its most recent playing and override the manual
-    // distance/technical with data-derived values (elevation/climate/bias stay
-    // manual). Falls back to manual when there's no venue history.
+    // Derived course Distance/Technical, matched to this venue's most recent
+    // playing. Elevation/Climate/Bias are retired — only these two axes remain.
     let courseDerived: DerivedCourse | null = null;
     try {
         const { data: courseRows } = await supabaseAdmin
@@ -198,6 +154,56 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
         }
     } catch (e) {
         console.warn('Course rating derivation failed (non-fatal):', e);
+    }
+
+    const effectiveCourse = {
+        ...tournament,
+        distance: courseDerived?.distance ?? tournament.distance,
+        technical: courseDerived?.technical ?? tournament.technical,
+    };
+
+    // Attach the dropdown stats + 0-100 abilities to a player by normalized name.
+    const attachDerived = (p: Player): Player => {
+        const key = `${statKeyForPlayer(p.firstName, p.lastName)}|${p.division}`;
+        const stats = statMap.get(key);
+        const abilities = starMap.get(key);
+        if (!stats && !abilities) return p;
+        return { ...p, ...(stats ? { statmando: stats } : {}), ...(abilities ? { abilities } : {}) };
+    };
+
+    let players: Player[];
+
+    if (registrations && registrations.length > 0) {
+        // Dynamic pool from DB — the source of truth. Price with derived abilities
+        // + derived course (Power↔Distance, Accuracy↔Technical).
+        players = registrations.map(r => {
+            const staticPlayer = ALL_PLAYERS.find(p => p.pdgaNumber === r.pdga_number);
+            const abilities = starMap.get(`${statKeyForPlayer(r.first_name as string, r.last_name as string)}|${r.division}`);
+            return attachDerived({
+                id: String(r.pdga_number),
+                firstName: r.first_name as string,
+                lastName: r.last_name as string,
+                rating: r.rating as number,
+                division: r.division as 'MPO' | 'FPO',
+                pdgaNumber: r.pdga_number as number,
+                country: countryMap.get(r.pdga_number as number),
+                price: calculateDynamicPrice(
+                    calculatePrice(r.rating as number, r.division as 'MPO' | 'FPO'),
+                    { ...(staticPlayer || {}), abilities },
+                    effectiveCourse,
+                    formMap.get(r.pdga_number as number) || []
+                ),
+                tier: 'A' as const,
+                power: staticPlayer?.power,
+                accuracy: staticPlayer?.accuracy,
+                recovery: staticPlayer?.recovery,
+                resilience: staticPlayer?.resilience,
+                versatility: staticPlayer?.versatility,
+            });
+        }).sort((a, b) => b.price - a.price);
+    } else {
+        // Fallback: cron hasn't run yet — use static list (unfiltered).
+        players = getPlayersWithPrices(tournament, formMap).map(attachDerived);
     }
 
     // Fetch the user's existing entry so DraftClient can pre-populate picks

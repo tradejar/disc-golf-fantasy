@@ -47,28 +47,22 @@ export function calculateDynamicPrice(
 
     let ratingMod = 0;
 
-    // 1. Mechanical Course Fit (1% per star difference)
-    if (course && player.power !== undefined) {
-        const mapping = [
-            { p: player.accuracy, c: course.technical },
-            { p: player.recovery, c: course.elevation },
-            { p: player.resilience, c: course.climate },
-            { p: player.versatility, c: course.bias }
-        ];
-
-        for (const m of mapping) {
-            if (m.p !== undefined && m.c !== undefined) {
-                ratingMod += (m.p - m.c) * 1;
-            }
+    // 1. Course Fit (StatMando-derived, two axes).
+    //    Each axis = how good the player is × how much the course demands it:
+    //      modifier = K · ((ability − 50) / 50) · (courseDemand / 5)
+    //    - ability is the 0-100 rating (50 = tour average; >50 adds, <50 subtracts)
+    //    - courseDemand is the 1-5 Distance/Technical rating (a demand weight)
+    //    A demanding course amplifies the swing; a course that doesn't ask for a
+    //    skill makes it near-irrelevant. Players without tracked abilities (no
+    //    `abilities`) contribute 0 on that axis. Power↔Distance, Accuracy↔Technical.
+    const COURSE_FIT_K = 6;
+    if (course) {
+        const a = player.abilities;
+        if (a?.power != null && course.distance != null) {
+            ratingMod += COURSE_FIT_K * ((a.power - 50) / 50) * (course.distance / 5);
         }
-
-        // Distance exception
-        if (player.power !== undefined && course.distance !== undefined) {
-            if (player.power === 5 && course.distance === 5) {
-                ratingMod += 5; // 5% specific bump for 5/5 arm on 5/5 bomber course
-            } else {
-                ratingMod += (player.power - course.distance) * 1; // standard
-            }
+        if (a?.accuracy != null && course.technical != null) {
+            ratingMod += COURSE_FIT_K * ((a.accuracy - 50) / 50) * (course.technical / 5);
         }
     }
 

@@ -368,13 +368,11 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
                 {isPremium && (() => {
                     const t = SEASON_2026.find(x => x.id === tournamentId);
                     if (!t) return null;
-                    // Distance/Technical use StatMando-derived values when available.
+                    // Course now carries only two demand axes, both StatMando-derived
+                    // when available (Distance↔Power, Technical↔Accuracy).
                     const traits: { label: string; sub: string; val?: number; color: string; derived?: boolean }[] = [
                         { label: 'Dist', sub: 'Power', val: courseDerived?.distance ?? t.distance, color: '#f472b6', derived: courseDerived != null },
                         { label: 'Tech', sub: 'Accuracy', val: courseDerived?.technical ?? t.technical, color: '#38bdf8', derived: courseDerived != null },
-                        { label: 'Elev', sub: 'Recovery', val: t.elevation, color: '#4ade80' },
-                        { label: 'Clim', sub: 'Resilience', val: t.climate, color: '#fb923c' },
-                        { label: 'Bias', sub: 'Versatility', val: t.bias, color: '#a78bfa' },
                     ];
                     return (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '0.5rem' }}>
