@@ -4,23 +4,23 @@ import { normalizeName } from '@/lib/name-utils';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-export type StatCategory = 'main' | 'teegreen' | 'putt';
+export type StatCategory = 'main' | 'teegreen' | 'putt' | 'driving';
 export type Division = 'MPO' | 'FPO';
 
-// StatMando StatZone season-stats pages. One per category x division.
-const SLUG: Record<StatCategory, string> = {
-    main: 'main',
-    teegreen: 'teegreen',
-    putt: 'putt',
-};
-
+// StatMando StatZone pages. main/teegreen/putt are DGPT season pages; 'driving'
+// is the long-holes (400'+) Major/Elite-Series page — our Power signal (CiRDS
+// slugging = how often a player reaches the circle in regulation on long holes).
 function pageUrl(category: StatCategory, division: Division): string {
-    return `https://statmando.com/stats/season-stats-${SLUG[category]}-dgpt-2026-${division.toLowerCase()}`;
+    const d = division.toLowerCase();
+    if (category === 'driving') {
+        return `https://statmando.com/stats/driving-stats-long-holes-major-elite-series-${d}-2026`;
+    }
+    return `https://statmando.com/stats/season-stats-${category}-dgpt-2026-${d}`;
 }
 
 // Column headers that are not "stats" — handled as their own columns.
 const EVENTS_LABELS = new Set(['Events', 'Events Tr.']);
-const ROUNDS_LABELS = new Set(['Rounds', 'Rounds Tr.']);
+const ROUNDS_LABELS = new Set(['Rounds', 'Rounds Tr.', 'Total Holes']);
 
 export interface StatRow {
     norm_name: string;
@@ -155,7 +155,7 @@ export interface StatmandoSyncResult {
  */
 export async function syncStatmandoStats(): Promise<StatmandoSyncResult> {
     const supabase = getServiceClient();
-    const categories: StatCategory[] = ['main', 'teegreen', 'putt'];
+    const categories: StatCategory[] = ['main', 'teegreen', 'putt', 'driving'];
     const divisions: Division[] = ['MPO', 'FPO'];
 
     const allRows: StatRow[] = [];

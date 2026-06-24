@@ -9,7 +9,16 @@ interface Props {
 }
 
 export default function PlayerRatings({ player, isPremium = false }: Props) {
-    const { power, accuracy, recovery, resilience, versatility } = player;
+    const a = player.abilities;
+    const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+
+    // Auto-dismiss tooltip after 3 seconds on mobile
+    useEffect(() => {
+        if (activeTooltip) {
+            const timer = setTimeout(() => setActiveTooltip(null), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [activeTooltip]);
 
     // Non-premium users always see a lock pill — encourages upgrade regardless of data availability
     if (!isPremium) {
@@ -39,7 +48,7 @@ export default function PlayerRatings({ player, isPremium = false }: Props) {
         );
     }
 
-    const renderStars = (count?: number) => {
+    const renderStars = (count?: number | null) => {
         if (!count) return <span style={{ color: '#64748b', fontSize: '9px' }}>—</span>;
         return (
             <div style={{ display: 'flex', gap: '1px', color: '#38bdf8' }}>
@@ -51,22 +60,12 @@ export default function PlayerRatings({ player, isPremium = false }: Props) {
     };
 
     const metrics = [
-        { label: 'Pow', val: power, desc: 'Measures maximum throwing distance' },
-        { label: 'Acc', val: accuracy, desc: 'Measures precision in hitting gaps and landing zones' },
-        { label: 'Rec', val: recovery, desc: 'Measures scrambling ability and saving par from trouble' },
-        { label: 'Res', val: resilience, desc: 'Measures mental toughness and performing under pressure' },
-        { label: 'Ver', val: versatility, desc: 'Measures the variety of shot types (forehand, backhand, etc)' },
+        { label: 'Pow', val: a?.power, desc: 'Power — how often they reach the putting circle in regulation on long (400ft+) holes. A driving-distance signal.' },
+        { label: 'Acc', val: a?.accuracy, desc: 'Accuracy — fairway hits plus Circle 1 in regulation.' },
+        { label: 'Rec', val: a?.recovery, desc: 'Recovery — scramble rate: saving par after missing the green.' },
+        { label: 'Putt', val: a?.putting, desc: 'Putting — Circle 1 & 2 make rate plus strokes gained putting.' },
+        { label: 'Con', val: a?.consistency, desc: 'Consistency — balance across driving, putting and scramble, plus birdie-to-bogey steadiness.' },
     ];
-
-    const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
-
-    // Auto-dismiss tooltip after 3 seconds on mobile
-    useEffect(() => {
-        if (activeTooltip) {
-            const timer = setTimeout(() => setActiveTooltip(null), 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [activeTooltip]);
 
     return (
         <div style={{

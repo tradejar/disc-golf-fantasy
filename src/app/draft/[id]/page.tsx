@@ -9,6 +9,7 @@ import { calculatePrice, calculateDynamicPrice, FormHistory } from '@/lib/pricin
 import { Player } from '@/data/mock-schema';
 import { statKeyForPlayer } from '@/lib/name-utils';
 import { StatmandoStats, StatCategory } from '@/data/statmando-types';
+import { deriveStars, StatRowLite } from '@/lib/derive-stars';
 
 // Must always render fresh — isLocked is time-sensitive and must never be cached
 export const dynamic = 'force-dynamic';
@@ -165,9 +166,17 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
                 };
                 statMap.set(key, entry);
             }
+
+            // Derive 1-5 ability stars (Power/Accuracy/Recovery/Putting/Consistency)
+            // from the same stat rows, percentiled within each division.
+            const starMap = deriveStars(statRows as StatRowLite[]);
+
             players = players.map(p => {
-                const stats = statMap.get(`${statKeyForPlayer(p.firstName, p.lastName)}|${p.division}`);
-                return stats ? { ...p, statmando: stats } : p;
+                const key = `${statKeyForPlayer(p.firstName, p.lastName)}|${p.division}`;
+                const stats = statMap.get(key);
+                const abilities = starMap.get(key);
+                if (!stats && !abilities) return p;
+                return { ...p, ...(stats ? { statmando: stats } : {}), ...(abilities ? { abilities } : {}) };
             });
         }
     } catch (e) {

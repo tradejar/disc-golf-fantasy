@@ -16,6 +16,7 @@ export interface Player {
     resilience?: number;
     versatility?: number;
     statmando?: import('./statmando-types').StatmandoStats; // StatMando season stats (draft dropdown)
+    abilities?: import('@/lib/derive-stars').Abilities;     // 1-5 stars derived from StatMando data
 }
 
 export interface Tournament {
