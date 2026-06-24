@@ -1,7 +1,9 @@
-
+'use client';
+import { useState } from 'react';
 import styles from './PlayerRow.module.css';
 import { Player } from '@/data/mock-schema';
 import PlayerRatings from './PlayerRatings';
+import PlayerStatsPanel from './PlayerStatsPanel';
 import NationalityFlag from './NationalityFlag';
 
 interface PlayerRowProps {
@@ -15,50 +17,75 @@ interface PlayerRowProps {
 
 export default function PlayerRow({ player, onDraft, disabled, isSelected, isRegistered, isPremium = false }: PlayerRowProps) {
     const value = player.price > 0 ? (player.rating / player.price).toFixed(2) : '-';
+    const [expanded, setExpanded] = useState(false);
 
     return (
-        <div className={`${styles.row} ${isSelected ? styles.selected : ''} ${disabled ? styles.disabled : ''}`}>
-            <div className={styles.ratingBadge}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.55rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.1rem' }}>Rating</span>
-                    <span className={styles.rating}>{player.rating}</span>
+        <div>
+            <div className={`${styles.row} ${isSelected ? styles.selected : ''} ${disabled ? styles.disabled : ''}`}>
+                <div className={styles.ratingBadge}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.55rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.1rem' }}>Rating</span>
+                        <span className={styles.rating}>{player.rating}</span>
+                    </div>
                 </div>
-            </div>
 
-            <div className={styles.mobileInfo}>
-                <span className={styles.name}>
-                    {player.firstName} {player.lastName}
-                    <NationalityFlag country={player.country} />
-                    {isRegistered === true && (
-                        <span style={{ marginLeft: '6px', fontSize: '0.65em', padding: '2px 4px', backgroundColor: '#dcfce7', color: '#166534', borderRadius: '4px', display: 'inline-block', verticalAlign: 'middle' }}>
-                            ✅ Registered
+                <div className={styles.mobileInfo}>
+                    <button
+                        type="button"
+                        onClick={() => setExpanded(v => !v)}
+                        aria-expanded={expanded}
+                        title="Show season stats"
+                        style={{
+                            background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                            textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        }}
+                    >
+                        <span className={styles.name}>
+                            {player.firstName} {player.lastName}
+                            <NationalityFlag country={player.country} />
+                            {isRegistered === true && (
+                                <span style={{ marginLeft: '6px', fontSize: '0.65em', padding: '2px 4px', backgroundColor: '#dcfce7', color: '#166534', borderRadius: '4px', display: 'inline-block', verticalAlign: 'middle' }}>
+                                    ✅ Registered
+                                </span>
+                            )}
                         </span>
-                    )}
-                </span>
-                <span className={styles.division}>{player.division}</span>
-                <PlayerRatings player={player} isPremium={isPremium} />
+                        <span style={{
+                            color: '#60a5fa', fontSize: '0.7rem', transition: 'transform 0.15s',
+                            transform: expanded ? 'rotate(180deg)' : 'none', display: 'inline-block',
+                        }}>
+                            ▾
+                        </span>
+                        <span style={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Stats
+                        </span>
+                    </button>
+                    <span className={styles.division}>{player.division}</span>
+                    <PlayerRatings player={player} isPremium={isPremium} />
+                </div>
+
+                <div className={styles.mobileStats}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                        <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.1rem' }}>Price</span>
+                        <span className={styles.price}>${player.price}</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.1rem' }}>Value</span>
+                        <span className={styles.value}>{value} pts/$</span>
+                    </div>
+                </div>
+
+                <div className={styles.mobileAction}>
+                    <button
+                        className={styles.button}
+                        onClick={() => onDraft(player)}
+                        disabled={disabled && !isSelected}
+                    >
+                        {isSelected ? 'Remove' : 'Draft'}
+                    </button>
+                </div>
             </div>
 
-            <div className={styles.mobileStats}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.1rem' }}>Price</span>
-                    <span className={styles.price}>${player.price}</span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                    <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.1rem' }}>Value</span>
-                    <span className={styles.value}>{value} pts/$</span>
-                </div>
-            </div>
-
-            <div className={styles.mobileAction}>
-                <button
-                    className={styles.button}
-                    onClick={() => onDraft(player)}
-                    disabled={disabled && !isSelected}
-                >
-                    {isSelected ? 'Remove' : 'Draft'}
-                </button>
-            </div>
+            {expanded && <PlayerStatsPanel player={player} isPremium={isPremium} />}
         </div>
     );
 }

@@ -15,6 +15,7 @@ export interface Player {
     recovery?: number;
     resilience?: number;
     versatility?: number;
+    statmando?: import('./statmando-types').StatmandoStats; // StatMando season stats (draft dropdown)
 }
 
 export interface Tournament {

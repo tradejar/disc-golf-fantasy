@@ -7,6 +7,8 @@ import { auth } from '@clerk/nextjs/server';
 import { notFound, redirect } from 'next/navigation';
 import { calculatePrice, calculateDynamicPrice, FormHistory } from '@/lib/pricing';
 import { Player } from '@/data/mock-schema';
+import { statKeyForPlayer } from '@/lib/name-utils';
+import { StatmandoStats, StatCategory } from '@/data/statmando-types';
 
 // Must always render fresh — isLocked is time-sensitive and must never be cached
 export const dynamic = 'force-dynamic';
@@ -137,6 +139,39 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
     } else {
         // Fallback: cron hasn't run yet — use static list (unfiltered)
         players = getPlayersWithPrices(tournament, formMap);
+    }
+
+    // ── Attach StatMando season stats (premium dropdown on the draft page) ────
+    // Scraped daily by /api/cron/stats into statmando_stats, keyed by a
+    // normalized name. We match on the same normalization (statKeyForPlayer)
+    // so PDGA-side names line up with StatMando's listings.
+    try {
+        const divisions = [...new Set(players.map(p => p.division))];
+        const { data: statRows } = await supabaseAdmin
+            .from('statmando_stats')
+            .select('norm_name, division, category, stats, events, rounds, source_updated')
+            .in('division', divisions);
+
+        if (statRows && statRows.length > 0) {
+            const statMap = new Map<string, StatmandoStats>();
+            for (const row of statRows) {
+                const key = `${row.norm_name}|${row.division}`;
+                const entry = statMap.get(key) ?? {};
+                entry[row.category as StatCategory] = {
+                    stats: (row.stats ?? {}) as Record<string, number>,
+                    events: row.events ?? null,
+                    rounds: row.rounds ?? null,
+                    sourceUpdated: row.source_updated ?? null,
+                };
+                statMap.set(key, entry);
+            }
+            players = players.map(p => {
+                const stats = statMap.get(`${statKeyForPlayer(p.firstName, p.lastName)}|${p.division}`);
+                return stats ? { ...p, statmando: stats } : p;
+            });
+        }
+    } catch (e) {
+        console.warn('StatMando stats attach failed (non-fatal):', e);
     }
 
     // Fetch the user's existing entry so DraftClient can pre-populate picks
