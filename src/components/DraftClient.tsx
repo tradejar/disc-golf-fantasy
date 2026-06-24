@@ -7,6 +7,7 @@ import RefreshRegistrationsButton from './RefreshRegistrationsButton';
 import styles from './Draft.module.css';
 import { SCORING_RULES, RoundStats, getPlacementPoints } from '@/lib/scoring';
 import { SEASON_2026 } from '@/data/tournaments';
+import { DerivedCourse } from '@/lib/derive-course';
 
 interface DraftProps {
     players: Player[];
@@ -16,13 +17,14 @@ interface DraftProps {
     lockTime?: string;
     existingEntry?: { id: string; roster_data: unknown; budget_remaining: number } | null;
     carryoverBudget?: number; // Leftover from previous tournament — adds to $950 base cap
+    courseDerived?: DerivedCourse | null; // StatMando-derived Distance/Technical (overrides manual)
 }
 
 
 const SLOTS_MPO = 4;
 const SLOTS_FPO = 2;
 
-export default function DraftClient({ players, tournamentId, tournamentName, isLocked = false, lockTime, existingEntry, carryoverBudget = 0 }: DraftProps) {
+export default function DraftClient({ players, tournamentId, tournamentName, isLocked = false, lockTime, existingEntry, carryoverBudget = 0, courseDerived = null }: DraftProps) {
     const BASE_BUDGET = 950;
     const BUDGET_CAP = BASE_BUDGET + carryoverBudget;
     const [roster, setRoster] = useState<Player[]>([]);
@@ -366,26 +368,40 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
                 {isPremium && (() => {
                     const t = SEASON_2026.find(x => x.id === tournamentId);
                     if (!t) return null;
-                    const traits: { label: string; sub: string; val?: number; color: string }[] = [
-                        { label: 'Dist', sub: 'Power', val: t.distance, color: '#f472b6' },
-                        { label: 'Tech', sub: 'Accuracy', val: t.technical, color: '#38bdf8' },
+                    // Distance/Technical use StatMando-derived values when available.
+                    const traits: { label: string; sub: string; val?: number; color: string; derived?: boolean }[] = [
+                        { label: 'Dist', sub: 'Power', val: courseDerived?.distance ?? t.distance, color: '#f472b6', derived: courseDerived != null },
+                        { label: 'Tech', sub: 'Accuracy', val: courseDerived?.technical ?? t.technical, color: '#38bdf8', derived: courseDerived != null },
                         { label: 'Elev', sub: 'Recovery', val: t.elevation, color: '#4ade80' },
                         { label: 'Clim', sub: 'Resilience', val: t.climate, color: '#fb923c' },
                         { label: 'Bias', sub: 'Versatility', val: t.bias, color: '#a78bfa' },
                     ];
                     return (
-                        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                            {traits.map(tr => (
-                                <div key={tr.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px' }}>
-                                    <span style={{ fontSize: '7px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>{tr.label}</span>
-                                    <div style={{ display: 'flex', gap: '1px' }}>
-                                        {Array.from({ length: 5 }).map((_, i) => (
-                                            <span key={i} style={{ fontSize: '9px', color: tr.color, opacity: tr.val !== undefined && i < tr.val ? 1 : 0.2 }}>★</span>
-                                        ))}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '0.5rem' }}>
+                            <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                                {traits.map(tr => (
+                                    <div
+                                        key={tr.label}
+                                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px' }}
+                                        title={tr.derived ? `Derived from ${courseDerived?.season} tour data (${courseDerived ? Math.round(courseDerived.roundLengthFt).toLocaleString() : ''} ft round)` : undefined}
+                                    >
+                                        <span style={{ fontSize: '7px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                                            {tr.label}{tr.derived && <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />}
+                                        </span>
+                                        <div style={{ display: 'flex', gap: '1px' }}>
+                                            {Array.from({ length: 5 }).map((_, i) => (
+                                                <span key={i} style={{ fontSize: '9px', color: tr.color, opacity: tr.val !== undefined && i < tr.val ? 1 : 0.2 }}>★</span>
+                                            ))}
+                                        </div>
+                                        <span style={{ fontSize: '6px', color: '#64748b' }}>{tr.sub}</span>
                                     </div>
-                                    <span style={{ fontSize: '6px', color: '#64748b' }}>{tr.sub}</span>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+                            {courseDerived && (
+                                <span style={{ fontSize: '6.5px', color: '#475569' }}>
+                                    ● Dist/Tech from {courseDerived.season} data
+                                </span>
+                            )}
                         </div>
                     );
                 })()}

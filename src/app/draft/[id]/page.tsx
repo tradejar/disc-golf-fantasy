@@ -10,6 +10,7 @@ import { Player } from '@/data/mock-schema';
 import { statKeyForPlayer } from '@/lib/name-utils';
 import { StatmandoStats, StatCategory } from '@/data/statmando-types';
 import { deriveStars, StatRowLite } from '@/lib/derive-stars';
+import { deriveCourseRating, CourseRatingRow, DerivedCourse } from '@/lib/derive-course';
 
 // Must always render fresh — isLocked is time-sensitive and must never be cached
 export const dynamic = 'force-dynamic';
@@ -183,6 +184,22 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
         console.warn('StatMando stats attach failed (non-fatal):', e);
     }
 
+    // ── Derived course Distance/Technical (StatMando tour-holes) ──────────────
+    // Match this tournament to its most recent playing and override the manual
+    // distance/technical with data-derived values (elevation/climate/bias stay
+    // manual). Falls back to manual when there's no venue history.
+    let courseDerived: DerivedCourse | null = null;
+    try {
+        const { data: courseRows } = await supabaseAdmin
+            .from('statmando_course_ratings')
+            .select('pdga_event_id, season, event_name, round_length_ft, distance_rating, technical_rating');
+        if (courseRows && courseRows.length > 0) {
+            courseDerived = deriveCourseRating(courseRows as CourseRatingRow[], tournament.name);
+        }
+    } catch (e) {
+        console.warn('Course rating derivation failed (non-fatal):', e);
+    }
+
     // Fetch the user's existing entry so DraftClient can pre-populate picks
     // and track entryId — prevents duplicate inserts on re-save
     const { userId } = await auth();
@@ -232,6 +249,7 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
                 lockTime={lockTime.toISOString()}
                 existingEntry={existingEntry}
                 carryoverBudget={carryoverBudget}
+                courseDerived={courseDerived}
             />
         </main>
     );
