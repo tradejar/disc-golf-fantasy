@@ -1,4 +1,4 @@
-// Derive 1-5 ability stars from StatMando season stats.
+// Derive 0-100 ability ratings from StatMando season stats.
 //
 // Dimensions (all grounded in real data):
 //   Power       - long-hole slugging (driving page; reaching the circle in
@@ -11,9 +11,11 @@
 //                 OB avoidance)
 //
 // Each underlying metric is converted to a percentile WITHIN the division's
-// qualified field, composites are averaged, then bucketed to 1-5 stars. This is
-// self-calibrating: 5 stars always means "top of the current tour".
+// qualified field, composites are averaged, then scaled to 0-100. This is
+// self-calibrating: 100 always means "top of the current tour".
 
+// Each value is a 0-100 rating (the player's percentile within their division's
+// qualified field), or null when there isn't enough data to rate them.
 export interface Abilities {
     power: number | null;
     accuracy: number | null;
@@ -40,13 +42,9 @@ const PUTT_W = { c1x: 0.4, c2p: 0.3, sgp: 0.3 };
 const STEADY_W = { ratio: 0.7, ob: 0.3 };
 const CONSISTENCY_W = { balance: 0.5, steady: 0.5 };
 
-// Percentile (0..1) -> 1-5 stars.
-function bucket(pct: number): number {
-    if (pct >= 0.90) return 5;
-    if (pct >= 0.70) return 4;
-    if (pct >= 0.40) return 3;
-    if (pct >= 0.15) return 2;
-    return 1;
+// Percentile (0..1) -> 0-100 rating.
+function score100(pct: number): number {
+    return Math.round(Math.max(0, Math.min(1, pct)) * 100);
 }
 
 // Mid-rank percentile of value v within sorted ascending array (higher = better).
@@ -134,10 +132,10 @@ export function deriveStars(rows: StatRowLite[]): Map<string, Abilities> {
             if (mainOk) {
                 const fwyV = s(p.main, 'FWY'), c1rV = s(p.main, 'C1R');
                 if (fwyV !== undefined && c1rV !== undefined) {
-                    accuracy = bucket((percentile(fwy, fwyV) + percentile(c1r, c1rV)) / 2);
+                    accuracy = score100((percentile(fwy, fwyV) + percentile(c1r, c1rV)) / 2);
                 }
                 const scrV = s(p.main, 'SCR');
-                if (scrV !== undefined) { recPct = percentile(scr, scrV); recovery = bucket(recPct); }
+                if (scrV !== undefined) { recPct = percentile(scr, scrV); recovery = score100(recPct); }
 
                 const c1xV = s(p.main, 'C1X'), c2pV = s(p.main, 'C2P'), sg = s(p.main, 'Tot. SG:P');
                 const r = p.main!.rounds ?? 0;
@@ -145,7 +143,7 @@ export function deriveStars(rows: StatRowLite[]): Map<string, Abilities> {
                     puttPct = PUTT_W.c1x * percentile(c1x, c1xV)
                         + PUTT_W.c2p * percentile(c2p, c2pV)
                         + PUTT_W.sgp * percentile(sgpPR, sg / r);
-                    putting = bucket(puttPct);
+                    putting = score100(puttPct);
                 }
 
                 // Consistency: balance(driving/putting/scramble) + scoring steadiness
@@ -160,12 +158,12 @@ export function deriveStars(rows: StatRowLite[]): Map<string, Abilities> {
                     steady = STEADY_W.ratio * ratioPct + STEADY_W.ob * obPct;
                 }
                 if (steady !== null && balanceParts.length) {
-                    consistency = bucket(CONSISTENCY_W.balance * balance + CONSISTENCY_W.steady * steady);
+                    consistency = score100(CONSISTENCY_W.balance * balance + CONSISTENCY_W.steady * steady);
                 }
             }
 
             out.set(`${name}|${division}`, {
-                power: powerPct !== null ? bucket(powerPct) : null,
+                power: powerPct !== null ? score100(powerPct) : null,
                 accuracy, recovery, putting, consistency,
             });
         }
