@@ -55,6 +55,20 @@ test('pure putter: strong Putting, weak Power', () => {
     assert.ok((p.power ?? 100) <= 40, `power ${p.power} should be low`);
 });
 
+test('FPO Power uses the lower long-hole threshold (18) so the field is rated', () => {
+    // FPO sees far fewer 400'+ holes; a ~20-hole sample must still earn a Power rating.
+    const fpoRows: StatRowLite[] = [
+        { ...main('w1', { fwy: 72, c1r: 40, scr: 55, c1x: 90, c2p: 30, sgp: 30, bird: 7, bog: 2, ob: 1.4 }), division: 'FPO' },
+        { norm_name: 'w1', division: 'FPO', category: 'driving', events: null, rounds: 20, stats: { SLG: 1.0 } },
+        { ...main('w2', { fwy: 66, c1r: 30, scr: 45, c1x: 85, c2p: 22, sgp: 5, bird: 5, bog: 3, ob: 2 }), division: 'FPO' },
+        { norm_name: 'w2', division: 'FPO', category: 'driving', events: null, rounds: 22, stats: { SLG: 0.6 } },
+    ];
+    const out = deriveStars(fpoRows);
+    assert.notEqual(out.get('w1|FPO')!.power, null);
+    assert.notEqual(out.get('w2|FPO')!.power, null);
+    assert.ok((out.get('w1|FPO')!.power ?? 0) > (out.get('w2|FPO')!.power ?? 0));
+});
+
 test('FPO players are scored independently of MPO (separate field)', () => {
     const out = deriveStars([
         main('a', { fwy: 70, c1r: 40, scr: 55, c1x: 90, c2p: 30, sgp: 30, bird: 7, bog: 2, ob: 1.4 }),

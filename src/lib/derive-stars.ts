@@ -35,7 +35,10 @@ export interface StatRowLite {
 
 // Minimum sample to be rated, so a one-event cameo can't post a fake 5.
 const MIN_MAIN_ROUNDS = 10;
-const MIN_DRIVING_HOLES = 36;
+// Power comes from 400'+ "long hole" driving samples. FPO courses have far fewer
+// long holes than MPO, so a full FPO season only yields ~30-37 — gate FPO lower
+// or nearly the whole field would be unrated on Power.
+const MIN_DRIVING_HOLES: Record<string, number> = { MPO: 36, FPO: 18 };
 
 // Composite weights.
 const PUTT_W = { c1x: 0.4, c2p: 0.3, sgp: 0.3 };
@@ -87,11 +90,12 @@ export function deriveStars(rows: StatRowLite[]): Map<string, Abilities> {
         }
 
         // Qualified subsets.
+        const minDriving = MIN_DRIVING_HOLES[division] ?? 36;
         const mainQ: string[] = [];
         const drivingQ: string[] = [];
         for (const [name, p] of players) {
             if (p.main && (p.main.rounds ?? 0) >= MIN_MAIN_ROUNDS) mainQ.push(name);
-            if (p.driving && (p.driving.rounds ?? 0) >= MIN_DRIVING_HOLES) drivingQ.push(name);
+            if (p.driving && (p.driving.rounds ?? 0) >= minDriving) drivingQ.push(name);
         }
 
         // Helper to pull a numeric stat.
@@ -120,7 +124,7 @@ export function deriveStars(rows: StatRowLite[]): Map<string, Abilities> {
 
         for (const [name, p] of players) {
             const mainOk = p.main && (p.main.rounds ?? 0) >= MIN_MAIN_ROUNDS;
-            const drivingOk = p.driving && (p.driving.rounds ?? 0) >= MIN_DRIVING_HOLES;
+            const drivingOk = p.driving && (p.driving.rounds ?? 0) >= minDriving;
 
             // Power
             const powerPct = drivingOk ? percentile(slg, s(p.driving, 'SLG')!) : null;
