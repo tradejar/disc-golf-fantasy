@@ -1,3 +1,4 @@
+import { unsubscribeUrl } from '@/lib/unsubscribe';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SEASON_2026 } from '@/data/tournaments';
@@ -106,7 +107,7 @@ function buildTournamentEmailHtml(opts: {
 
 export async function GET(request: Request) {
     const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -273,7 +274,7 @@ export async function GET(request: Request) {
                     roster,
                     leagues: leagueMap.get(entry.user_id) ?? [],
                     leaderboardUrl: 'https://eagly.app/leaderboard',
-                    unsubscribeUrl: `https://eagly.app/api/unsubscribe?uid=${profile.id}`,
+                    unsubscribeUrl: unsubscribeUrl(profile.id),
                 }),
             });
 

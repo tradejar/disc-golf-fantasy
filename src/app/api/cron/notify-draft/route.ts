@@ -1,3 +1,4 @@
+import { unsubscribeUrl } from '@/lib/unsubscribe';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SEASON_2026, getLockTime } from '@/data/tournaments';
@@ -68,7 +69,7 @@ function buildEmailHtml(opts: {
 
 export async function GET(request: Request) {
     const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -148,7 +149,7 @@ export async function GET(request: Request) {
                         draftUrl,
                         displayName: profile.display_name ?? undefined,
                         urgency: window.urgency,
-                        unsubscribeUrl: `https://eagly.app/api/unsubscribe?uid=${profile.id}`,
+                        unsubscribeUrl: unsubscribeUrl(profile.id),
                     }),
                 });
                 if (sendError) {

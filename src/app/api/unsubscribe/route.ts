@@ -1,14 +1,16 @@
-import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { verifyUnsubscribe } from '@/lib/unsubscribe';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const uid = searchParams.get('uid');
+    const token = searchParams.get('token');
 
-    if (!uid) {
+    // Require a valid signed token — prevents unsubscribing arbitrary users.
+    if (!uid || !verifyUnsubscribe(uid, token)) {
         return new Response(
             `<!DOCTYPE html><html><body style="font-family:sans-serif;background:#0f172a;color:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0">
-            <div style="text-align:center;padding:2rem"><h1>❌ Invalid link</h1><p style="color:#94a3b8">This unsubscribe link is missing a user ID.</p></div>
+            <div style="text-align:center;padding:2rem"><h1>❌ Invalid link</h1><p style="color:#94a3b8">This unsubscribe link is invalid or expired. Please use the link from a recent email.</p></div>
             </body></html>`,
             { status: 400, headers: { 'Content-Type': 'text/html' } }
         );

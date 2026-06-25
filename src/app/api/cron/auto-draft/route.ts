@@ -1,3 +1,4 @@
+import { unsubscribeUrl } from '@/lib/unsubscribe';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SEASON_2026, getLockTime } from '@/data/tournaments';
@@ -199,7 +200,7 @@ export async function GET(request: Request) {
     try {
         const authHeader = request.headers.get('authorization');
         // Same pattern as ingest: only enforce secret when it's actually configured
-        if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -395,7 +396,7 @@ export async function GET(request: Request) {
                                     effectiveBudget,
                                     isPremium: isPremiumUser,
                                     carryover,
-                                    unsubscribeUrl: `https://eagly.app/api/unsubscribe?uid=${profile.id}`,
+                                    unsubscribeUrl: unsubscribeUrl(profile.id),
                                 }),
                             });
                         } catch (emailErr) {
