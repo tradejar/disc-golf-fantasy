@@ -4,6 +4,7 @@ import DraftClient from '@/components/DraftClient';
 import { SEASON_2026, getLockTime } from '@/data/tournaments';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { auth } from '@clerk/nextjs/server';
+import { isPremium as checkPremium } from '@/lib/premium';
 import { notFound, redirect } from 'next/navigation';
 import { calculatePrice, calculateDynamicPrice, FormHistory } from '@/lib/pricing';
 import { Player } from '@/data/mock-schema';
@@ -209,6 +210,7 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
     // Fetch the user's existing entry so DraftClient can pre-populate picks
     // and track entryId — prevents duplicate inserts on re-save
     const { userId } = await auth();
+    const isPremium = userId ? await checkPremium(userId) : false;
     let existingEntry: { id: string; roster_data: unknown; budget_remaining: number } | null = null;
     let carryoverBudget = 0;
 
@@ -256,6 +258,7 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
                 existingEntry={existingEntry}
                 carryoverBudget={carryoverBudget}
                 courseDerived={courseDerived}
+                isPremium={isPremium}
             />
         </main>
     );

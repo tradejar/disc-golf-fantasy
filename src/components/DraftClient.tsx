@@ -18,13 +18,14 @@ interface DraftProps {
     existingEntry?: { id: string; roster_data: unknown; budget_remaining: number } | null;
     carryoverBudget?: number; // Leftover from previous tournament — adds to $950 base cap
     courseDerived?: DerivedCourse | null; // StatMando-derived Distance/Technical (overrides manual)
+    isPremium?: boolean; // resolved server-side and passed in (no client flash)
 }
 
 
 const SLOTS_MPO = 4;
 const SLOTS_FPO = 2;
 
-export default function DraftClient({ players, tournamentId, tournamentName, isLocked = false, lockTime, existingEntry, carryoverBudget = 0, courseDerived = null }: DraftProps) {
+export default function DraftClient({ players, tournamentId, tournamentName, isLocked = false, lockTime, existingEntry, carryoverBudget = 0, courseDerived = null, isPremium = false }: DraftProps) {
     const BASE_BUDGET = 950;
     const BUDGET_CAP = BASE_BUDGET + carryoverBudget;
     const [roster, setRoster] = useState<Player[]>([]);
@@ -36,7 +37,8 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
     const [simResults, setSimResults] = useState<{ player: Player, stats: RoundStats }[] | null>(null);
     const [activeTab, setActiveTab] = useState<'MPO' | 'FPO'>('MPO');
     const [searchTerm, setSearchTerm] = useState('');
-    const [isPremium, setIsPremium] = useState(false);
+    const [toast, setToast] = useState<{ msg: string; tone: 'error' | 'warn' } | null>(null);
+    const showToast = (msg: string, tone: 'error' | 'warn' = 'error') => setToast({ msg, tone });
     // Live countdown derived from lockTime
     const [clientLocked, setClientLocked] = useState(isLocked);
     // Approximate display countdown — purely cosmetic, does NOT trigger lock
@@ -50,12 +52,12 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
     const [controlsHeight, setControlsHeight] = useState(0);
     const controlsTop = NAV_HEIGHT + dashboardHeight;
 
+    // Auto-dismiss toast
     useEffect(() => {
-        // Fetch premium status for UI gating (star ratings, etc.)
-        fetch('/api/premium/status').then(r => r.json()).then(d => {
-            if (d.isPremium) setIsPremium(true);
-        }).catch(() => { /* non-critical, fail silently */ });
-    }, []);
+        if (!toast) return;
+        const t = setTimeout(() => setToast(null), 4000);
+        return () => clearTimeout(t);
+    }, [toast]);
 
     useEffect(() => {
         // Restore existing entry on mount.
@@ -185,7 +187,7 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
             setRoster(roster.filter(p => p.id !== player.id));
         } else {
             if (currentSpend + player.price > BUDGET_CAP) {
-                alert("Over Budget!");
+                showToast("Over Budget!");
                 return;
             }
             if (player.division === 'MPO' && mpoCount >= SLOTS_MPO) return;
@@ -223,8 +225,8 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
 
             if (!res.ok) {
                 setConfirmed(false); // Revert UI state
-                if (res.status === 401) alert("Please Sign In to save your team!");
-                else alert("Failed to save team (Server Error)");
+                if (res.status === 401) showToast("Please Sign In to save your team!");
+                else showToast("Failed to save team (Server Error)");
             } else {
                 const data = await res.json();
                 if (data.entry && data.entry.id) {
@@ -260,10 +262,10 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
                 setSimResults(null);
             } else {
                 const data = await res.json();
-                alert(data.error || 'Failed to delete draft.');
+                showToast(data.error || 'Failed to delete draft.');
             }
         } catch {
-            alert('Network error — please try again.');
+            showToast('Network error — please try again.');
         } finally {
             setIsSaving(false);
         }
@@ -282,7 +284,7 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
             });
 
             if (!res.ok) {
-                alert("Failed to run tournament. Please try again.");
+                showToast("Failed to run tournament. Please try again.");
                 setIsSaving(false);
                 return;
             }
@@ -317,7 +319,7 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
 
         } catch (e) {
             console.error("Simulation error:", e);
-            alert("Error running tournament.");
+            showToast("Error running tournament.");
         } finally {
             setIsSaving(false);
         }
@@ -352,6 +354,24 @@ export default function DraftClient({ players, tournamentId, tournamentName, isL
 
     return (
         <div className={styles.container} style={{ paddingTop: dashboardHeight + controlsHeight }}>
+            {/* Toast — inline, accessible, replaces blocking alert() dialogs */}
+            {toast && (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    onClick={() => setToast(null)}
+                    style={{
+                        position: 'fixed', top: NAV_HEIGHT + 12, left: '50%', transform: 'translateX(-50%)',
+                        zIndex: 1000, maxWidth: '90vw', cursor: 'pointer',
+                        background: toast.tone === 'warn' ? '#78350f' : '#7f1d1d',
+                        border: `1px solid ${toast.tone === 'warn' ? '#f59e0b' : '#ef4444'}`,
+                        color: '#fff', padding: '10px 16px', borderRadius: '10px',
+                        fontSize: '0.85rem', fontWeight: 600, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                    }}
+                >
+                    {toast.msg}
+                </div>
+            )}
             {/* Compact page header — tournament name + lock countdown, scrolls away under fixed bars */}
             <div style={{ padding: '0.75rem 0 0.5rem', borderBottom: '1px solid #1e293b' }}>
                 <h1 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc', margin: 0, lineHeight: 1.2 }}>{tournamentName}</h1>
