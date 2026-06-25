@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2020",
+    "moduleResolution": "node",
+    "outDir": "dist-test",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] },
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "types": ["node"],
+    "resolveJsonModule": true,
+    "noEmit": false,
+    "incremental": false
+  },
+  "include": [
+    "src/lib/pricing.ts",
+    "src/lib/scoring.ts",
+    "src/lib/derive-stars.ts",
+    "src/lib/derive-course.ts",
+    "tests/**/*.ts"
+  ]
+}
