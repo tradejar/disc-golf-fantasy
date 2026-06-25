@@ -353,22 +353,26 @@ export async function GET(request: Request) {
     const rankMap = new Map<string, number>();
     entryScores.forEach((e, i) => rankMap.set(e.id, i + 1));
 
-    // Write scores back — use update (not upsert) since entries always exist already
+    // Write scores back — update (not upsert) since entries always exist.
+    // Run in parallel chunks instead of one sequential round-trip per entry
+    // (the old loop dominated runtime and risked the function timeout).
     let updated = 0;
-    for (const u of updates) {
-        const { error: updateError } = await supabaseAdmin
-            .from('entries')
-            .update({
-                total_points: u.total_points,
-                breakdown_data: u.breakdown_data,
-                tournament_rank: rankMap.get(u.id) ?? null,
-            })
-            .eq('id', u.id);
-
-        if (updateError) {
-            console.error(`Score cron: failed to update entry ${u.id}`, updateError);
-        } else {
-            updated++;
+    const WRITE_CHUNK = 25;
+    for (let i = 0; i < updates.length; i += WRITE_CHUNK) {
+        const slice = updates.slice(i, i + WRITE_CHUNK);
+        const results = await Promise.all(slice.map(u =>
+            supabaseAdmin
+                .from('entries')
+                .update({
+                    total_points: u.total_points,
+                    breakdown_data: u.breakdown_data,
+                    tournament_rank: rankMap.get(u.id) ?? null,
+                })
+                .eq('id', u.id)
+        ));
+        for (let j = 0; j < results.length; j++) {
+            if (results[j].error) console.error(`Score cron: failed to update entry ${slice[j].id}`, results[j].error);
+            else updated++;
         }
     }
 

@@ -186,33 +186,39 @@ export async function GET(request: Request) {
         const leagueMap = new Map<string, { name: string; rank: number; totalMembers: number }[]>();
 
         if (memberships?.length) {
-            // Get unique league IDs
             const leagueIds = [...new Set(memberships.map((m: any) => m.league_id))];
 
-            // For each league, compute each member's total season points
+            // Pre-fetch every league's ranking entries in ONE query, then rank
+            // each league in memory (was one entries query per league = N+1).
+            const allLeagueTournamentIds = [...new Set(
+                leagueIds.flatMap(lid => {
+                    const lm = memberships.filter((m: any) => m.league_id === lid);
+                    return ((lm[0] as any)?.leagues?.tournament_ids ?? SEASON_2026.map(t => t.id)) as string[];
+                })
+            )];
+            const allMemberIds = [...new Set(memberships.map((m: any) => m.user_id))];
+            const { data: allLeagueEntries } = await supabaseAdmin
+                .from('entries')
+                .select('user_id, tournament_id, total_points')
+                .in('tournament_id', allLeagueTournamentIds)
+                .in('user_id', allMemberIds)
+                .not('total_points', 'is', null);
+
             for (const leagueId of leagueIds) {
                 const leagueMemberships = memberships.filter((m: any) => m.league_id === leagueId);
                 const leagueName = (leagueMemberships[0] as any)?.leagues?.name ?? 'League';
-                const leagueMemberIds = leagueMemberships.map((m: any) => m.user_id);
+                const leagueMemberIds = new Set(leagueMemberships.map((m: any) => m.user_id));
+                const leagueTournamentIds = new Set<string>(
+                    ((leagueMemberships[0] as any)?.leagues?.tournament_ids ?? SEASON_2026.map(t => t.id)) as string[]
+                );
 
-                // Fetch all entries for this league's tournaments for ranking
-                const leagueTournamentIds: string[] = (leagueMemberships[0] as any)?.leagues?.tournament_ids ?? SEASON_2026.map(t => t.id);
-                const { data: leagueEntries } = await supabaseAdmin
-                    .from('entries')
-                    .select('user_id, total_points')
-                    .in('tournament_id', leagueTournamentIds)
-                    .in('user_id', leagueMemberIds)
-                    .not('total_points', 'is', null);
-
-                // Aggregate total points per user
                 const leaguePoints = new Map<string, number>();
-                for (const e of leagueEntries ?? []) {
+                for (const e of allLeagueEntries ?? []) {
+                    if (!leagueMemberIds.has(e.user_id) || !leagueTournamentIds.has(e.tournament_id)) continue;
                     leaguePoints.set(e.user_id, (leaguePoints.get(e.user_id) ?? 0) + (e.total_points ?? 0));
                 }
 
-                const ranked = [...leaguePoints.entries()]
-                    .sort((a, b) => b[1] - a[1]);
-
+                const ranked = [...leaguePoints.entries()].sort((a, b) => b[1] - a[1]);
                 ranked.forEach(([uid], idx) => {
                     if (!leagueMap.has(uid)) leagueMap.set(uid, []);
                     leagueMap.get(uid)!.push({ name: leagueName, rank: idx + 1, totalMembers: ranked.length });

@@ -87,6 +87,14 @@ export async function GET(request: Request) {
 
     const results: { tournament: string; window: string; sent: number; errors: number }[] = [];
 
+    // Notifiable profiles are identical for every window/tournament — fetch once,
+    // and push the unsubscribe filter into the query (IS NOT TRUE keeps nulls).
+    const { data: notifiableProfiles } = await supabaseAdmin
+        .from('profiles')
+        .select('id, email, display_name, email_unsubscribed')
+        .not('email', 'is', null)
+        .not('email_unsubscribed', 'is', true);
+
     for (const window of WINDOWS) {
         const windowStart = new Date(now.getTime() + window.start);
         const windowEnd   = new Date(now.getTime() + window.end);
@@ -114,14 +122,9 @@ export async function GET(request: Request) {
             });
             const draftUrl = `https://eagly.app/draft/${tournament.id}`;
 
-            // Fetch all profiles except unsubscribed and those who already have a draft
-            const { data: profiles } = await supabaseAdmin
-                .from('profiles')
-                .select('id, email, display_name, email_unsubscribed')
-                .not('email', 'is', null);
+            if (!notifiableProfiles?.length) continue;
 
-            if (!profiles?.length) continue;
-
+            // Exclude users who already drafted this tournament.
             const { data: existingEntries } = await supabaseAdmin
                 .from('entries')
                 .select('user_id')
@@ -129,8 +132,8 @@ export async function GET(request: Request) {
                 .limit(10000);
 
             const draftedUserIds = new Set((existingEntries ?? []).map((e: any) => e.user_id));
-            const toNotify = profiles.filter((p: any) =>
-                !draftedUserIds.has(p.id) && p.email && !(p as any).email_unsubscribed
+            const toNotify = notifiableProfiles.filter((p: any) =>
+                !draftedUserIds.has(p.id) && p.email
             );
 
             let sent = 0;
