@@ -97,3 +97,6 @@ a {
     top: 59px !important;
   }
 }
+/* Route loading skeletons */
+@keyframes sk-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.sk { background: #1e293b; animation: sk-pulse 1.4s ease-in-out infinite; }
