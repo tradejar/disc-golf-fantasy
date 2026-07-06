@@ -32,9 +32,11 @@ npx vercel promote "$LATEST" --yes 2>&1 | tail -1
 
 echo ""
 echo "📦 Syncing master → main (keeps GitHub Actions workflow up to date)..."
+# Push via explicit SSH URL — origin is HTTPS, which fails non-interactively
+# ("could not read Username"). The SSH URL authenticates via ~/.ssh/id_ed25519.
 eval "$(ssh-agent -s)" > /dev/null 2>&1
 ssh-add ~/.ssh/id_ed25519 > /dev/null 2>&1
-git push origin master:main 2>&1 | tail -1
+git push git@github.com:tradejar/disc-golf-fantasy.git master:main 2>&1 | tail -1
 
 echo ""
 echo "🧹 Pruning old deployments..."

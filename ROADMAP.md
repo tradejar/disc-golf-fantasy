@@ -32,9 +32,6 @@ _Nothing right now._
   probes. Archive everything not referenced by a current workflow.
 - **`.env.local.example`** — none exists; new contributors reverse-engineer
   required vars from `src/lib/*` imports. Generate one.
-- **deploy.sh push fix.** `git push origin master:main` (line 30) fails under
-  HTTPS origin (`could not read Username`). Switch to explicit SSH URL or
-  drop the line in favor of the manual push step.
 - **Course-fit stat coverage (residual).** Course-fit v2 now derives
   Power/Accuracy axes from StatMando data, covering most of the field.
   Remaining gap: registrants with no StatMando history get base + form
@@ -45,6 +42,11 @@ _Nothing right now._
 ## Shipped
 
 ### 2026-07 — Consolidation batch
+
+- **deploy.sh push fix.** The `master:main` sync now pushes via the explicit
+  SSH URL — the HTTPS origin failed non-interactively (`could not read
+  Username`), which had left GitHub `main` 15 commits behind. Backlog synced
+  by hand 2026-07-06.
 
 - **Single pricing path.** `draft/[id]/page.tsx` migrated onto
   `player-service.ts:getTournamentPool` — one pool-construction path shared
