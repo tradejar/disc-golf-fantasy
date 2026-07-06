@@ -1,69 +1,80 @@
 # Roadmap
 
 What's next for DGPT Fantasy. Single source of truth — supersedes any inline TODOs
-or scattered notes.
+or scattered notes. Last updated: 2026-07-06.
 
 ---
 
 ## In progress
 
-_Nothing right now._ The pre-Waco batch shipped (manual-registrations refresh
-button, 3h registrations cron cadence, refresh-button cooldown fix).
+_Nothing right now._
 
 ---
 
-## Next up (post-Waco / mid-May)
+## Next up
 
-- **Hard-fail cron tightening.** Crons currently swallow many transient failures
+- **Hard-fail cron tightening.** Crons still swallow transient failures
   silently or as 200s with `success: false`. Tighten to: distinct exit codes,
   Discord webhook on every failure path, run-summary alerting if a scheduled
-  window is missed entirely. Held until after a green Thu–Sun cycle proves the
-  current behavior baseline.
-- **`middleware` → `proxy` rename.** Next.js 16 has deprecated the `middleware`
-  file convention (build emits `⚠ The "middleware" file convention is
-  deprecated. Please use "proxy" instead.`). Mechanical rename + import-path
-  update. Held to keep the Waco week's deploy diff small.
-- **Tests for scoring / pricing / lock-logic.** No test suite today. First
-  targets: `src/lib/scoring.ts` (point-table edge cases — DNF, partial round,
-  finals format), `src/lib/pricing.ts` (floor + dynamic adjustment math),
-  `getLockTime()` (UTC boundary correctness across daylight-saving transitions).
-- **Clerk → Supabase profile mirror.** Today the leaderboard hits Clerk
-  `getUserList` per render — works at our 10-user scale but burns through
-  Clerk's 100-req/10s rate limit at growth. Wire up
-  `/api/webhooks/clerk` → `profiles` table (`avatar_url`, `display_name`),
-  read from Supabase only. See [scalability.md](./scalability.md) for the full
-  plan.
+  window is missed entirely.
+- **`middleware` → `proxy` rename.** Next.js 16 deprecation warning at build.
+  Mechanical rename; was held to keep the Waco deploy diff small — no longer
+  a reason to wait.
 
 ---
 
 ## Backlog
 
-- **Repo bloat trim** — partially handled in this batch. Remaining: assess
-  whether `parse_layout.py`, `parse_pdf.{js,py}`, the root-level `*.sql`
-  migrations, and `tournament-cron.sh` are still load-bearing; relocate to
-  `scripts/archive/` if not.
-- **`scripts/` cleanup.** 117 files in there, mostly one-off `check_*.js`
-  probes from past debugging. Archive everything not referenced by a current
-  workflow into `scripts/archive/`, leave only actively-used utilities at the
-  top level.
-- **Migrate `draft/[id]/page.tsx` to use the shared
-  `player-service.ts:getRegisteredPlayersForTournament` helper.** Auto-draft
-  was migrated to the helper pre-Waco; the page still has its own ~85 LOC of
-  inline pool-construction logic (`src/app/draft/[id]/page.tsx:36-122`).
-  Replacing that block with a single helper call eliminates the duplication
-  introduced by the pre-Waco fix. Pure refactor, zero behavior change.
-- **`ALL_PLAYERS` course-fit coverage.** Both the draft page and auto-draft
-  now price every registrant via rating + form modifiers, but the **course-fit
-  ±%** modifier is gated on per-player stats (`power/accuracy/recovery/
-  resilience/versatility`) which only exist in `src/data/mock-players.ts`.
-  Across recent Waco-sized fields, only ~50–60% of MPO and ~70–75% of FPO
-  registrants have those stats; the rest get base + form pricing only.
-  Backfill stats for the missing ~30–50% of the field, switch to an
-  algorithmic stat floor, or accept the modifier gap as a design choice.
-- **`.env.local.example`** — none exists today; new contributors have to
-  reverse-engineer required vars from `src/lib/*` imports. Generate one.
-- **deploy.sh: HTTPS-auth `master:main` push fails inside the script.** Line 30
-  (`git push origin master:main`) errors with `could not read Username for
-  'https://github.com'` because origin is HTTPS but the script tries via
-  ssh-agent. Either switch the in-script push to use the SSH URL explicitly,
-  or drop the line and rely on the manual push step in the deploy playbook.
+- **Repo bloat trim.** Assess whether `parse_layout.py`, `parse_pdf.{js,py}`,
+  the root-level `*.sql` migrations, and `tournament-cron.sh` are still
+  load-bearing; relocate to `scripts/archive/` if not.
+- **`scripts/` cleanup.** ~117 files, mostly one-off `check_*.js` debug
+  probes. Archive everything not referenced by a current workflow.
+- **`.env.local.example`** — none exists; new contributors reverse-engineer
+  required vars from `src/lib/*` imports. Generate one.
+- **deploy.sh push fix.** `git push origin master:main` (line 30) fails under
+  HTTPS origin (`could not read Username`). Switch to explicit SSH URL or
+  drop the line in favor of the manual push step.
+- **Course-fit stat coverage (residual).** Course-fit v2 now derives
+  Power/Accuracy axes from StatMando data, covering most of the field.
+  Remaining gap: registrants with no StatMando history get base + form
+  pricing only. Decide: algorithmic floor vs. accept as design choice.
+
+---
+
+## Shipped
+
+### 2026-07 — Consolidation batch
+
+- **Single pricing path.** `draft/[id]/page.tsx` migrated onto
+  `player-service.ts:getTournamentPool` — one pool-construction path shared
+  with the auto-draft cron, so draft-UI and auto-draft prices can't diverge.
+  Removed ~160 LOC of duplicated logic; parallel reads preserved.
+- **Clerk → Supabase profile mirror — verified live.** `/api/webhooks/clerk`
+  (svix-verified) upserts `display_name`/`email`/`avatar_url` into `profiles`;
+  `ProfileSync` + `save-entry` also upsert as backstops. All leaderboard
+  routes read from Supabase only — zero Clerk `getUserList` calls remain.
+  All 18 prod profiles have name + avatar synced.
+
+### 2026-06 — Audit batch (post-Waco)
+
+- **Security:** cron auth fails closed; `/api/unsubscribe` links HMAC-signed;
+  `/api/debug-staging` removed.
+- **Perf:** `entries` indexes live in prod (tournament_id + unique composite,
+  duplicate dropped); draft page DB reads parallelized (`Promise.all`);
+  score-cron writes batched; `notify-tournament` / `notify-draft` N+1s fixed.
+- **UX:** premium resolved server-side (no stats flash); `alert()` replaced
+  with inline toasts; route-level loading skeletons, branded `error.tsx`,
+  `not-found.tsx`.
+- **Tests:** `node:test` unit suite (`npm test`) — 25 cases across pricing,
+  scoring, derive-stars, derive-course. (Lock-logic tests still to add.)
+- **Course-fit pricing v2:** 2-axis (Power×Distance, Accuracy×Technical)
+  derived from StatMando tour-holes; division-specific long-hole thresholds
+  (FPO 18 / MPO 36); ability bars UI.
+- **Stats:** StatMando 2026 season stats in draft page (premium dropdown);
+  pagination past Supabase's 1000-row cap.
+
+### 2026-05 — Pre-Waco batch
+
+- Manual-registrations refresh button, 3h registrations cron cadence,
+  refresh-button cooldown fix.
