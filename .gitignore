@@ -46,3 +46,6 @@ next-env.d.ts
 
 # test build output
 dist-test/
+
+# Claude working dir (contains repo-scoped deploy key — never commit)
+.claude/
